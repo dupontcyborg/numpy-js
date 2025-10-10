@@ -19,17 +19,28 @@ Running log of implementation decisions, gotchas, and lessons learned as we buil
 
 ---
 
-## To Investigate
+## @stdlib Investigation Results (2025-10-10)
 
-### @stdlib's ndarray
-- [ ] Check if @stdlib/ndarray is suitable for our needs
-- [ ] If not, build our own with:
-  - TypedArray backing
-  - Stride-based views
-  - Broadcasting support
-  - Works with @stdlib's computational functions
+### ✅ DECISION: Use @stdlib/ndarray as Foundation
 
-**Question**: Can @stdlib's ndarray handle our memory model requirements?
+**Findings:**
+- `@stdlib/ndarray` has everything we need: shape, strides, TypedArrays, views
+- Broadcasting: `broadcastArray()`, `broadcastArrays()`
+- Slicing: `slice()` function available
+- DTypes: Full system with 20+ types
+- **All BLAS functions available via `@stdlib/blas/base/*`**:
+  - Level 1: `ddot`, `daxpy`, `dcopy`, `dscal`
+  - Level 2: `dgemv`, `dsymv`, `dtrmv`
+  - Level 3: `dgemm`, `dger` ✅ (Matrix multiply!)
+  - WASM versions: `dgemm-wasm`, `ddot-wasm` for performance
+
+**Strategy:**
+```typescript
+import ndarray from '@stdlib/ndarray';
+import dgemm from '@stdlib/blas/base/dgemm';
+
+// Use @stdlib/ndarray + thin wrapper for NumPy API
+```
 
 ---
 
@@ -269,12 +280,12 @@ _(None yet - will document as we discover)_
 
 ---
 
-## Questions to Answer
+## Questions Answered
 
-1. **@stdlib ndarray**: Can we use it or build our own?
-   - Need: Views, strides, broadcasting
-   - Need: Works with @stdlib computational functions
-   - Decision: TBD after investigation
+1. **@stdlib ndarray**: ✅ ANSWERED - Use it!
+   - Has everything: views, strides, broadcasting
+   - Works perfectly with @stdlib/blas functions
+   - Decision: Use @stdlib/ndarray, build thin NumPy wrapper on top
 
 2. **Complex numbers**: Implement early or later?
    - Interleaved storage decided

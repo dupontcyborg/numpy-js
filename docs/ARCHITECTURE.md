@@ -15,24 +15,23 @@
 
 ```
 ┌─────────────────────────────────────────┐
-│         NumPy-Compatible API            │
+│    NumPy-Compatible API (Thin Wrapper)  │
 │  np.zeros(), arr.matmul(), np.linalg.*  │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────┴──────────────────────────┐
-│         NDArray Class (Our Own)         │
-│  Memory management, broadcasting,       │
-│  slicing, views, dtype system          │
+│    @stdlib/ndarray (Array Foundation)   │
+│  Memory, broadcasting, slicing, views   │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────┴──────────────────────────┐
-│    Computational Backend (@stdlib)      │
-│  dgemm, ddot, dgesv, dgesvd, etc.      │
+│    @stdlib/blas/base/* (Computation)    │
+│  dgemm, dgemv, ddot, daxpy + WASM      │
 └─────────────────────────────────────────┘
 ```
 
-**We build**: API layer, NDArray memory model, broadcasting, slicing
-**We use**: @stdlib for BLAS/LAPACK computations
+**We build**: Thin NumPy-compatible API layer only
+**We use**: @stdlib/ndarray for array structure, @stdlib/blas for all computations
 
 ---
 
@@ -210,24 +209,29 @@ function broadcastable(shape1: number[], shape2: number[]): boolean {
 
 ## Using @stdlib
 
-### When to Use @stdlib
+### How We Use @stdlib
 
-✅ **Use @stdlib for:**
-- BLAS operations: `dgemm`, `ddot`, `daxpy`, `dgemv`
-- LAPACK operations: `dgesv`, `dgesvd`, `dgeev`, `dgeqrf`
-- Proven numerical algorithms
+**@stdlib/ndarray** - Array foundation:
+- ✅ Memory management (TypedArrays, strides, views)
+- ✅ Broadcasting logic built-in
+- ✅ Slicing support
+- ✅ DType system
 
-❌ **Implement ourselves:**
-- NDArray memory management
-- Broadcasting logic
-- Slicing and views
-- Element-wise operations (need broadcasting)
-- Reductions with axis parameter
+**@stdlib/blas/base/** - Computational kernels:
+- ✅ Level 1 BLAS: `ddot`, `daxpy`, `dcopy`, `dscal`, `dnrm2`
+- ✅ Level 2 BLAS: `dgemv`, `dsymv`, `dtrmv`, `dtrsv`
+- ✅ Level 3 BLAS: `dgemm`, `dger`
+- ✅ WASM versions available: `dgemm-wasm`, `ddot-wasm`, etc.
+
+**We implement:**
+- Thin NumPy-compatible API wrapper
+- String-based slicing syntax (`arr.slice('0:5', ':')`)
+- High-level functions that compose @stdlib operations
 
 ### Example: Matrix Multiply
 
 ```typescript
-import dgemm from '@stdlib/blas-base-dgemm';
+import dgemm from '@stdlib/blas/base/dgemm';
 
 class NDArray {
   matmul(other: NDArray): NDArray {
@@ -269,7 +273,7 @@ class NDArray {
 ### Example: Solve Linear System
 
 ```typescript
-import dgesv from '@stdlib/lapack-base-dgesv';
+import dgesv from '@stdlib/lapack/base/dgesv';
 
 function solve(A: NDArray, b: NDArray): NDArray {
   // Validate shapes
@@ -421,8 +425,8 @@ src/
 - **Helpers**: `row()`, `col()`, `rows()`, `cols()`
 
 ### 4. @stdlib Integration
-- **Decision**: Use for BLAS/LAPACK, build our own NDArray
-- **Rationale**: Proven computations, full control over API
+- **Decision**: Use @stdlib/ndarray as foundation + @stdlib/blas for computations
+- **Rationale**: Battle-tested implementation, we focus purely on NumPy API compatibility
 
 ### 5. Performance Strategy
 - **Phase 1**: Correctness with @stdlib (pure JS)
