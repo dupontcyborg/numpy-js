@@ -32,6 +32,7 @@
     "build:esm": "esbuild src/index.ts --bundle --platform=neutral --format=esm --sourcemap --outfile=dist/numpy.esm.js",
     "build:types": "tsc --emitDeclarationOnly --outDir dist/types",
     "test": "vitest run",
+    "test:quick": "vitest run --exclude tests/validation/exports.numpy.test.ts",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:validation": "vitest run tests/validation",

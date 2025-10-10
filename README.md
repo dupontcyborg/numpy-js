@@ -157,22 +157,28 @@ import * as np from 'numpy-js/browser';
 
 ## Development Status
 
-### Phase 0: Project Setup ✅ (Current)
+### Phase 0: Project Setup ✅ COMPLETE
 - [x] Package configuration
 - [x] TypeScript setup
 - [x] Build system (esbuild)
 - [x] Test framework (Vitest)
 - [x] Documentation consolidated
-- [ ] Linting (ESLint + Prettier)
+- [x] Linting (ESLint + Prettier)
+- [x] @stdlib investigation and integration
+- [x] First working implementation
 - [ ] CI/CD (GitHub Actions)
 
-### Phase 1: Core Foundation (Next)
-- [ ] NDArray class with memory management
+### Phase 1: Core Foundation (In Progress)
+- [x] NDArray wrapper class (using @stdlib/ndarray)
+- [x] Array creation: `zeros()`, `ones()`, `array()`
+- [x] Matrix operations: `matmul()` using `dgemm`
+- [x] Properties: `shape`, `ndim`, `size`, `dtype`, `data`, `strides`
+- [x] Data conversion: `toArray()`
 - [ ] DType system (20+ types)
-- [ ] Broadcasting engine
-- [ ] String-based slicing
-- [ ] Array creation functions
-- [ ] Basic arithmetic operations
+- [ ] Broadcasting wrapper
+- [ ] String-based slicing (`arr.slice('0:5', ':')`)
+- [ ] More creation functions: `arange()`, `linspace()`, `eye()`
+- [ ] Basic arithmetic: `add()`, `subtract()`, `multiply()`, `divide()`
 
 ### Phase 2: Essential Operations
 - [ ] Matrix operations (using @stdlib BLAS)

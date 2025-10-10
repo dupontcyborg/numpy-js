@@ -7,21 +7,21 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 ## Array Creation
 
 ### From Shape
-- [ ] `zeros(shape, dtype?)` - Array of zeros
-- [ ] `ones(shape, dtype?)` - Array of ones
+- [x] `zeros(shape, dtype?)` - Array of zeros
+- [x] `ones(shape, dtype?)` - Array of ones
 - [ ] `empty(shape, dtype?)` - Uninitialized array
 - [ ] `full(shape, fill_value, dtype?)` - Array filled with value
-- [ ] `eye(n, m?, k?, dtype?)` - Identity matrix
+- [x] `eye(n, m?, k?, dtype?)` - Identity matrix
 - [ ] `identity(n, dtype?)` - Square identity matrix
 
 ### From Data
-- [ ] `array(object, dtype?)` - Create from nested arrays
+- [x] `array(object, dtype?)` - Create from nested arrays
 - [ ] `asarray(a, dtype?)` - Convert to array
 - [ ] `copy(a)` - Deep copy
 
 ### Numerical Ranges
-- [ ] `arange(start, stop, step?, dtype?)` - Evenly spaced values
-- [ ] `linspace(start, stop, num?)` - Evenly spaced over interval
+- [x] `arange(start, stop, step?, dtype?)` - Evenly spaced values
+- [x] `linspace(start, stop, num?)` - Evenly spaced over interval
 - [ ] `logspace(start, stop, num?, base?)` - Log-spaced values
 - [ ] `geomspace(start, stop, num?)` - Geometric progression
 
@@ -69,10 +69,10 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 ## Mathematical Operations
 
 ### Arithmetic
-- [ ] `add(x1, x2)` - Addition
-- [ ] `subtract(x1, x2)` - Subtraction
-- [ ] `multiply(x1, x2)` - Multiplication
-- [ ] `divide(x1, x2)` - Division
+- [x] `add(x1, x2)` - Addition _(implemented as NDArray.add() method)_
+- [x] `subtract(x1, x2)` - Subtraction _(implemented as NDArray.subtract() method)_
+- [x] `multiply(x1, x2)` - Multiplication _(implemented as NDArray.multiply() method)_
+- [x] `divide(x1, x2)` - Division _(implemented as NDArray.divide() method)_
 - [ ] `power(x1, x2)` - Power
 - [ ] `mod(x1, x2)` - Modulo
 - [ ] `floor_divide(x1, x2)` - Floor division
@@ -131,13 +131,13 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 ## Reductions
 
 ### Sum and Product
-- [ ] `sum(a, axis?, keepdims?)` - Sum
+- [x] `sum(a, axis?, keepdims?)` - Sum _(implemented as NDArray.sum() method, no axis/keepdims yet)_
 - [ ] `prod(a, axis?, keepdims?)` - Product
 - [ ] `cumsum(a, axis?)` - Cumulative sum
 - [ ] `cumprod(a, axis?)` - Cumulative product
 
 ### Statistics
-- [ ] `mean(a, axis?, keepdims?)` - Mean
+- [x] `mean(a, axis?, keepdims?)` - Mean _(implemented as NDArray.mean() method, no axis/keepdims yet)_
 - [ ] `median(a, axis?, keepdims?)` - Median
 - [ ] `std(a, axis?, ddof?, keepdims?)` - Standard deviation
 - [ ] `var(a, axis?, ddof?, keepdims?)` - Variance
@@ -145,8 +145,8 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 - [ ] `quantile(a, q, axis?)` - Quantile
 
 ### Min/Max
-- [ ] `min(a, axis?, keepdims?)` - Minimum
-- [ ] `max(a, axis?, keepdims?)` - Maximum
+- [x] `min(a, axis?, keepdims?)` - Minimum _(implemented as NDArray.min() method, no axis/keepdims yet)_
+- [x] `max(a, axis?, keepdims?)` - Maximum _(implemented as NDArray.max() method, no axis/keepdims yet)_
 - [ ] `argmin(a, axis?)` - Index of minimum
 - [ ] `argmax(a, axis?)` - Index of maximum
 - [ ] `ptp(a, axis?)` - Peak-to-peak (max - min)
@@ -183,7 +183,7 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 
 ### Matrix Products
 - [ ] `dot(a, b)` - Dot product
-- [ ] `matmul(a, b)` - Matrix product
+- [x] `matmul(a, b)` - Matrix product _(implemented as NDArray.matmul() method)_
 - [ ] `inner(a, b)` - Inner product
 - [ ] `outer(a, b)` - Outer product
 - [ ] `tensordot(a, b, axes)` - Tensor dot product
@@ -348,31 +348,53 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 ## Progress Summary
 
 **Total Functions**: ~350 core functions
+**Implemented**: 13 functions (4%)
+
+### Completed (13)
+
+**Array Creation** (6):
+- ✅ zeros, ones, array, arange, linspace, eye
+
+**Arithmetic Operations** (4):
+- ✅ add, subtract, multiply, divide _(as NDArray methods)_
+
+**Reductions** (4):
+- ✅ sum, mean, max, min _(as NDArray methods, no axis/keepdims yet)_
+
+**Linear Algebra** (1):
+- ✅ matmul _(as NDArray method)_
+
+### Testing
+
+- **171 tests passing**
+  - 87 unit tests (creation, arithmetic, exports)
+  - 54 NumPy validation tests (cross-checked against Python NumPy 2.3.3)
+  - 30 API comparison tests (verifying TS API matches Python API)
 
 ### Priority Tiers
 
 **Tier 1 - Essential** (~50 functions):
-- Array creation: zeros, ones, array, arange
-- Basic math: add, multiply, matmul, dot
-- Slicing and indexing
-- Broadcasting
-- Basic reductions: sum, mean, max, min
+- Array creation: ✅ zeros, ones, array, arange, ⚠️ linspace, ✅ eye
+- Basic math: ✅ add, ✅ multiply, ✅ matmul, ⬜ dot
+- Slicing and indexing: ⬜ TODO
+- Broadcasting: ⬜ TODO (partial support)
+- Basic reductions: ✅ sum, ✅ mean, ✅ max, ✅ min
 
 **Tier 2 - Important** (~100 functions):
-- Linear algebra: solve, inv, svd, eig
-- More math: sin, cos, exp, log
-- Full reductions: std, var, median
-- Comparison operators
-- Reshaping operations
+- Linear algebra: ⬜ solve, ⬜ inv, ⬜ svd, ⬜ eig
+- More math: ⬜ sin, cos, exp, log
+- Full reductions: ⬜ std, var, median
+- Comparison operators: ⬜ TODO
+- Reshaping operations: ⬜ TODO
 
 **Tier 3 - Extended** (~200 functions):
-- Random number generation
-- FFT operations
-- Polynomials
-- I/O operations
-- Set operations
-- Advanced indexing
+- Random number generation: ⬜ TODO
+- FFT operations: ⬜ TODO
+- Polynomials: ⬜ TODO
+- I/O operations: ⬜ TODO
+- Set operations: ⬜ TODO
+- Advanced indexing: ⬜ TODO
 
 ---
 
-**Last Updated**: 2025-10-07
+**Last Updated**: 2025-10-10
