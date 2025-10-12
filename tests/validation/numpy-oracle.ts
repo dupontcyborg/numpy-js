@@ -11,7 +11,7 @@
  *     NUMPY_PYTHON='python' npm test
  */
 
-import { execSync, execFileSync } from 'child_process';
+import { execSync } from 'child_process';
 import { writeFileSync, unlinkSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -72,10 +72,10 @@ except Exception as e:
       throw new Error(`NumPy error: ${parsed.error}`);
     }
     return parsed as NumPyResult;
-  } catch (error: any) {
-    // eslint-disable-line @typescript-eslint/no-explicit-any
-    if (error.stderr) {
-      const stderrStr = error.stderr.toString();
+  } catch (error: unknown) {
+    const err = error as { stderr?: Buffer; message?: string };
+    if (err.stderr) {
+      const stderrStr = err.stderr.toString();
       try {
         const parsed = JSON.parse(stderrStr);
         if ('error' in parsed) {
@@ -85,7 +85,7 @@ except Exception as e:
         // Not JSON, throw original error
       }
     }
-    throw new Error(`Failed to run Python: ${error.message}`);
+    throw new Error(`Failed to run Python: ${err.message || 'Unknown error'}`);
   } finally {
     try {
       unlinkSync(tmpFile);

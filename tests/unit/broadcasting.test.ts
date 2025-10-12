@@ -1,0 +1,312 @@
+/**
+ * Unit tests for broadcasting utilities
+ */
+
+import { describe, it, expect } from 'vitest';
+import { computeBroadcastShape, areBroadcastable } from '../../src/core/broadcasting';
+import { array, zeros, ones } from '../../src/core/ndarray';
+
+describe('Broadcasting utilities', () => {
+  describe('computeBroadcastShape', () => {
+    it('returns shape for single array', () => {
+      expect(computeBroadcastShape([[3, 4]])).toEqual([3, 4]);
+    });
+
+    it('returns empty array for no shapes', () => {
+      expect(computeBroadcastShape([])).toEqual([]);
+    });
+
+    it('broadcasts scalar (0d) with any shape', () => {
+      expect(computeBroadcastShape([[], [3, 4]])).toEqual([3, 4]);
+      expect(computeBroadcastShape([[3, 4], []])).toEqual([3, 4]);
+    });
+
+    it('broadcasts same shapes', () => {
+      expect(
+        computeBroadcastShape([
+          [3, 4],
+          [3, 4],
+        ])
+      ).toEqual([3, 4]);
+    });
+
+    it('broadcasts with trailing dimension match', () => {
+      expect(computeBroadcastShape([[5, 4], [4]])).toEqual([5, 4]);
+      expect(computeBroadcastShape([[4], [5, 4]])).toEqual([5, 4]);
+    });
+
+    it('broadcasts with size 1 dimensions', () => {
+      expect(
+        computeBroadcastShape([
+          [3, 1],
+          [1, 4],
+        ])
+      ).toEqual([3, 4]);
+      expect(
+        computeBroadcastShape([
+          [1, 4],
+          [3, 1],
+        ])
+      ).toEqual([3, 4]);
+      expect(
+        computeBroadcastShape([
+          [8, 1, 6, 1],
+          [7, 1, 5],
+        ])
+      ).toEqual([8, 7, 6, 5]);
+    });
+
+    it('broadcasts different number of dimensions', () => {
+      expect(computeBroadcastShape([[3, 4, 5], [5]])).toEqual([3, 4, 5]);
+      expect(computeBroadcastShape([[5], [3, 4, 5]])).toEqual([3, 4, 5]);
+      expect(
+        computeBroadcastShape([
+          [15, 3, 5],
+          [3, 5],
+        ])
+      ).toEqual([15, 3, 5]);
+    });
+
+    it('broadcasts multiple arrays', () => {
+      expect(computeBroadcastShape([[6, 7], [5, 6, 1], [7], [5, 1, 7]])).toEqual([5, 6, 7]);
+    });
+
+    it('returns null for incompatible shapes', () => {
+      expect(computeBroadcastShape([[3], [4]])).toBeNull();
+      expect(
+        computeBroadcastShape([
+          [3, 4],
+          [3, 5],
+        ])
+      ).toBeNull();
+      expect(
+        computeBroadcastShape([
+          [2, 1],
+          [8, 4, 3],
+        ])
+      ).toBeNull();
+    });
+
+    it('handles edge case: size 0 dimensions', () => {
+      // Size 0 must match with 0 or 1
+      expect(computeBroadcastShape([[8, 1, 1, 6, 1], [0]])).toEqual([8, 1, 1, 6, 0]);
+      expect(
+        computeBroadcastShape([
+          [8, 0, 1, 6, 1],
+          [6, 5],
+        ])
+      ).toEqual([8, 0, 1, 6, 5]);
+    });
+  });
+
+  describe('areBroadcastable', () => {
+    it('returns true for compatible shapes', () => {
+      expect(areBroadcastable([3, 4], [4])).toBe(true);
+      expect(areBroadcastable([3, 1], [1, 4])).toBe(true);
+      expect(areBroadcastable([5, 4], [1])).toBe(true);
+    });
+
+    it('returns false for incompatible shapes', () => {
+      expect(areBroadcastable([3], [4])).toBe(false);
+      expect(areBroadcastable([3, 4], [3, 5])).toBe(false);
+    });
+
+    it('returns true for same shapes', () => {
+      expect(areBroadcastable([3, 4], [3, 4])).toBe(true);
+    });
+  });
+});
+
+describe('Broadcasting in arithmetic operations', () => {
+  describe('add with broadcasting', () => {
+    it('broadcasts (3, 4) + (4,)', () => {
+      const a = ones([3, 4]);
+      const b = array([1, 2, 3, 4]);
+
+      const result = a.add(b);
+
+      expect(result.shape).toEqual([3, 4]);
+      expect(result.toArray()).toEqual([
+        [2, 3, 4, 5],
+        [2, 3, 4, 5],
+        [2, 3, 4, 5],
+      ]);
+    });
+
+    it('broadcasts (4,) + (3, 4)', () => {
+      const a = array([1, 2, 3, 4]);
+      const b = ones([3, 4]);
+
+      const result = a.add(b);
+
+      expect(result.shape).toEqual([3, 4]);
+      expect(result.toArray()).toEqual([
+        [2, 3, 4, 5],
+        [2, 3, 4, 5],
+        [2, 3, 4, 5],
+      ]);
+    });
+
+    it('broadcasts (3, 1) + (1, 4)', () => {
+      const a = array([[1], [2], [3]]);
+      const b = array([[10, 20, 30, 40]]);
+
+      const result = a.add(b);
+
+      expect(result.shape).toEqual([3, 4]);
+      expect(result.toArray()).toEqual([
+        [11, 21, 31, 41],
+        [12, 22, 32, 42],
+        [13, 23, 33, 43],
+      ]);
+    });
+
+    it('broadcasts same shapes (no actual broadcasting)', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [10, 20],
+        [30, 40],
+      ]);
+
+      const result = a.add(b);
+
+      expect(result.shape).toEqual([2, 2]);
+      expect(result.toArray()).toEqual([
+        [11, 22],
+        [33, 44],
+      ]);
+    });
+
+    it('throws error for incompatible shapes', () => {
+      const a = array([1, 2, 3]);
+      const b = array([1, 2, 3, 4]);
+
+      expect(() => a.add(b)).toThrow(/operands could not be broadcast/);
+    });
+  });
+
+  describe('subtract with broadcasting', () => {
+    it('broadcasts (3, 4) - (4,)', () => {
+      const a = ones([3, 4]).multiply(10);
+      const b = array([1, 2, 3, 4]);
+
+      const result = a.subtract(b);
+
+      expect(result.shape).toEqual([3, 4]);
+      expect(result.toArray()).toEqual([
+        [9, 8, 7, 6],
+        [9, 8, 7, 6],
+        [9, 8, 7, 6],
+      ]);
+    });
+
+    it('broadcasts (3, 1) - (1, 4)', () => {
+      const a = array([[10], [20], [30]]);
+      const b = array([[1, 2, 3, 4]]);
+
+      const result = a.subtract(b);
+
+      expect(result.shape).toEqual([3, 4]);
+      expect(result.toArray()).toEqual([
+        [9, 8, 7, 6],
+        [19, 18, 17, 16],
+        [29, 28, 27, 26],
+      ]);
+    });
+  });
+
+  describe('multiply with broadcasting', () => {
+    it('broadcasts (3, 4) * (4,)', () => {
+      const a = ones([3, 4]).multiply(2);
+      const b = array([1, 2, 3, 4]);
+
+      const result = a.multiply(b);
+
+      expect(result.shape).toEqual([3, 4]);
+      expect(result.toArray()).toEqual([
+        [2, 4, 6, 8],
+        [2, 4, 6, 8],
+        [2, 4, 6, 8],
+      ]);
+    });
+
+    it('broadcasts (3, 1) * (1, 4)', () => {
+      const a = array([[2], [3], [4]]);
+      const b = array([[10, 20, 30, 40]]);
+
+      const result = a.multiply(b);
+
+      expect(result.shape).toEqual([3, 4]);
+      expect(result.toArray()).toEqual([
+        [20, 40, 60, 80],
+        [30, 60, 90, 120],
+        [40, 80, 120, 160],
+      ]);
+    });
+  });
+
+  describe('divide with broadcasting', () => {
+    it('broadcasts (3, 4) / (4,)', () => {
+      const a = array([
+        [10, 20, 30, 40],
+        [10, 20, 30, 40],
+        [10, 20, 30, 40],
+      ]);
+      const b = array([2, 4, 5, 10]);
+
+      const result = a.divide(b);
+
+      expect(result.shape).toEqual([3, 4]);
+      expect(result.toArray()).toEqual([
+        [5, 5, 6, 4],
+        [5, 5, 6, 4],
+        [5, 5, 6, 4],
+      ]);
+    });
+
+    it('broadcasts (3, 1) / (1, 4)', () => {
+      const a = array([[100], [200], [400]]);
+      const b = array([[10, 20, 25, 50]]);
+
+      const result = a.divide(b);
+
+      expect(result.shape).toEqual([3, 4]);
+      expect(result.toArray()).toEqual([
+        [10, 5, 4, 2],
+        [20, 10, 8, 4],
+        [40, 20, 16, 8],
+      ]);
+    });
+  });
+
+  describe('complex broadcasting scenarios', () => {
+    it('broadcasts 3D with 1D', () => {
+      const a = zeros([2, 3, 4]).add(1);
+      const b = array([1, 2, 3, 4]);
+
+      const result = a.add(b);
+
+      expect(result.shape).toEqual([2, 3, 4]);
+      // Each 3x4 slice should have the same pattern
+      const slice = result.toArray()[0] as number[][];
+      expect(slice).toEqual([
+        [2, 3, 4, 5],
+        [2, 3, 4, 5],
+        [2, 3, 4, 5],
+      ]);
+    });
+
+    it('broadcasts with multiple size-1 dimensions', () => {
+      const a = array([[[1]], [[2]], [[3]]]);
+      const b = array([[10, 20]]);
+
+      const result = a.multiply(b);
+
+      expect(result.shape).toEqual([3, 1, 2]);
+      expect(result.toArray()).toEqual([[[10, 20]], [[20, 40]], [[30, 60]]]);
+    });
+  });
+});

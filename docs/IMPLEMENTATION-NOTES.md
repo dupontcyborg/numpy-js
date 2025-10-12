@@ -222,32 +222,34 @@ function add_good(a: NDArray, b: NDArray): NDArray {
 ## Implementation Checklist
 
 ### Phase 1: Core Foundation
-- [ ] NDArray class
-  - [ ] Constructor with TypedArray + shape
-  - [ ] Properties: shape, strides, dtype, ndim, size
+- [x] NDArray class
+  - [x] Constructor with TypedArray + shape
+  - [x] Properties: shape, strides, dtype, ndim, size
   - [ ] get/set methods
   - [ ] copy() method
 - [ ] DType system
-  - [ ] Basic types: float64, float32, int32
+  - [x] Basic types: float64 (default)
+  - [ ] More types: float32, int32, etc.
   - [ ] TypedArray mapping
-- [ ] Array creation
-  - [ ] zeros, ones, empty
-  - [ ] array() from nested arrays
-  - [ ] arange, linspace
+- [x] Array creation
+  - [x] zeros, ones, empty
+  - [x] array() from nested arrays
+  - [x] arange, linspace, eye
 - [ ] Slicing
   - [ ] String parser: "0:5", ":", "::2"
   - [ ] Apply slicing to create views
   - [ ] Convenience: row(), col()
-- [ ] Broadcasting
-  - [ ] Check if shapes broadcastable
-  - [ ] Compute output shape
-  - [ ] Create broadcast views
+- [x] Broadcasting ✅ **COMPLETE (2025-10-12)**
+  - [x] Check if shapes broadcastable
+  - [x] Compute output shape
+  - [x] Create broadcast views
+  - [x] Integrated into all arithmetic operations
 
 ### Phase 2: Basic Operations
-- [ ] Arithmetic
-  - [ ] add, subtract, multiply, divide
-  - [ ] Scalar operations
-  - [ ] Broadcasting
+- [x] Arithmetic ✅ **WITH BROADCASTING**
+  - [x] add, subtract, multiply, divide
+  - [x] Scalar operations
+  - [x] Broadcasting (fully integrated)
 - [ ] Reductions
   - [ ] sum, mean, min, max
   - [ ] Support axis parameter
@@ -298,6 +300,7 @@ _(None yet - will document as we discover)_
 4. **Testing**: How much Python comparison vs unit tests?
    - Start with unit tests
    - Add Python comparison for validation
+   - Implement benchmarks between Python & JS
    - Balance speed vs thoroughness
 
 ---
@@ -310,4 +313,79 @@ _(None yet - will document as we discover)_
 
 ---
 
-**Last Updated**: 2025-10-07
+## Broadcasting Implementation (2025-10-12)
+
+### ✅ Successfully Implemented
+
+Broadcasting is now fully functional across all arithmetic operations!
+
+**What Was Done:**
+1. Created `src/core/broadcasting.ts` module with:
+   - `computeBroadcastShape()` - Check compatibility and compute output shape
+   - `areBroadcastable()` - Quick compatibility check
+   - `broadcastStdlibArrays()` - Broadcast arrays using @stdlib
+   - `broadcastErrorMessage()` - Generate descriptive error messages
+
+2. Updated all arithmetic operations in `NDArray`:
+   - `add()`, `subtract()`, `multiply()`, `divide()` now support broadcasting
+   - Uses @stdlib's `broadcastArrays()` under the hood
+   - Efficient: Creates read-only views, no data copying
+
+3. Comprehensive testing:
+   - **25 new unit tests** for broadcasting utilities and operations
+   - **15 new Python validation tests** confirming NumPy compatibility
+   - **All 169 tests pass** (100 unit + 69 validation)
+
+**Implementation Details:**
+
+The approach leverages @stdlib's battle-tested broadcasting:
+
+```typescript
+private _elementwiseOp(other: NDArray, op: (a, b) => number, opName: string): NDArray {
+  // 1. Check compatibility and compute output shape
+  const outputShape = computeBroadcastShape([this.shape, other.shape]);
+
+  // 2. Broadcast both arrays (creates views, no copying)
+  const [broadcastThis, broadcastOther] = broadcastStdlibArrays([this._data, other._data]);
+
+  // 3. Create result array and perform element-wise operation
+  const result = zeros(outputShape);
+  for (let i = 0; i < size; i++) {
+    resultData[i] = op(broadcastThis.iget(i), broadcastOther.iget(i));
+  }
+
+  return result;
+}
+```
+
+**Examples Now Supported:**
+
+```typescript
+// (3, 4) + (4,) → (3, 4)
+array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]).add(array([10, 20, 30, 40]))
+
+// (3, 1) * (1, 4) → (3, 4)
+array([[2], [3], [4]]).multiply(array([[10, 20, 30, 40]]))
+
+// (1,) + (3, 4) → (3, 4)
+array([5]).add(array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]))
+```
+
+**Performance Considerations:**
+
+- @stdlib's broadcasting creates memory-efficient views (no data duplication)
+- Element-wise iteration uses `iget()` for correct strided access
+- Current implementation prioritizes correctness over speed
+- Future optimization: Could use SIMD or @stdlib's element-wise ops for specific cases
+
+**What's Next:**
+
+Broadcasting is foundational - it unblocks many other operations. Natural next steps:
+1. **Slicing** - Another core feature
+2. **Axis support for reductions** - `sum(axis=0)`, `mean(axis=1)`, etc.
+3. **More arithmetic ops** - `power()`, `mod()`, etc. (will automatically have broadcasting)
+4. **Comparison operations** - `greater()`, `less()`, `equal()` with broadcasting
+
+---
+
+**Last Updated**: 2025-10-12

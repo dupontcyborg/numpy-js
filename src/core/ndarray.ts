@@ -6,6 +6,11 @@
 
 import stdlib_ndarray from '@stdlib/ndarray';
 import dgemm from '@stdlib/blas/base/dgemm';
+import {
+  computeBroadcastShape,
+  broadcastStdlibArrays,
+  broadcastErrorMessage,
+} from './broadcasting';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type StdlibNDArray = any; // @stdlib types not available yet
@@ -43,6 +48,43 @@ export class NDArray {
     return Array.from(stdlib_ndarray.strides(this._data));
   }
 
+  /**
+   * Helper method for element-wise operations with broadcasting
+   * @private
+   */
+  private _elementwiseOp(
+    other: NDArray,
+    op: (a: number, b: number) => number,
+    opName: string
+  ): NDArray {
+    // Check if shapes are broadcast-compatible
+    const outputShape = computeBroadcastShape([this.shape, other.shape]);
+
+    if (outputShape === null) {
+      throw new Error(broadcastErrorMessage([this.shape, other.shape], opName));
+    }
+
+    // Broadcast both arrays to the output shape
+    const [broadcastThis, broadcastOther] = broadcastStdlibArrays([this._data, other._data]);
+
+    // Create result array with the output shape
+    const result = zeros(outputShape);
+    const resultData = result.data;
+
+    // Perform element-wise operation
+    // Both broadcast arrays now have the same shape and size
+    const size = stdlib_ndarray.numel(broadcastThis);
+
+    for (let i = 0; i < size; i++) {
+      // Use iget to handle strided access correctly
+      const a = broadcastThis.iget(i);
+      const b = broadcastOther.iget(i);
+      resultData[i] = op(a, b);
+    }
+
+    return result;
+  }
+
   // Arithmetic operations
   add(other: NDArray | number): NDArray {
     if (typeof other === 'number') {
@@ -55,20 +97,8 @@ export class NDArray {
       }
       return result;
     } else {
-      // Array addition (TODO: broadcasting)
-      if (this.size !== other.size) {
-        throw new Error(
-          'add: arrays must have same size for now (broadcasting not yet implemented)'
-        );
-      }
-      const result = zeros(Array.from(this.shape));
-      const thisData = this.data;
-      const otherData = other.data;
-      const resultData = result.data;
-      for (let i = 0; i < this.size; i++) {
-        resultData[i] = thisData[i]! + otherData[i]!;
-      }
-      return result;
+      // Array addition with broadcasting
+      return this._elementwiseOp(other, (a, b) => a + b, 'add');
     }
   }
 
@@ -82,19 +112,8 @@ export class NDArray {
       }
       return result;
     } else {
-      if (this.size !== other.size) {
-        throw new Error(
-          'subtract: arrays must have same size for now (broadcasting not yet implemented)'
-        );
-      }
-      const result = zeros(Array.from(this.shape));
-      const thisData = this.data;
-      const otherData = other.data;
-      const resultData = result.data;
-      for (let i = 0; i < this.size; i++) {
-        resultData[i] = thisData[i]! - otherData[i]!;
-      }
-      return result;
+      // Array subtraction with broadcasting
+      return this._elementwiseOp(other, (a, b) => a - b, 'subtract');
     }
   }
 
@@ -108,19 +127,8 @@ export class NDArray {
       }
       return result;
     } else {
-      if (this.size !== other.size) {
-        throw new Error(
-          'multiply: arrays must have same size for now (broadcasting not yet implemented)'
-        );
-      }
-      const result = zeros(Array.from(this.shape));
-      const thisData = this.data;
-      const otherData = other.data;
-      const resultData = result.data;
-      for (let i = 0; i < this.size; i++) {
-        resultData[i] = thisData[i]! * otherData[i]!;
-      }
-      return result;
+      // Array multiplication with broadcasting
+      return this._elementwiseOp(other, (a, b) => a * b, 'multiply');
     }
   }
 
@@ -134,19 +142,8 @@ export class NDArray {
       }
       return result;
     } else {
-      if (this.size !== other.size) {
-        throw new Error(
-          'divide: arrays must have same size for now (broadcasting not yet implemented)'
-        );
-      }
-      const result = zeros(Array.from(this.shape));
-      const thisData = this.data;
-      const otherData = other.data;
-      const resultData = result.data;
-      for (let i = 0; i < this.size; i++) {
-        resultData[i] = thisData[i]! / otherData[i]!;
-      }
-      return result;
+      // Array division with broadcasting
+      return this._elementwiseOp(other, (a, b) => a / b, 'divide');
     }
   }
 

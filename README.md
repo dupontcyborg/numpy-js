@@ -45,8 +45,13 @@ const eigenvalues = np.linalg.eig(A);
 const row = A.slice('0', ':');  // First row
 const col = A.col(1);            // Second column
 
-// Broadcasting
+// Broadcasting (fully implemented!)
 const scaled = A.add(5).multiply(2);
+
+// Advanced broadcasting examples:
+const row = np.array([1, 2, 3, 4]);        // (4,)
+const col = np.array([[1], [2], [3]]);     // (3, 1)
+const result = col.multiply(row);           // (3, 4) via broadcasting!
 
 // Reductions
 const total = A.sum();
@@ -174,11 +179,12 @@ import * as np from 'numpy-js/browser';
 - [x] Matrix operations: `matmul()` using `dgemm`
 - [x] Properties: `shape`, `ndim`, `size`, `dtype`, `data`, `strides`
 - [x] Data conversion: `toArray()`
+- [x] More creation functions: `arange()`, `linspace()`, `eye()`
+- [x] Basic arithmetic: `add()`, `subtract()`, `multiply()`, `divide()`
+- [x] Broadcasting ✅ **COMPLETE** (fully integrated into all arithmetic operations)
 - [ ] DType system (20+ types)
-- [ ] Broadcasting wrapper
 - [ ] String-based slicing (`arr.slice('0:5', ':')`)
-- [ ] More creation functions: `arange()`, `linspace()`, `eye()`
-- [ ] Basic arithmetic: `add()`, `subtract()`, `multiply()`, `divide()`
+- [ ] Reductions with axis support
 
 ### Phase 2: Essential Operations
 - [ ] Matrix operations (using @stdlib BLAS)
