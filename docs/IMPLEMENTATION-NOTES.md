@@ -710,4 +710,85 @@ With axis-based reductions complete, natural next steps include:
 
 ---
 
+## Comparison Operations Implementation (2025-10-12)
+
+### ✅ Successfully Implemented
+
+Comparison operations now support broadcasting and return boolean arrays (as uint8)!
+
+**What Was Done:**
+1. Implemented six comparison methods:
+   - `greater(other)` - Element-wise greater than (>)
+   - `greater_equal(other)` - Element-wise greater than or equal (>=)
+   - `less(other)` - Element-wise less than (<)
+   - `less_equal(other)` - Element-wise less than or equal (<=)
+   - `equal(other)` - Element-wise equality (==)
+   - `not_equal(other)` - Element-wise inequality (!=)
+
+2. All operations support:
+   - Scalar comparisons
+   - Array-to-array comparisons
+   - Broadcasting for incompatible shapes
+
+3. Comprehensive testing:
+   - **26 new unit tests** for all comparison operations
+   - **18 new Python validation tests** confirming NumPy compatibility
+   - **All 262 tests pass** (244 unit + 18 validation)
+
+**Boolean Array Representation:**
+
+JavaScript lacks native boolean TypedArrays, so we use `uint8` (0=false, 1=true):
+
+```typescript
+greater(other: NDArray | number): NDArray {
+  if (typeof other === 'number') {
+    const data = new Uint8Array(this.size);
+    for (let i = 0; i < this.size; i++) {
+      data[i] = this.data[i]! > other ? 1 : 0;
+    }
+    return new NDArray(stdlib_ndarray.ndarray('uint8', data, ...));
+  } else {
+    return this._comparisonOp(other, (a, b) => a > b, 'greater');
+  }
+}
+```
+
+**Why uint8 instead of bool?**
+1. ✅ TypedArrays don't have a boolean type
+2. ✅ uint8 is memory-efficient (1 byte per element)
+3. ✅ Standard practice in numerical libraries
+4. ✅ Easy conversion for boolean operations (0 = false, 1 = true)
+5. ✅ Compatible with NumPy via `.astype(np.uint8)`
+
+**Supported Syntax:**
+
+```typescript
+const a = array([1, 2, 3, 4, 5]);
+const b = array([2, 2, 2, 6, 1]);
+
+// Scalar comparisons
+a.greater(3);         // [0, 0, 0, 1, 1]  (uint8)
+a.less_equal(3);      // [1, 1, 1, 0, 0]
+a.equal(2);           // [0, 1, 0, 0, 0]
+
+// Array comparisons
+a.greater(b);         // [0, 0, 1, 0, 1]
+a.equal(b);           // [0, 1, 0, 0, 0]
+
+// With broadcasting
+const matrix = array([[1, 2, 3], [4, 5, 6]]);
+const row = array([2, 4, 5]);
+matrix.greater(row);  // [[0, 0, 0], [1, 1, 1]]  shape: (2, 3)
+```
+
+**What's Next:**
+
+With comparison operations complete, natural next steps include:
+1. **Logical operations** - `logical_and()`, `logical_or()`, `logical_not()` for boolean arrays
+2. **Boolean indexing** - Use comparison results to filter arrays: `arr[arr > 5]`
+3. **Conditional functions** - `where(condition, x, y)` for conditional selection
+4. **Reshape operations** - `reshape()`, `flatten()`, `ravel()`, `transpose()`
+
+---
+
 **Last Updated**: 2025-10-12

@@ -58,6 +58,15 @@ const total = A.sum();                // Sum all elements
 const columnMeans = A.mean(0);        // Mean along axis 0
 const rowMaxs = A.max(1, true);       // Max along axis 1, keep dims
 
+// Comparisons (return boolean arrays as uint8)
+const mask = A.greater(5);            // Element-wise A > 5
+const equal = A.equal(B);             // Element-wise A == B
+const inRange = A.greater_equal(0);   // A >= 0
+
+// Tolerance comparisons (for floating point)
+const close = A.isclose(B);           // Element-wise closeness
+const allClose = A.allclose(B);       // True if all elements close
+
 // Random
 const random = np.random.randn([100, 100]);
 
@@ -185,6 +194,7 @@ import * as np from 'numpy-js/browser';
 - [x] Broadcasting ✅ **COMPLETE** (fully integrated into all arithmetic operations)
 - [x] String-based slicing ✅ **COMPLETE** (`arr.slice('0:5', ':')`, `row()`, `col()`, etc.)
 - [x] Reductions with axis support ✅ **COMPLETE** (`sum(axis, keepdims)`, `mean()`, `max()`, `min()`)
+- [x] Comparison operations ✅ **COMPLETE** (`greater()`, `less()`, `equal()`, etc. with broadcasting)
 - [ ] DType system (20+ types)
 
 ### Phase 2: Benchmarks & CI/CD

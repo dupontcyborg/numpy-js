@@ -159,14 +159,14 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 
 ## Comparison
 
-- [ ] `greater(x1, x2)` - Greater than
-- [ ] `greater_equal(x1, x2)` - Greater or equal
-- [ ] `less(x1, x2)` - Less than
-- [ ] `less_equal(x1, x2)` - Less or equal
-- [ ] `equal(x1, x2)` - Equal
-- [ ] `not_equal(x1, x2)` - Not equal
-- [ ] `allclose(a, b, rtol?, atol?)` - Close within tolerance
-- [ ] `isclose(a, b, rtol?, atol?)` - Element-wise close
+- [x] `greater(x1, x2)` - Greater than _(implemented as NDArray.greater() method)_
+- [x] `greater_equal(x1, x2)` - Greater or equal _(implemented as NDArray.greater_equal() method)_
+- [x] `less(x1, x2)` - Less than _(implemented as NDArray.less() method)_
+- [x] `less_equal(x1, x2)` - Less or equal _(implemented as NDArray.less_equal() method)_
+- [x] `equal(x1, x2)` - Equal _(implemented as NDArray.equal() method)_
+- [x] `not_equal(x1, x2)` - Not equal _(implemented as NDArray.not_equal() method)_
+- [x] `allclose(a, b, rtol?, atol?)` - Close within tolerance _(implemented as NDArray.allclose() method)_
+- [x] `isclose(a, b, rtol?, atol?)` - Element-wise close _(implemented as NDArray.isclose() method)_
 
 ---
 
@@ -348,9 +348,9 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 ## Progress Summary
 
 **Total Functions**: ~350 core functions
-**Implemented**: 13 functions (4%)
+**Implemented**: 21 functions (6%)
 
-### Completed (13)
+### Completed (21)
 
 **Array Creation** (6):
 - ✅ zeros, ones, array, arange, linspace, eye
@@ -359,17 +359,21 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 - ✅ add, subtract, multiply, divide _(as NDArray methods)_
 
 **Reductions** (4):
-- ✅ sum, mean, max, min _(as NDArray methods, no axis/keepdims yet)_
+- ✅ sum, mean, max, min _(as NDArray methods with axis/keepdims support)_
+
+**Comparison Operations** (8):
+- ✅ greater, greater_equal, less, less_equal, equal, not_equal _(as NDArray methods)_
+- ✅ isclose, allclose _(as NDArray methods with rtol/atol parameters)_
 
 **Linear Algebra** (1):
 - ✅ matmul _(as NDArray method)_
 
 ### Testing
 
-- **171 tests passing**
-  - 87 unit tests (creation, arithmetic, exports)
-  - 54 NumPy validation tests (cross-checked against Python NumPy 2.3.3)
-  - 30 API comparison tests (verifying TS API matches Python API)
+- **265 tests passing**
+  - 134 unit tests (creation, arithmetic, comparisons, reductions, slicing)
+  - 84 NumPy validation tests (cross-checked against Python NumPy 2.3.3)
+  - 47 additional tests (API comparison, edge cases, broadcasting)
 
 ### Priority Tiers
 
@@ -384,7 +388,7 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 - Linear algebra: ⬜ solve, ⬜ inv, ⬜ svd, ⬜ eig
 - More math: ⬜ sin, cos, exp, log
 - Full reductions: ⬜ std, var, median
-- Comparison operators: ⬜ TODO
+- Comparison operators: ✅ greater, less, equal, isclose, allclose (complete with broadcasting)
 - Reshaping operations: ⬜ TODO
 
 **Tier 3 - Extended** (~200 functions):

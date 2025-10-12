@@ -61,10 +61,12 @@ export class NDArray {
     opName: string
   ): NDArray {
     // Check if shapes are broadcast-compatible
-    const outputShape = computeBroadcastShape([this.shape, other.shape]);
+    const outputShape = computeBroadcastShape([Array.from(this.shape), Array.from(other.shape)]);
 
     if (outputShape === null) {
-      throw new Error(broadcastErrorMessage([this.shape, other.shape], opName));
+      throw new Error(
+        broadcastErrorMessage([Array.from(this.shape), Array.from(other.shape)], opName)
+      );
     }
 
     // Broadcast both arrays to the output shape
@@ -148,6 +150,308 @@ export class NDArray {
       // Array division with broadcasting
       return this._elementwiseOp(other, (a, b) => a / b, 'divide');
     }
+  }
+
+  // Comparison operations
+  /**
+   * Element-wise greater than comparison
+   * @param other - Value or array to compare with
+   * @returns Boolean array (represented as uint8: 1=true, 0=false)
+   */
+  greater(other: NDArray | number): NDArray {
+    if (typeof other === 'number') {
+      // Create a uint8 array for boolean result
+      const data = new Uint8Array(this.size);
+      const thisData = this.data;
+      for (let i = 0; i < this.size; i++) {
+        data[i] = thisData[i]! > other ? 1 : 0;
+      }
+      const stdlibArray = stdlib_ndarray.ndarray(
+        'uint8',
+        data,
+        Array.from(this.shape),
+        this._computeStrides(this.shape),
+        0,
+        'row-major'
+      );
+      return new NDArray(stdlibArray);
+    } else {
+      // Array comparison with broadcasting
+      return this._comparisonOp(other, (a, b) => a > b, 'greater');
+    }
+  }
+
+  /**
+   * Element-wise greater than or equal comparison
+   * @param other - Value or array to compare with
+   * @returns Boolean array (represented as uint8: 1=true, 0=false)
+   */
+  greater_equal(other: NDArray | number): NDArray {
+    if (typeof other === 'number') {
+      const data = new Uint8Array(this.size);
+      const thisData = this.data;
+      for (let i = 0; i < this.size; i++) {
+        data[i] = thisData[i]! >= other ? 1 : 0;
+      }
+      const stdlibArray = stdlib_ndarray.ndarray(
+        'uint8',
+        data,
+        Array.from(this.shape),
+        this._computeStrides(this.shape),
+        0,
+        'row-major'
+      );
+      return new NDArray(stdlibArray);
+    } else {
+      return this._comparisonOp(other, (a, b) => a >= b, 'greater_equal');
+    }
+  }
+
+  /**
+   * Element-wise less than comparison
+   * @param other - Value or array to compare with
+   * @returns Boolean array (represented as uint8: 1=true, 0=false)
+   */
+  less(other: NDArray | number): NDArray {
+    if (typeof other === 'number') {
+      const data = new Uint8Array(this.size);
+      const thisData = this.data;
+      for (let i = 0; i < this.size; i++) {
+        data[i] = thisData[i]! < other ? 1 : 0;
+      }
+      const stdlibArray = stdlib_ndarray.ndarray(
+        'uint8',
+        data,
+        Array.from(this.shape),
+        this._computeStrides(this.shape),
+        0,
+        'row-major'
+      );
+      return new NDArray(stdlibArray);
+    } else {
+      return this._comparisonOp(other, (a, b) => a < b, 'less');
+    }
+  }
+
+  /**
+   * Element-wise less than or equal comparison
+   * @param other - Value or array to compare with
+   * @returns Boolean array (represented as uint8: 1=true, 0=false)
+   */
+  less_equal(other: NDArray | number): NDArray {
+    if (typeof other === 'number') {
+      const data = new Uint8Array(this.size);
+      const thisData = this.data;
+      for (let i = 0; i < this.size; i++) {
+        data[i] = thisData[i]! <= other ? 1 : 0;
+      }
+      const stdlibArray = stdlib_ndarray.ndarray(
+        'uint8',
+        data,
+        Array.from(this.shape),
+        this._computeStrides(this.shape),
+        0,
+        'row-major'
+      );
+      return new NDArray(stdlibArray);
+    } else {
+      return this._comparisonOp(other, (a, b) => a <= b, 'less_equal');
+    }
+  }
+
+  /**
+   * Element-wise equality comparison
+   * @param other - Value or array to compare with
+   * @returns Boolean array (represented as uint8: 1=true, 0=false)
+   */
+  equal(other: NDArray | number): NDArray {
+    if (typeof other === 'number') {
+      const data = new Uint8Array(this.size);
+      const thisData = this.data;
+      for (let i = 0; i < this.size; i++) {
+        data[i] = thisData[i]! === other ? 1 : 0;
+      }
+      const stdlibArray = stdlib_ndarray.ndarray(
+        'uint8',
+        data,
+        Array.from(this.shape),
+        this._computeStrides(this.shape),
+        0,
+        'row-major'
+      );
+      return new NDArray(stdlibArray);
+    } else {
+      return this._comparisonOp(other, (a, b) => a === b, 'equal');
+    }
+  }
+
+  /**
+   * Element-wise not equal comparison
+   * @param other - Value or array to compare with
+   * @returns Boolean array (represented as uint8: 1=true, 0=false)
+   */
+  not_equal(other: NDArray | number): NDArray {
+    if (typeof other === 'number') {
+      const data = new Uint8Array(this.size);
+      const thisData = this.data;
+      for (let i = 0; i < this.size; i++) {
+        data[i] = thisData[i]! !== other ? 1 : 0;
+      }
+      const stdlibArray = stdlib_ndarray.ndarray(
+        'uint8',
+        data,
+        Array.from(this.shape),
+        this._computeStrides(this.shape),
+        0,
+        'row-major'
+      );
+      return new NDArray(stdlibArray);
+    } else {
+      return this._comparisonOp(other, (a, b) => a !== b, 'not_equal');
+    }
+  }
+
+  /**
+   * Element-wise comparison with tolerance
+   * Returns True where |a - b| <= (atol + rtol * |b|)
+   * @param other - Value or array to compare with
+   * @param rtol - Relative tolerance (default: 1e-5)
+   * @param atol - Absolute tolerance (default: 1e-8)
+   * @returns Boolean array (represented as uint8: 1=true, 0=false)
+   */
+  isclose(other: NDArray | number, rtol: number = 1e-5, atol: number = 1e-8): NDArray {
+    if (typeof other === 'number') {
+      // Scalar comparison
+      const data = new Uint8Array(this.size);
+      const thisData = this.data;
+      for (let i = 0; i < this.size; i++) {
+        const a = thisData[i]!;
+        const diff = Math.abs(a - other);
+        const threshold = atol + rtol * Math.abs(other);
+        data[i] = diff <= threshold ? 1 : 0;
+      }
+      const stdlibArray = stdlib_ndarray.ndarray(
+        'uint8',
+        data,
+        Array.from(this.shape),
+        this._computeStrides(this.shape),
+        0,
+        'row-major'
+      );
+      return new NDArray(stdlibArray);
+    } else {
+      // Array comparison with broadcasting
+      return this._iscloseOp(other, rtol, atol);
+    }
+  }
+
+  /**
+   * Returns True if all elements are close within tolerance
+   * Equivalent to all(isclose(a, b, rtol, atol))
+   * @param other - Value or array to compare with
+   * @param rtol - Relative tolerance (default: 1e-5)
+   * @param atol - Absolute tolerance (default: 1e-8)
+   * @returns True if all elements are close
+   */
+  allclose(other: NDArray | number, rtol: number = 1e-5, atol: number = 1e-8): boolean {
+    const iscloseResult = this.isclose(other, rtol, atol);
+    const data = iscloseResult.data;
+
+    // Check if all elements are 1 (true)
+    for (let i = 0; i < iscloseResult.size; i++) {
+      if (data[i] === 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Helper method for isclose operation with broadcasting
+   * @private
+   */
+  private _iscloseOp(other: NDArray, rtol: number, atol: number): NDArray {
+    // Check if shapes are broadcast-compatible
+    const outputShape = computeBroadcastShape([Array.from(this.shape), Array.from(other.shape)]);
+
+    if (outputShape === null) {
+      throw new Error(
+        broadcastErrorMessage([Array.from(this.shape), Array.from(other.shape)], 'isclose')
+      );
+    }
+
+    // Broadcast both arrays to the output shape
+    const [broadcastThis, broadcastOther] = broadcastStdlibArrays([this._data, other._data]);
+
+    // Create result array with uint8 dtype for boolean result
+    const size = outputShape.reduce((a, b) => a * b, 1);
+    const resultData = new Uint8Array(size);
+
+    // Perform element-wise comparison
+    for (let i = 0; i < size; i++) {
+      const a = broadcastThis.iget(i);
+      const b = broadcastOther.iget(i);
+      const diff = Math.abs(a - b);
+      const threshold = atol + rtol * Math.abs(b);
+      resultData[i] = diff <= threshold ? 1 : 0;
+    }
+
+    // Create NDArray with uint8 dtype
+    const stdlibArray = stdlib_ndarray.ndarray(
+      'uint8',
+      resultData,
+      outputShape,
+      this._computeStrides(outputShape),
+      0,
+      'row-major'
+    );
+
+    return new NDArray(stdlibArray);
+  }
+
+  /**
+   * Helper method for comparison operations with broadcasting
+   * @private
+   */
+  private _comparisonOp(
+    other: NDArray,
+    op: (a: number, b: number) => boolean,
+    opName: string
+  ): NDArray {
+    // Check if shapes are broadcast-compatible
+    const outputShape = computeBroadcastShape([Array.from(this.shape), Array.from(other.shape)]);
+
+    if (outputShape === null) {
+      throw new Error(
+        broadcastErrorMessage([Array.from(this.shape), Array.from(other.shape)], opName)
+      );
+    }
+
+    // Broadcast both arrays to the output shape
+    const [broadcastThis, broadcastOther] = broadcastStdlibArrays([this._data, other._data]);
+
+    // Create result array with uint8 dtype for boolean result
+    const size = outputShape.reduce((a, b) => a * b, 1);
+    const resultData = new Uint8Array(size);
+
+    // Perform element-wise comparison
+    for (let i = 0; i < size; i++) {
+      const a = broadcastThis.iget(i);
+      const b = broadcastOther.iget(i);
+      resultData[i] = op(a, b) ? 1 : 0;
+    }
+
+    // Create NDArray with uint8 dtype
+    const stdlibArray = stdlib_ndarray.ndarray(
+      'uint8',
+      resultData,
+      outputShape,
+      this._computeStrides(outputShape),
+      0,
+      'row-major'
+    );
+
+    return new NDArray(stdlibArray);
   }
 
   // Reductions

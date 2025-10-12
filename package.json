@@ -36,6 +36,7 @@
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:validation": "vitest run tests/validation",
+    "test:summary": "vitest run --reporter=tap | grep -E 'not ok|# tests'",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src tests --ext .ts",
