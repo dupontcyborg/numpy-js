@@ -67,6 +67,13 @@ const inRange = A.greater_equal(0);   // A >= 0
 const close = A.isclose(B);           // Element-wise closeness
 const allClose = A.allclose(B);       // True if all elements close
 
+// Reshape operations
+const reshaped = A.reshape(4, 1);     // Change shape
+const flat = A.flatten();             // Flatten to 1D
+const transposed = A.transpose();      // Transpose (reverse dims)
+const squeezed = A.squeeze();          // Remove size-1 dims
+const expanded = A.expand_dims(0);     // Add new axis
+
 // Random
 const random = np.random.randn([100, 100]);
 
@@ -194,7 +201,8 @@ import * as np from 'numpy-js/browser';
 - [x] Broadcasting ✅ **COMPLETE** (fully integrated into all arithmetic operations)
 - [x] String-based slicing ✅ **COMPLETE** (`arr.slice('0:5', ':')`, `row()`, `col()`, etc.)
 - [x] Reductions with axis support ✅ **COMPLETE** (`sum(axis, keepdims)`, `mean()`, `max()`, `min()`)
-- [x] Comparison operations ✅ **COMPLETE** (`greater()`, `less()`, `equal()`, etc. with broadcasting)
+- [x] Comparison operations ✅ **COMPLETE** (`greater()`, `less()`, `equal()`, `isclose()`, `allclose()` with broadcasting)
+- [x] Reshape operations ✅ **COMPLETE** (`reshape()`, `flatten()`, `ravel()`, `transpose()`, `squeeze()`, `expand_dims()`)
 - [ ] DType system (20+ types)
 
 ### Phase 2: Benchmarks & CI/CD

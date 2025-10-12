@@ -719,6 +719,242 @@ export class NDArray {
     return result;
   }
 
+  // Shape manipulation
+  /**
+   * Reshape array to a new shape
+   * Returns a new array with the specified shape
+   * @param shape - New shape (must be compatible with current size)
+   * @returns Reshaped array
+   */
+  reshape(...shape: number[]): NDArray {
+    // Flatten the input if it's a nested array (e.g., reshape([2, 3]) or reshape(2, 3))
+    const newShape = shape.length === 1 && Array.isArray(shape[0]) ? shape[0] : shape;
+
+    // Check if -1 is in the shape (infer dimension)
+    const negIndex = newShape.indexOf(-1);
+    let finalShape: number[];
+
+    if (negIndex !== -1) {
+      // Infer the dimension at negIndex
+      const knownSize = newShape.reduce((acc, dim, i) => (i === negIndex ? acc : acc * dim), 1);
+      const inferredDim = this.size / knownSize;
+
+      if (!Number.isInteger(inferredDim)) {
+        throw new Error(
+          `cannot reshape array of size ${this.size} into shape ${JSON.stringify(newShape)}`
+        );
+      }
+
+      finalShape = newShape.map((dim, i) => (i === negIndex ? inferredDim : dim));
+    } else {
+      finalShape = newShape;
+    }
+
+    // Validate that the new shape has the same total size
+    const newSize = finalShape.reduce((a, b) => a * b, 1);
+    if (newSize !== this.size) {
+      throw new Error(
+        `cannot reshape array of size ${this.size} into shape ${JSON.stringify(finalShape)}`
+      );
+    }
+
+    // Create new array with same data but different shape
+    const stdlibArray = stdlib_ndarray.ndarray(
+      this.dtype as StdlibNDArray,
+      this.data,
+      finalShape,
+      this._computeStrides(finalShape),
+      0,
+      'row-major'
+    );
+
+    return new NDArray(stdlibArray);
+  }
+
+  /**
+   * Return a flattened copy of the array
+   * @returns 1D array containing all elements
+   */
+  flatten(): NDArray {
+    // Create a 1D copy in row-major (C) order
+    const data = new Float64Array(this.size);
+    let idx = 0;
+
+    // Helper function to recursively iterate through all indices
+    const flattenRecursive = (indices: number[], dim: number) => {
+      if (dim === this.ndim) {
+        // At leaf, copy the value using stdlib's get method which respects strides
+        data[idx++] = this._data.get(...indices);
+        return;
+      }
+
+      // Iterate through current dimension
+      for (let i = 0; i < this.shape[dim]!; i++) {
+        indices[dim] = i;
+        flattenRecursive(indices, dim + 1);
+      }
+    };
+
+    flattenRecursive(new Array(this.ndim), 0);
+
+    const stdlibArray = stdlib_ndarray.ndarray('float64', data, [this.size], [1], 0, 'row-major');
+    return new NDArray(stdlibArray);
+  }
+
+  /**
+   * Return a flattened array (view when possible, otherwise copy)
+   * Currently always returns a copy like flatten()
+   * @returns 1D array containing all elements
+   */
+  ravel(): NDArray {
+    // For now, always return a copy like flatten()
+    // In the future, could return a view if the array is C-contiguous
+    return this.flatten();
+  }
+
+  /**
+   * Transpose array (permute dimensions)
+   * @param axes - Permutation of axes. If undefined, reverse the dimensions
+   * @returns Transposed array
+   */
+  transpose(axes?: number[]): NDArray {
+    let permutation: number[];
+
+    if (axes === undefined) {
+      // Default: reverse all dimensions
+      permutation = Array.from({ length: this.ndim }, (_, i) => this.ndim - 1 - i);
+    } else {
+      // Validate axes
+      if (axes.length !== this.ndim) {
+        throw new Error(`axes must have length ${this.ndim}, got ${axes.length}`);
+      }
+
+      // Check that axes is a valid permutation
+      const seen = new Set<number>();
+      for (const axis of axes) {
+        const normalizedAxis = axis < 0 ? this.ndim + axis : axis;
+        if (normalizedAxis < 0 || normalizedAxis >= this.ndim) {
+          throw new Error(`axis ${axis} is out of bounds for array of dimension ${this.ndim}`);
+        }
+        if (seen.has(normalizedAxis)) {
+          throw new Error(`repeated axis in transpose`);
+        }
+        seen.add(normalizedAxis);
+      }
+
+      permutation = axes.map((ax) => (ax < 0 ? this.ndim + ax : ax));
+    }
+
+    // Compute new shape and strides
+    const newShape = permutation.map((i) => this.shape[i]!);
+    const oldStrides = Array.from(this.strides);
+    const newStrides = permutation.map((i) => oldStrides[i]!);
+
+    // Create transposed view
+    const stdlibArray = stdlib_ndarray.ndarray(
+      this.dtype as StdlibNDArray,
+      this.data,
+      newShape,
+      newStrides,
+      stdlib_ndarray.offset(this._data),
+      'row-major'
+    );
+
+    return new NDArray(stdlibArray);
+  }
+
+  /**
+   * Remove axes of length 1
+   * @param axis - Axis to squeeze. If undefined, squeeze all axes of length 1
+   * @returns Array with specified dimensions removed
+   */
+  squeeze(axis?: number): NDArray {
+    if (axis === undefined) {
+      // Remove all axes with size 1
+      const newShape = Array.from(this.shape).filter((dim) => dim !== 1);
+
+      // If all dimensions were 1, result would be a scalar (0-d array)
+      // For now, keep at least one dimension since stdlib may not fully support 0-d arrays
+      if (newShape.length === 0) {
+        newShape.push(1);
+      }
+
+      const newStrides = this._computeStrides(newShape);
+      const stdlibArray = stdlib_ndarray.ndarray(
+        this.dtype as StdlibNDArray,
+        this.data,
+        newShape,
+        newStrides,
+        0,
+        'row-major'
+      );
+
+      return new NDArray(stdlibArray);
+    } else {
+      // Normalize axis
+      const normalizedAxis = axis < 0 ? this.ndim + axis : axis;
+
+      if (normalizedAxis < 0 || normalizedAxis >= this.ndim) {
+        throw new Error(`axis ${axis} is out of bounds for array of dimension ${this.ndim}`);
+      }
+
+      // Check that the axis has size 1
+      if (this.shape[normalizedAxis] !== 1) {
+        throw new Error(
+          `cannot select an axis which has size not equal to one (axis ${axis} has size ${this.shape[normalizedAxis]})`
+        );
+      }
+
+      // Remove the specified axis
+      const newShape = Array.from(this.shape).filter((_, i) => i !== normalizedAxis);
+
+      const newStrides = this._computeStrides(newShape);
+      const stdlibArray = stdlib_ndarray.ndarray(
+        this.dtype as StdlibNDArray,
+        this.data,
+        newShape,
+        newStrides,
+        0,
+        'row-major'
+      );
+
+      return new NDArray(stdlibArray);
+    }
+  }
+
+  /**
+   * Expand the shape by inserting a new axis of length 1
+   * @param axis - Position where new axis is placed
+   * @returns Array with additional dimension
+   */
+  expand_dims(axis: number): NDArray {
+    // Normalize axis (can be from -ndim-1 to ndim)
+    let normalizedAxis = axis;
+    if (normalizedAxis < 0) {
+      normalizedAxis = this.ndim + axis + 1;
+    }
+
+    if (normalizedAxis < 0 || normalizedAxis > this.ndim) {
+      throw new Error(`axis ${axis} is out of bounds for array of dimension ${this.ndim + 1}`);
+    }
+
+    // Insert 1 at the specified position
+    const newShape = [...Array.from(this.shape)];
+    newShape.splice(normalizedAxis, 0, 1);
+
+    const newStrides = this._computeStrides(newShape);
+    const stdlibArray = stdlib_ndarray.ndarray(
+      this.dtype as StdlibNDArray,
+      this.data,
+      newShape,
+      newStrides,
+      0,
+      'row-major'
+    );
+
+    return new NDArray(stdlibArray);
+  }
+
   // Matrix multiplication
   matmul(other: NDArray): NDArray {
     if (this.ndim !== 2 || other.ndim !== 2) {

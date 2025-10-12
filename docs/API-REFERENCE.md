@@ -36,14 +36,14 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 ## Array Manipulation
 
 ### Shape
-- [ ] `reshape(a, shape)` - New shape
-- [ ] `ravel(a)` - Flatten to 1D
-- [ ] `flatten(a)` - Flatten (copy)
-- [ ] `squeeze(a, axis?)` - Remove single-dimensional entries
-- [ ] `expand_dims(a, axis)` - Add dimension
+- [x] `reshape(a, shape)` - New shape _(implemented as NDArray.reshape() method)_
+- [x] `ravel(a)` - Flatten to 1D _(implemented as NDArray.ravel() method)_
+- [x] `flatten(a)` - Flatten (copy) _(implemented as NDArray.flatten() method)_
+- [x] `squeeze(a, axis?)` - Remove single-dimensional entries _(implemented as NDArray.squeeze() method)_
+- [x] `expand_dims(a, axis)` - Add dimension _(implemented as NDArray.expand_dims() method)_
 
 ### Transpose
-- [ ] `transpose(a, axes?)` - Permute dimensions
+- [x] `transpose(a, axes?)` - Permute dimensions _(implemented as NDArray.transpose() method)_
 - [ ] `swapaxes(a, axis1, axis2)` - Swap two axes
 - [ ] `moveaxis(a, source, destination)` - Move axes
 
@@ -348,9 +348,9 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 ## Progress Summary
 
 **Total Functions**: ~350 core functions
-**Implemented**: 21 functions (6%)
+**Implemented**: 27 functions (8%)
 
-### Completed (21)
+### Completed (27)
 
 **Array Creation** (6):
 - ✅ zeros, ones, array, arange, linspace, eye
@@ -365,14 +365,17 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 - ✅ greater, greater_equal, less, less_equal, equal, not_equal _(as NDArray methods)_
 - ✅ isclose, allclose _(as NDArray methods with rtol/atol parameters)_
 
+**Reshape Operations** (6):
+- ✅ reshape, flatten, ravel, transpose, squeeze, expand_dims _(as NDArray methods)_
+
 **Linear Algebra** (1):
 - ✅ matmul _(as NDArray method)_
 
 ### Testing
 
-- **265 tests passing**
-  - 134 unit tests (creation, arithmetic, comparisons, reductions, slicing)
-  - 84 NumPy validation tests (cross-checked against Python NumPy 2.3.3)
+- **322 tests passing**
+  - 171 unit tests (creation, arithmetic, comparisons, reductions, reshape, slicing)
+  - 104 NumPy validation tests (cross-checked against Python NumPy 2.3.3)
   - 47 additional tests (API comparison, edge cases, broadcasting)
 
 ### Priority Tiers
@@ -389,7 +392,7 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 - More math: ⬜ sin, cos, exp, log
 - Full reductions: ⬜ std, var, median
 - Comparison operators: ✅ greater, less, equal, isclose, allclose (complete with broadcasting)
-- Reshaping operations: ⬜ TODO
+- Reshaping operations: ✅ reshape, flatten, ravel, transpose, squeeze, expand_dims (complete)
 
 **Tier 3 - Extended** (~200 functions):
 - Random number generation: ⬜ TODO
