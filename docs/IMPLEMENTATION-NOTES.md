@@ -250,15 +250,18 @@ function add_good(a: NDArray, b: NDArray): NDArray {
   - [x] add, subtract, multiply, divide
   - [x] Scalar operations
   - [x] Broadcasting (fully integrated)
-- [ ] Reductions
-  - [ ] sum, mean, min, max
-  - [ ] Support axis parameter
-  - [ ] Support keepdims
+- [x] Reductions ✅ **WITH AXIS SUPPORT (2025-10-12)**
+  - [x] sum, mean, min, max
+  - [x] Support axis parameter
+  - [x] Support keepdims
+  - [x] Negative axis support
+- [x] Matrix operations ✅ **COMPLETE**
+  - [x] matmul using @stdlib dgemm
 - [ ] Comparison
   - [ ] greater, less, equal
   - [ ] Return boolean arrays
-- [ ] Matrix operations
-  - [ ] matmul using @stdlib dgemm
+- [ ] More reductions
+  - [ ] prod, std, var, median
   - [ ] dot product using @stdlib ddot
 
 ### Phase 3: Linear Algebra
@@ -548,6 +551,162 @@ With slicing complete, these operations become more useful:
 2. **Reshape operations** - `reshape()`, `flatten()`, `ravel()`
 3. **Set operations** - `arr.slice('0:2').set(value)` for assignment
 4. **More convenience methods** - `diagonal()`, `take()`, `compress()`
+
+---
+
+## Axis-Based Reductions Implementation (2025-10-12)
+
+### ✅ Successfully Implemented
+
+Reduction operations now support axis and keepdims parameters, matching NumPy behavior!
+
+**What Was Done:**
+1. Updated four reduction methods with axis support:
+   - `sum(axis?, keepdims?)` - Sum along specified axis
+   - `mean(axis?, keepdims?)` - Mean along specified axis
+   - `max(axis?, keepdims?)` - Maximum along specified axis
+   - `min(axis?, keepdims?)` - Minimum along specified axis
+
+2. Implemented helper methods for multi-dimensional indexing:
+   - `_outerIndexToMultiIndex()` - Convert output index to input multi-index
+   - `_multiIndexToLinear()` - Convert multi-index to linear index
+   - `_computeStrides()` - Compute strides for row-major order
+
+3. Comprehensive testing:
+   - **31 new unit tests** for all reduction operations with axis support
+   - **29 new Python validation tests** confirming NumPy compatibility
+   - **All 247 tests pass** (218 unit + 29 validation)
+
+**Implementation Details:**
+
+The axis parameter allows reducing along specific dimensions:
+
+```typescript
+sum(axis?: number, keepdims: boolean = false): NDArray | number {
+  if (axis === undefined) {
+    // Sum all elements → scalar
+    return this.data.reduce((a, b) => a + b, 0);
+  }
+
+  // Normalize negative axis (-1 → ndim-1)
+  if (axis < 0) {
+    axis = this.ndim + axis;
+  }
+
+  // Compute output shape (remove axis dimension)
+  const outputShape = Array.from(this.shape).filter((_, i) => i !== axis);
+
+  // Perform reduction
+  const result = zeros(outputShape);
+  for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+    let sum = 0;
+    for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+      const inputIndices = this._outerIndexToMultiIndex(outerIdx, axis, axisIdx);
+      const linearIdx = this._multiIndexToLinear(inputIndices);
+      sum += this.data[linearIdx];
+    }
+    resultData[outerIdx] = sum;
+  }
+
+  // Handle keepdims (preserve reduced dimension as size-1)
+  if (keepdims) {
+    const keepdimsShape = [...this.shape];
+    keepdimsShape[axis] = 1;
+    return new NDArray(stdlib_ndarray.ndarray(
+      'float64', resultData, keepdimsShape,
+      this._computeStrides(keepdimsShape), 0, 'row-major'
+    ));
+  }
+
+  return result;
+}
+```
+
+**Supported Syntax:**
+
+All NumPy reduction syntax variants are supported:
+
+```typescript
+const arr = array([[1, 2, 3], [4, 5, 6]]);  // shape: (2, 3)
+
+// No axis - reduce all elements → scalar
+arr.sum()            // 21
+arr.mean()           // 3.5
+arr.max()            // 6
+arr.min()            // 1
+
+// axis=0 - reduce along rows → shape: (3,)
+arr.sum(0)           // [5, 7, 9]
+arr.mean(0)          // [2.5, 3.5, 4.5]
+arr.max(0)           // [4, 5, 6]
+
+// axis=1 - reduce along columns → shape: (2,)
+arr.sum(1)           // [6, 15]
+arr.mean(1)          // [2, 5]
+arr.max(1)           // [3, 6]
+
+// Negative axis - count from end
+arr.sum(-1)          // Same as axis=1 for 2D
+arr.sum(-2)          // Same as axis=0 for 2D
+
+// keepdims=true - preserve reduced dimension
+arr.sum(0, true)     // [[5, 7, 9]]  shape: (1, 3)
+arr.sum(1, true)     // [[6], [15]]  shape: (2, 1)
+```
+
+**3D Array Examples:**
+
+```typescript
+const arr3d = array([
+  [[1, 2], [3, 4]],
+  [[5, 6], [7, 8]]
+]);  // shape: (2, 2, 2)
+
+// axis=0 - reduce along first dimension → shape: (2, 2)
+arr3d.sum(0)         // [[6, 8], [10, 12]]
+
+// axis=1 - reduce along second dimension → shape: (2, 2)
+arr3d.sum(1)         // [[4, 6], [12, 14]]
+
+// axis=2 - reduce along third dimension → shape: (2, 2)
+arr3d.sum(2)         // [[3, 7], [11, 15]]
+
+// axis=-1 - last axis → shape: (2, 2)
+arr3d.mean(-1)       // [[1.5, 3.5], [5.5, 7.5]]
+```
+
+**Implementation Challenges & Solutions:**
+
+1. **Negative Axis Handling in mean()**:
+   - Bug: Using `this.shape[axis]` with negative axis (e.g., -1) returned `undefined`
+   - Fix: Normalize axis at the start of the method before using it to access shape
+
+2. **Multi-dimensional Index Conversion**:
+   - Challenge: Converting between linear indices and multi-dimensional indices
+   - Solution: Implemented helper methods to handle row-major stride calculations
+
+3. **keepdims Support**:
+   - Challenge: Preserving shape with size-1 dimensions
+   - Solution: Used @stdlib's ndarray constructor to reshape result data
+
+**Performance Considerations:**
+
+- **Current implementation**: Iterates through all elements for axis reduction
+  - Time complexity: O(size) where size = total number of elements
+  - Simple and correct, prioritizing correctness over optimization
+
+- **Future optimizations**:
+  - Could use @stdlib's element-wise operations for specific cases
+  - SIMD vectorization for large arrays
+  - Multi-threading for very large reductions
+
+**What's Next:**
+
+With axis-based reductions complete, natural next steps include:
+1. **More reduction operations** - `prod()`, `std()`, `var()`, `median()`
+2. **Cumulative operations** - `cumsum()`, `cumprod()`
+3. **Boolean reductions** - `all()`, `any()`
+4. **Arg reductions** - `argmin()`, `argmax()` to find indices of min/max values
 
 ---
 

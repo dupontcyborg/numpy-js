@@ -54,8 +54,9 @@ const col = np.array([[1], [2], [3]]);     // (3, 1)
 const result = col.multiply(row);           // (3, 4) via broadcasting!
 
 // Reductions
-const total = A.sum();
-const columnMeans = A.mean({ axis: 0 });
+const total = A.sum();                // Sum all elements
+const columnMeans = A.mean(0);        // Mean along axis 0
+const rowMaxs = A.max(1, true);       // Max along axis 1, keep dims
 
 // Random
 const random = np.random.randn([100, 100]);
@@ -183,8 +184,8 @@ import * as np from 'numpy-js/browser';
 - [x] Basic arithmetic: `add()`, `subtract()`, `multiply()`, `divide()`
 - [x] Broadcasting ✅ **COMPLETE** (fully integrated into all arithmetic operations)
 - [x] String-based slicing ✅ **COMPLETE** (`arr.slice('0:5', ':')`, `row()`, `col()`, etc.)
+- [x] Reductions with axis support ✅ **COMPLETE** (`sum(axis, keepdims)`, `mean()`, `max()`, `min()`)
 - [ ] DType system (20+ types)
-- [ ] Reductions with axis support
 
 ### Phase 2: Benchmarks & CI/CD
 - [ ] CI/CD (GitHub Actions)

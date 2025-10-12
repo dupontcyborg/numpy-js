@@ -151,7 +151,13 @@ export class NDArray {
   }
 
   // Reductions
-  sum(axis?: number): NDArray | number {
+  /**
+   * Sum array elements over a given axis
+   * @param axis - Axis along which to sum. If undefined, sum all elements
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Sum of array elements, or array of sums along axis
+   */
+  sum(axis?: number, keepdims: boolean = false): NDArray | number {
     if (axis === undefined) {
       // Sum all elements
       const data = this.data;
@@ -160,20 +166,112 @@ export class NDArray {
         total += data[i]!;
       }
       return total;
-    } else {
-      throw new Error('sum with axis not yet implemented');
     }
+
+    // Validate axis
+    if (axis < 0) {
+      axis = this.ndim + axis;
+    }
+    if (axis < 0 || axis >= this.ndim) {
+      throw new Error(`axis ${axis} is out of bounds for array of dimension ${this.ndim}`);
+    }
+
+    // Compute output shape
+    const outputShape = Array.from(this.shape).filter((_, i) => i !== axis);
+    if (outputShape.length === 0) {
+      // Result is scalar
+      const data = this.data;
+      let total = 0;
+      for (let i = 0; i < this.size; i++) {
+        total += data[i]!;
+      }
+      return total;
+    }
+
+    // Create result array
+    const result = zeros(outputShape);
+    const resultData = result.data;
+
+    // Perform reduction along axis
+    const axisSize = this.shape[axis]!;
+    const outerSize = outputShape.reduce((a, b) => a * b, 1);
+
+    for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+      let sum = 0;
+      for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+        // Convert output index to input multi-index
+        const inputIndices = this._outerIndexToMultiIndex(outerIdx, axis, axisIdx);
+        const linearIdx = this._multiIndexToLinear(inputIndices);
+        sum += this.data[linearIdx]!;
+      }
+      resultData[outerIdx] = sum;
+    }
+
+    // Handle keepdims
+    if (keepdims) {
+      const keepdimsShape = [...this.shape];
+      keepdimsShape[axis] = 1;
+      // Reshape result to have size-1 dimension at axis position
+      const reshapedData = resultData;
+      const stdlibArray = stdlib_ndarray.ndarray(
+        'float64',
+        reshapedData,
+        keepdimsShape,
+        this._computeStrides(keepdimsShape),
+        0,
+        'row-major'
+      );
+      return new NDArray(stdlibArray);
+    }
+
+    return result;
   }
 
-  mean(axis?: number): NDArray | number {
+  /**
+   * Compute the arithmetic mean along the specified axis
+   * @param axis - Axis along which to compute mean. If undefined, compute mean of all elements
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Mean of array elements, or array of means along axis
+   */
+  mean(axis?: number, keepdims: boolean = false): NDArray | number {
     if (axis === undefined) {
       return (this.sum() as number) / this.size;
-    } else {
-      throw new Error('mean with axis not yet implemented');
     }
+
+    // Normalize negative axis
+    let normalizedAxis = axis;
+    if (normalizedAxis < 0) {
+      normalizedAxis = this.ndim + normalizedAxis;
+    }
+    if (normalizedAxis < 0 || normalizedAxis >= this.ndim) {
+      throw new Error(`axis ${axis} is out of bounds for array of dimension ${this.ndim}`);
+    }
+
+    const sumResult = this.sum(axis, keepdims);
+    if (typeof sumResult === 'number') {
+      return sumResult / this.shape[normalizedAxis]!;
+    }
+
+    // Divide by the size of the reduced axis
+    const divisor = this.shape[normalizedAxis]!;
+    const result = zeros(sumResult.shape as number[]);
+    const resultData = result.data;
+    const sumData = sumResult.data;
+
+    for (let i = 0; i < resultData.length; i++) {
+      resultData[i] = sumData[i]! / divisor;
+    }
+
+    return result;
   }
 
-  max(axis?: number): NDArray | number {
+  /**
+   * Return the maximum along a given axis
+   * @param axis - Axis along which to compute maximum. If undefined, compute maximum of all elements
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Maximum of array elements, or array of maximums along axis
+   */
+  max(axis?: number, keepdims: boolean = false): NDArray | number {
     if (axis === undefined) {
       const data = this.data;
       if (this.size === 0) {
@@ -186,12 +284,69 @@ export class NDArray {
         }
       }
       return maxVal;
-    } else {
-      throw new Error('max with axis not yet implemented');
     }
+
+    // Validate axis
+    if (axis < 0) {
+      axis = this.ndim + axis;
+    }
+    if (axis < 0 || axis >= this.ndim) {
+      throw new Error(`axis ${axis} is out of bounds for array of dimension ${this.ndim}`);
+    }
+
+    // Compute output shape
+    const outputShape = Array.from(this.shape).filter((_, i) => i !== axis);
+    if (outputShape.length === 0) {
+      // Result is scalar
+      return this.max();
+    }
+
+    // Create result array
+    const result = zeros(outputShape);
+    const resultData = result.data;
+
+    // Perform reduction along axis
+    const axisSize = this.shape[axis]!;
+    const outerSize = outputShape.reduce((a, b) => a * b, 1);
+
+    for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+      let maxVal = -Infinity;
+      for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+        const inputIndices = this._outerIndexToMultiIndex(outerIdx, axis, axisIdx);
+        const linearIdx = this._multiIndexToLinear(inputIndices);
+        const val = this.data[linearIdx]!;
+        if (val > maxVal) {
+          maxVal = val;
+        }
+      }
+      resultData[outerIdx] = maxVal;
+    }
+
+    // Handle keepdims
+    if (keepdims) {
+      const keepdimsShape = [...this.shape];
+      keepdimsShape[axis] = 1;
+      const stdlibArray = stdlib_ndarray.ndarray(
+        'float64',
+        resultData,
+        keepdimsShape,
+        this._computeStrides(keepdimsShape),
+        0,
+        'row-major'
+      );
+      return new NDArray(stdlibArray);
+    }
+
+    return result;
   }
 
-  min(axis?: number): NDArray | number {
+  /**
+   * Return the minimum along a given axis
+   * @param axis - Axis along which to compute minimum. If undefined, compute minimum of all elements
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Minimum of array elements, or array of minimums along axis
+   */
+  min(axis?: number, keepdims: boolean = false): NDArray | number {
     if (axis === undefined) {
       const data = this.data;
       if (this.size === 0) {
@@ -204,9 +359,60 @@ export class NDArray {
         }
       }
       return minVal;
-    } else {
-      throw new Error('min with axis not yet implemented');
     }
+
+    // Validate axis
+    if (axis < 0) {
+      axis = this.ndim + axis;
+    }
+    if (axis < 0 || axis >= this.ndim) {
+      throw new Error(`axis ${axis} is out of bounds for array of dimension ${this.ndim}`);
+    }
+
+    // Compute output shape
+    const outputShape = Array.from(this.shape).filter((_, i) => i !== axis);
+    if (outputShape.length === 0) {
+      // Result is scalar
+      return this.min();
+    }
+
+    // Create result array
+    const result = zeros(outputShape);
+    const resultData = result.data;
+
+    // Perform reduction along axis
+    const axisSize = this.shape[axis]!;
+    const outerSize = outputShape.reduce((a, b) => a * b, 1);
+
+    for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+      let minVal = Infinity;
+      for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+        const inputIndices = this._outerIndexToMultiIndex(outerIdx, axis, axisIdx);
+        const linearIdx = this._multiIndexToLinear(inputIndices);
+        const val = this.data[linearIdx]!;
+        if (val < minVal) {
+          minVal = val;
+        }
+      }
+      resultData[outerIdx] = minVal;
+    }
+
+    // Handle keepdims
+    if (keepdims) {
+      const keepdimsShape = [...this.shape];
+      keepdimsShape[axis] = 1;
+      const stdlibArray = stdlib_ndarray.ndarray(
+        'float64',
+        resultData,
+        keepdimsShape,
+        this._computeStrides(keepdimsShape),
+        0,
+        'row-major'
+      );
+      return new NDArray(stdlibArray);
+    }
+
+    return result;
   }
 
   // Matrix multiplication
@@ -315,6 +521,7 @@ export class NDArray {
           if (stop === -1) stop = null;
         }
 
+        // @ts-expect-error - stdlib Slice type definitions don't match actual behavior
         return new Slice(start, stop, spec.step);
       }
     });
@@ -390,6 +597,54 @@ export class NDArray {
     // Use @stdlib's built-in conversion
     const arr = stdlib_ndarray.ndarray2array(this._data);
     return arr;
+  }
+
+  /**
+   * Helper: Convert outer index and axis index to full multi-index
+   * @private
+   */
+  private _outerIndexToMultiIndex(outerIdx: number, axis: number, axisIdx: number): number[] {
+    const indices = new Array(this.ndim);
+    const outputShape = this.shape.filter((_, i) => i !== axis);
+
+    // Convert outerIdx to multi-index in the output shape
+    let remaining = outerIdx;
+    for (let i = outputShape.length - 1; i >= 0; i--) {
+      indices[i >= axis ? i + 1 : i] = remaining % outputShape[i]!;
+      remaining = Math.floor(remaining / outputShape[i]!);
+    }
+
+    // Insert the axis index
+    indices[axis] = axisIdx;
+    return indices;
+  }
+
+  /**
+   * Helper: Convert multi-index to linear index
+   * @private
+   */
+  private _multiIndexToLinear(indices: number[]): number {
+    let linearIdx = 0;
+    let stride = 1;
+    for (let i = this.ndim - 1; i >= 0; i--) {
+      linearIdx += indices[i]! * stride;
+      stride *= this.shape[i]!;
+    }
+    return linearIdx;
+  }
+
+  /**
+   * Helper: Compute strides for a given shape (row-major order)
+   * @private
+   */
+  private _computeStrides(shape: readonly number[]): number[] {
+    const strides = new Array(shape.length);
+    let stride = 1;
+    for (let i = shape.length - 1; i >= 0; i--) {
+      strides[i] = stride;
+      stride *= shape[i]!;
+    }
+    return strides;
   }
 }
 
