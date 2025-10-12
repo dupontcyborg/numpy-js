@@ -175,3 +175,404 @@ describe('NDArray Properties', () => {
     expect(str).toContain('dtype');
   });
 });
+
+describe('NDArray Slicing', () => {
+  describe('1D slicing', () => {
+    it('slices with start:stop', () => {
+      const arr = array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      const result = arr.slice('2:7');
+      expect(result.shape).toEqual([5]);
+      expect(result.toArray()).toEqual([2, 3, 4, 5, 6]);
+    });
+
+    it('slices with ":" (full slice)', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const result = arr.slice(':');
+      expect(result.shape).toEqual([5]);
+      expect(result.toArray()).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('slices with no arguments (returns full array)', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const result = arr.slice();
+      expect(result.shape).toEqual([5]);
+      expect(result.toArray()).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('slices with "5:" (start to end)', () => {
+      const arr = array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      const result = arr.slice('5:');
+      expect(result.shape).toEqual([5]);
+      expect(result.toArray()).toEqual([5, 6, 7, 8, 9]);
+    });
+
+    it('slices with ":5" (beginning to stop)', () => {
+      const arr = array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      const result = arr.slice(':5');
+      expect(result.shape).toEqual([5]);
+      expect(result.toArray()).toEqual([0, 1, 2, 3, 4]);
+    });
+
+    it('slices with negative start', () => {
+      const arr = array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      const result = arr.slice('-3:');
+      expect(result.shape).toEqual([3]);
+      expect(result.toArray()).toEqual([7, 8, 9]);
+    });
+
+    it('slices with negative stop', () => {
+      const arr = array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      const result = arr.slice(':-3');
+      expect(result.shape).toEqual([7]);
+      expect(result.toArray()).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    });
+
+    it('slices with negative start and stop', () => {
+      const arr = array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      const result = arr.slice('-7:-2');
+      expect(result.shape).toEqual([5]);
+      expect(result.toArray()).toEqual([3, 4, 5, 6, 7]);
+    });
+
+    it('slices single index', () => {
+      const arr = array([0, 1, 2, 3, 4, 5]);
+      const result = arr.slice('2');
+      expect(result.shape).toEqual([]);
+      expect(result.toArray()).toEqual(2);
+    });
+
+    it('slices with negative index', () => {
+      const arr = array([0, 1, 2, 3, 4, 5]);
+      const result = arr.slice('-1');
+      expect(result.shape).toEqual([]);
+      expect(result.toArray()).toEqual(5);
+    });
+
+    it('slices with step', () => {
+      const arr = array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      const result = arr.slice('::2');
+      expect(result.shape).toEqual([5]);
+      expect(result.toArray()).toEqual([0, 2, 4, 6, 8]);
+    });
+
+    it('slices with start:stop:step', () => {
+      const arr = array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      const result = arr.slice('1:8:2');
+      expect(result.shape).toEqual([4]);
+      expect(result.toArray()).toEqual([1, 3, 5, 7]);
+    });
+
+    it('slices with negative step (reverse)', () => {
+      const arr = array([0, 1, 2, 3, 4]);
+      const result = arr.slice('::-1');
+      expect(result.shape).toEqual([5]);
+      expect(result.toArray()).toEqual([4, 3, 2, 1, 0]);
+    });
+
+    it('slices with negative step and bounds', () => {
+      const arr = array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+      const result = arr.slice('7:2:-1');
+      expect(result.shape).toEqual([5]);
+      expect(result.toArray()).toEqual([7, 6, 5, 4, 3]);
+    });
+  });
+
+  describe('2D slicing', () => {
+    it('slices single row with index', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const result = arr.slice('0', ':');
+      expect(result.shape).toEqual([3]);
+      expect(result.toArray()).toEqual([1, 2, 3]);
+    });
+
+    it('slices single column with index', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const result = arr.slice(':', '1');
+      expect(result.shape).toEqual([3]);
+      expect(result.toArray()).toEqual([2, 5, 8]);
+    });
+
+    it('slices rows range', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const result = arr.slice('0:2', ':');
+      expect(result.shape).toEqual([2, 3]);
+      expect(result.toArray()).toEqual([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+    });
+
+    it('slices columns range', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const result = arr.slice(':', '1:3');
+      expect(result.shape).toEqual([3, 2]);
+      expect(result.toArray()).toEqual([
+        [2, 3],
+        [5, 6],
+        [8, 9],
+      ]);
+    });
+
+    it('slices submatrix', () => {
+      const arr = array([
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+        [9, 10, 11, 12],
+        [13, 14, 15, 16],
+      ]);
+      const result = arr.slice('1:3', '1:3');
+      expect(result.shape).toEqual([2, 2]);
+      expect(result.toArray()).toEqual([
+        [6, 7],
+        [10, 11],
+      ]);
+    });
+
+    it('slices with negative indices', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const result = arr.slice('-2:', '-2:');
+      expect(result.shape).toEqual([2, 2]);
+      // -2: means from index 1 to end (indices 1, 2)
+      // So we get rows [1, 2] and cols [1, 2]
+      expect(result.toArray()).toEqual([
+        [5, 6],
+        [8, 9],
+      ]);
+    });
+
+    it('slices bottom-right corner', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const result = arr.slice('-1', '-1');
+      expect(result.shape).toEqual([]);
+      expect(result.toArray()).toEqual(9);
+    });
+
+    it('slices with step on rows', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+        [10, 11, 12],
+      ]);
+      const result = arr.slice('::2', ':');
+      expect(result.shape).toEqual([2, 3]);
+      expect(result.toArray()).toEqual([
+        [1, 2, 3],
+        [7, 8, 9],
+      ]);
+    });
+
+    it('slices with step on columns', () => {
+      const arr = array([
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+      ]);
+      const result = arr.slice(':', '::2');
+      expect(result.shape).toEqual([2, 2]);
+      expect(result.toArray()).toEqual([
+        [1, 3],
+        [5, 7],
+      ]);
+    });
+
+    it('slices with step on both dimensions', () => {
+      const arr = array([
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+        [9, 10, 11, 12],
+        [13, 14, 15, 16],
+      ]);
+      const result = arr.slice('::2', '::2');
+      expect(result.shape).toEqual([2, 2]);
+      expect(result.toArray()).toEqual([
+        [1, 3],
+        [9, 11],
+      ]);
+    });
+  });
+
+  describe('convenience methods', () => {
+    describe('row()', () => {
+      it('gets single row', () => {
+        const arr = array([
+          [1, 2, 3],
+          [4, 5, 6],
+          [7, 8, 9],
+        ]);
+        const result = arr.row(1);
+        expect(result.shape).toEqual([3]);
+        expect(result.toArray()).toEqual([4, 5, 6]);
+      });
+
+      it('gets first row', () => {
+        const arr = array([
+          [1, 2],
+          [3, 4],
+        ]);
+        const result = arr.row(0);
+        expect(result.toArray()).toEqual([1, 2]);
+      });
+
+      it('gets last row with negative index', () => {
+        const arr = array([
+          [1, 2],
+          [3, 4],
+          [5, 6],
+        ]);
+        const result = arr.row(-1);
+        expect(result.toArray()).toEqual([5, 6]);
+      });
+
+      it('throws on 1D array', () => {
+        const arr = array([1, 2, 3]);
+        expect(() => arr.row(0)).toThrow('requires at least 2 dimensions');
+      });
+    });
+
+    describe('col()', () => {
+      it('gets single column', () => {
+        const arr = array([
+          [1, 2, 3],
+          [4, 5, 6],
+          [7, 8, 9],
+        ]);
+        const result = arr.col(1);
+        expect(result.shape).toEqual([3]);
+        expect(result.toArray()).toEqual([2, 5, 8]);
+      });
+
+      it('gets first column', () => {
+        const arr = array([
+          [1, 2],
+          [3, 4],
+        ]);
+        const result = arr.col(0);
+        expect(result.toArray()).toEqual([1, 3]);
+      });
+
+      it('gets last column with negative index', () => {
+        const arr = array([
+          [1, 2, 3],
+          [4, 5, 6],
+        ]);
+        const result = arr.col(-1);
+        expect(result.toArray()).toEqual([3, 6]);
+      });
+
+      it('throws on 1D array', () => {
+        const arr = array([1, 2, 3]);
+        expect(() => arr.col(0)).toThrow('requires at least 2 dimensions');
+      });
+    });
+
+    describe('rows()', () => {
+      it('gets range of rows', () => {
+        const arr = array([
+          [1, 2, 3],
+          [4, 5, 6],
+          [7, 8, 9],
+          [10, 11, 12],
+        ]);
+        const result = arr.rows(1, 3);
+        expect(result.shape).toEqual([2, 3]);
+        expect(result.toArray()).toEqual([
+          [4, 5, 6],
+          [7, 8, 9],
+        ]);
+      });
+
+      it('gets first two rows', () => {
+        const arr = array([
+          [1, 2],
+          [3, 4],
+          [5, 6],
+        ]);
+        const result = arr.rows(0, 2);
+        expect(result.toArray()).toEqual([
+          [1, 2],
+          [3, 4],
+        ]);
+      });
+
+      it('throws on 1D array', () => {
+        const arr = array([1, 2, 3]);
+        expect(() => arr.rows(0, 2)).toThrow('requires at least 2 dimensions');
+      });
+    });
+
+    describe('cols()', () => {
+      it('gets range of columns', () => {
+        const arr = array([
+          [1, 2, 3, 4],
+          [5, 6, 7, 8],
+          [9, 10, 11, 12],
+        ]);
+        const result = arr.cols(1, 3);
+        expect(result.shape).toEqual([3, 2]);
+        expect(result.toArray()).toEqual([
+          [2, 3],
+          [6, 7],
+          [10, 11],
+        ]);
+      });
+
+      it('gets last two columns', () => {
+        const arr = array([
+          [1, 2, 3],
+          [4, 5, 6],
+        ]);
+        const result = arr.cols(1, 3);
+        expect(result.toArray()).toEqual([
+          [2, 3],
+          [5, 6],
+        ]);
+      });
+
+      it('throws on 1D array', () => {
+        const arr = array([1, 2, 3]);
+        expect(() => arr.cols(0, 2)).toThrow('requires at least 2 dimensions');
+      });
+    });
+  });
+
+  describe('error cases', () => {
+    it('throws on too many indices', () => {
+      const arr = array([1, 2, 3]);
+      expect(() => arr.slice('0', '0')).toThrow(/Too many indices/);
+    });
+
+    it('throws on out of bounds index', () => {
+      const arr = array([1, 2, 3]);
+      expect(() => arr.slice('10')).toThrow(/out of bounds/);
+    });
+
+    it('throws on negative out of bounds index', () => {
+      const arr = array([1, 2, 3]);
+      expect(() => arr.slice('-10')).toThrow(/out of bounds/);
+    });
+  });
+});

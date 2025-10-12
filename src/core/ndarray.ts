@@ -6,11 +6,14 @@
 
 import stdlib_ndarray from '@stdlib/ndarray';
 import dgemm from '@stdlib/blas/base/dgemm';
+import stdlib_slice from '@stdlib/ndarray/slice';
+import Slice from '@stdlib/slice/ctor';
 import {
   computeBroadcastShape,
   broadcastStdlibArrays,
   broadcastErrorMessage,
 } from './broadcasting';
+import { parseSlice, normalizeSlice } from './slicing';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type StdlibNDArray = any; // @stdlib types not available yet
@@ -243,6 +246,134 @@ export class NDArray {
     return result;
   }
 
+  // Slicing
+  /**
+   * Slice the array using NumPy-style string syntax
+   *
+   * @param sliceStrs - Slice specifications, one per dimension
+   * @returns Sliced view of the array
+   *
+   * @example
+   * ```typescript
+   * const arr = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+   * const row = arr.slice('0', ':');     // First row: [1, 2, 3]
+   * const col = arr.slice(':', '1');     // Second column: [2, 5, 8]
+   * const sub = arr.slice('0:2', '1:3'); // Top-right 2x2: [[2, 3], [5, 6]]
+   * ```
+   */
+  slice(...sliceStrs: string[]): NDArray {
+    if (sliceStrs.length === 0) {
+      // No slices provided, return full array
+      return this;
+    }
+
+    if (sliceStrs.length > this.ndim) {
+      throw new Error(
+        `Too many indices for array: array is ${this.ndim}-dimensional, but ${sliceStrs.length} were indexed`
+      );
+    }
+
+    // Parse slice strings and normalize them
+    const sliceSpecs = sliceStrs.map((str, i) => {
+      const spec = parseSlice(str);
+      const normalized = normalizeSlice(spec, this.shape[i]!);
+      return normalized;
+    });
+
+    // Pad with full slices for remaining dimensions
+    while (sliceSpecs.length < this.ndim) {
+      sliceSpecs.push({
+        start: 0,
+        stop: this.shape[sliceSpecs.length]!,
+        step: 1,
+        isIndex: false,
+      });
+    }
+
+    // Convert to @stdlib Slice objects
+    const stdlibSlices = sliceSpecs.map((spec, i) => {
+      if (spec.isIndex) {
+        // Single index - use integer directly
+        return spec.start;
+      } else {
+        // Slice - create Slice object
+        // @stdlib Slice constructor: new Slice(start, stop, step)
+        // null means use default (beginning/end)
+
+        // For positive step: null start = 0, null stop = size
+        // For negative step: null start = size-1, null stop = -1
+        let start: number | null = spec.start;
+        let stop: number | null = spec.stop;
+
+        if (spec.step > 0) {
+          // Forward slice
+          if (start === 0) start = null;
+          if (stop === this.shape[i]!) stop = null;
+        } else {
+          // Backward slice
+          if (start === this.shape[i]! - 1) start = null;
+          if (stop === -1) stop = null;
+        }
+
+        return new Slice(start, stop, spec.step);
+      }
+    });
+
+    // Use @stdlib's slice function
+    const result = stdlib_slice(this._data, ...stdlibSlices);
+    return new NDArray(result);
+  }
+
+  /**
+   * Get a single row (convenience method)
+   * @param i - Row index
+   * @returns Row as 1D or (n-1)D array
+   */
+  row(i: number): NDArray {
+    if (this.ndim < 2) {
+      throw new Error('row() requires at least 2 dimensions');
+    }
+    return this.slice(String(i), ':');
+  }
+
+  /**
+   * Get a single column (convenience method)
+   * @param j - Column index
+   * @returns Column as 1D or (n-1)D array
+   */
+  col(j: number): NDArray {
+    if (this.ndim < 2) {
+      throw new Error('col() requires at least 2 dimensions');
+    }
+    return this.slice(':', String(j));
+  }
+
+  /**
+   * Get a range of rows (convenience method)
+   * @param start - Start row index
+   * @param stop - Stop row index (exclusive)
+   * @returns Rows as array
+   */
+  rows(start: number, stop: number): NDArray {
+    if (this.ndim < 2) {
+      throw new Error('rows() requires at least 2 dimensions');
+    }
+    return this.slice(`${start}:${stop}`, ':');
+  }
+
+  /**
+   * Get a range of columns (convenience method)
+   * @param start - Start column index
+   * @param stop - Stop column index (exclusive)
+   * @returns Columns as array
+   */
+  cols(start: number, stop: number): NDArray {
+    if (this.ndim < 2) {
+      throw new Error('cols() requires at least 2 dimensions');
+    }
+    return this.slice(':', `${start}:${stop}`);
+  }
+
   // String representation
   toString(): string {
     return `NDArray(shape=${JSON.stringify(this.shape)}, dtype=${this.dtype})`;
@@ -251,6 +382,11 @@ export class NDArray {
   // Convert to nested JavaScript array
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toArray(): any {
+    // Handle 0-dimensional arrays (scalars)
+    if (this.ndim === 0) {
+      // For 0-d arrays, return the scalar value directly
+      return this._data.get();
+    }
     // Use @stdlib's built-in conversion
     const arr = stdlib_ndarray.ndarray2array(this._data);
     return arr;

@@ -171,7 +171,7 @@ import * as np from 'numpy-js/browser';
 - [x] Linting (ESLint + Prettier)
 - [x] @stdlib investigation and integration
 - [x] First working implementation
-- [ ] CI/CD (GitHub Actions)
+
 
 ### Phase 1: Core Foundation (In Progress)
 - [x] NDArray wrapper class (using @stdlib/ndarray)
@@ -182,23 +182,33 @@ import * as np from 'numpy-js/browser';
 - [x] More creation functions: `arange()`, `linspace()`, `eye()`
 - [x] Basic arithmetic: `add()`, `subtract()`, `multiply()`, `divide()`
 - [x] Broadcasting ✅ **COMPLETE** (fully integrated into all arithmetic operations)
+- [x] String-based slicing ✅ **COMPLETE** (`arr.slice('0:5', ':')`, `row()`, `col()`, etc.)
 - [ ] DType system (20+ types)
-- [ ] String-based slicing (`arr.slice('0:5', ':')`)
 - [ ] Reductions with axis support
 
-### Phase 2: Essential Operations
+### Phase 2: Benchmarks & CI/CD
+- [ ] CI/CD (GitHub Actions)
+  - [ ] PR workflow
+  - [ ] Publish workflow
+  - [ ] Benchmark workflow
+- [ ] Implement benchmarks
+  - [ ] Regression (vs. previous runs)
+  - [ ] Comparison against Python NumPy
+
+### Phase 3: Essential Operations
 - [ ] Matrix operations (using @stdlib BLAS)
 - [ ] Linear algebra (using @stdlib LAPACK)
 - [ ] Reductions with axis support
 - [ ] Mathematical functions
 - [ ] Comparison operations
 
-### Phase 3: Extended Features
+### Phase 4: Extended Features
 - [ ] Random number generation
 - [ ] FFT operations (using fft.js)
 - [ ] I/O operations (.npy/.npz)
 - [ ] Advanced indexing
 - [ ] Complex numbers, datetime
+- [ ] Optional WASM mode
 
 See [API-REFERENCE.md](./docs/API-REFERENCE.md) for complete function checklist.
 

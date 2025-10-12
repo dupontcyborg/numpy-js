@@ -317,6 +317,12 @@ describe('NumPy API Comparison', () => {
         'matmul',
         // toString is JavaScript built-in
         'toString',
+        // Slicing convenience methods (Python uses [] operator, we use string methods)
+        'slice', // Our string-based slicing method (Python uses arr[:] syntax)
+        'row', // Convenience for arr.slice('i', ':')
+        'col', // Convenience for arr.slice(':', 'j')
+        'rows', // Convenience for arr.slice('start:stop', ':')
+        'cols', // Convenience for arr.slice(':', 'start:stop')
       ];
 
       const invalidAttrs: string[] = [];

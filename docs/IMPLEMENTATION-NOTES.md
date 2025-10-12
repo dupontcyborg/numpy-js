@@ -235,10 +235,10 @@ function add_good(a: NDArray, b: NDArray): NDArray {
   - [x] zeros, ones, empty
   - [x] array() from nested arrays
   - [x] arange, linspace, eye
-- [ ] Slicing
-  - [ ] String parser: "0:5", ":", "::2"
-  - [ ] Apply slicing to create views
-  - [ ] Convenience: row(), col()
+- [x] Slicing ✅ **COMPLETE (2025-10-12)**
+  - [x] String parser: "0:5", ":", "::2"
+  - [x] Apply slicing to create views
+  - [x] Convenience: row(), col(), rows(), cols()
 - [x] Broadcasting ✅ **COMPLETE (2025-10-12)**
   - [x] Check if shapes broadcastable
   - [x] Compute output shape
@@ -385,6 +385,169 @@ Broadcasting is foundational - it unblocks many other operations. Natural next s
 2. **Axis support for reductions** - `sum(axis=0)`, `mean(axis=1)`, etc.
 3. **More arithmetic ops** - `power()`, `mod()`, etc. (will automatically have broadcasting)
 4. **Comparison operations** - `greater()`, `less()`, `equal()` with broadcasting
+
+---
+
+## Slicing Implementation (2025-10-12)
+
+### ✅ Successfully Implemented
+
+Array slicing is now fully functional with NumPy-compatible string syntax!
+
+**What Was Done:**
+1. Created `src/core/slicing.ts` module with:
+   - `parseSlice()` - Parse slice strings like "0:5", ":", "::2", "-1"
+   - `normalizeSlice()` - Handle negative indices and defaults
+   - `computeSliceLength()` - Calculate slice result length
+   - Full support for NumPy slice syntax
+
+2. Implemented slicing in `NDArray` class:
+   - `slice(...sliceStrs)` - Main slicing method accepting string specs per dimension
+   - `row(i)`, `col(j)` - Convenience methods for single row/column
+   - `rows(start, stop)`, `cols(start, stop)` - Range convenience methods
+   - Integrates with @stdlib's `slice()` function for view semantics
+
+3. Added 0-dimensional array support:
+   - Updated `toArray()` to properly handle scalars (0-d arrays)
+   - Single index slicing returns 0-d arrays matching NumPy behavior
+
+4. Comprehensive testing:
+   - **45 unit tests** for slice parser (parseSlice, normalizeSlice, etc.)
+   - **52 unit tests** for actual slice operations on NDArray objects
+   - **27 Python validation tests** confirming NumPy compatibility
+   - **All 214 tests pass** (187 unit + 27 validation)
+
+**Implementation Details:**
+
+String-based slice syntax was chosen because TypeScript doesn't support Python's native slicing syntax:
+
+```typescript
+// NumPy/Python:
+arr[0:5, ::2]
+
+// NumPy.js equivalent:
+arr.slice('0:5', '::2')
+```
+
+The implementation follows this pipeline:
+
+```typescript
+slice(...sliceStrs: string[]): NDArray {
+  // 1. Parse each slice string
+  const sliceSpecs = sliceStrs.map((str, i) => {
+    const spec = parseSlice(str);           // Parse "0:5" → {start: 0, stop: 5, step: 1}
+    return normalizeSlice(spec, this.shape[i]);  // Handle negatives, defaults
+  });
+
+  // 2. Convert to @stdlib Slice objects
+  const stdlibSlices = sliceSpecs.map(spec => {
+    if (spec.isIndex) return spec.start;    // Single index: 5
+    return new Slice(start, stop, step);    // Range: Slice(0, 5, 1)
+  });
+
+  // 3. Use @stdlib's slice function (creates view, no copying)
+  const result = stdlib_slice(this._data, ...stdlibSlices);
+  return new NDArray(result);
+}
+```
+
+**Supported Syntax:**
+
+All NumPy slice syntax variants are supported:
+
+```typescript
+// Single index
+arr.slice('2')           // arr[2]  → 0-d array (scalar)
+arr.slice('-1')          // arr[-1] → last element
+
+// Start:Stop
+arr.slice('2:7')         // arr[2:7]   → indices 2,3,4,5,6
+arr.slice(':5')          // arr[:5]    → first 5 elements
+arr.slice('5:')          // arr[5:]    → from index 5 to end
+arr.slice(':-3')         // arr[:-3]   → all but last 3
+
+// Start:Stop:Step
+arr.slice('::2')         // arr[::2]   → every 2nd element
+arr.slice('1:8:2')       // arr[1:8:2] → indices 1,3,5,7
+arr.slice('::-1')        // arr[::-1]  → reverse array
+arr.slice('7:2:-1')      // arr[7:2:-1]→ indices 7,6,5,4,3
+
+// Multi-dimensional
+arr.slice('0:2', '1:3')  // arr[0:2, 1:3] → submatrix
+arr.slice(':', '::2')    // arr[:, ::2]   → every 2nd column
+
+// Convenience methods
+arr.row(1)               // arr[1, :]     → single row
+arr.col(2)               // arr[:, 2]     → single column
+arr.rows(1, 3)           // arr[1:3, :]   → rows 1-2
+arr.cols(1, 3)           // arr[:, 1:3]   → columns 1-2
+```
+
+**Examples:**
+
+```typescript
+// 1D slicing
+const arr1d = array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+arr1d.slice('2:7');      // [2, 3, 4, 5, 6]
+arr1d.slice('-3:');      // [7, 8, 9]
+arr1d.slice('::2');      // [0, 2, 4, 6, 8]
+arr1d.slice('::-1');     // [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+
+// 2D slicing
+const arr2d = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+arr2d.slice('0', ':');   // [1, 2, 3]  (first row)
+arr2d.slice(':', '1');   // [2, 5, 8]  (second column)
+arr2d.slice('0:2', '1:3'); // [[2, 3], [5, 6]]  (submatrix)
+
+// Convenience methods
+arr2d.row(1);            // [4, 5, 6]
+arr2d.col(2);            // [3, 6, 9]
+arr2d.rows(0, 2);        // [[1, 2, 3], [4, 5, 6]]
+arr2d.cols(1, 3);        // [[2, 3], [5, 6], [8, 9]]
+```
+
+**View Semantics:**
+
+Like NumPy, slices return views (not copies) when possible:
+
+```typescript
+const original = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+const view = original.slice('1:', '1:');  // [[5, 6], [8, 9]]
+
+// Views share underlying data with @stdlib
+// (Modifying views affects original - when we add set() method)
+```
+
+**Design Trade-offs:**
+
+1. **String-based syntax**: Required due to TypeScript limitations
+   - Pro: Clean, readable, familiar to NumPy users
+   - Pro: Type-safe (strings are validated at runtime)
+   - Con: No compile-time validation (but comprehensive runtime errors)
+
+2. **@stdlib integration**: Leverages robust, tested implementation
+   - Pro: Correct handling of all edge cases (negative indices, steps, etc.)
+   - Pro: Efficient view creation (no data copying)
+   - Pro: Consistent with broadcasting approach
+
+3. **0-dimensional arrays**: Return scalars via `.toArray()`
+   - Matches NumPy: `arr[0]` on 1-D array returns scalar
+   - Uses `._data.get()` for 0-d array values
+
+**Performance Considerations:**
+
+- Slice parsing is fast (simple string operations)
+- @stdlib's `slice()` creates views with adjusted strides (O(1), no data copy)
+- Step-based slicing handled efficiently by @stdlib
+- Negative indices normalized once during parsing
+
+**What's Next:**
+
+With slicing complete, these operations become more useful:
+1. **Advanced indexing** - Boolean and integer array indexing
+2. **Reshape operations** - `reshape()`, `flatten()`, `ravel()`
+3. **Set operations** - `arr.slice('0:2').set(value)` for assignment
+4. **More convenience methods** - `diagonal()`, `take()`, `compress()`
 
 ---
 
