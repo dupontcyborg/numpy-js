@@ -36,7 +36,7 @@ export function computeBroadcastShape(shapes: readonly number[][]): number[] | n
   // Use @stdlib's broadcastShapes
   // It returns null if shapes are incompatible
   const result = broadcastShapes(shapes.map((s) => Array.from(s)));
-  return result;
+  return result ? Array.from(result as ArrayLike<number>) : null;
 }
 
 /**
@@ -54,7 +54,7 @@ export function computeBroadcastShape(shapes: readonly number[][]): number[] | n
  * ```
  */
 export function areBroadcastable(shape1: readonly number[], shape2: readonly number[]): boolean {
-  return computeBroadcastShape([shape1, shape2]) !== null;
+  return computeBroadcastShape([Array.from(shape1), Array.from(shape2)]) !== null;
 }
 
 /**

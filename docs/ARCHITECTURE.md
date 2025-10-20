@@ -47,12 +47,19 @@ class NDArray {
   readonly strides: readonly number[]; // Byte strides for each dimension
   readonly dtype: DType;              // Data type
   readonly offset: number;            // Offset into data buffer
+  private _base?: NDArray;            // Base array if this is a view
 
-  // Views share data
+  // View tracking
+  get base(): NDArray | null {
+    // Returns the base array for views, null if owns data
+    return this._base ?? null;
+  }
+
+  // Memory layout flags
   readonly flags: {
-    owndata: boolean;      // Owns the underlying buffer?
-    writeable: boolean;    // Can modify data?
-    c_contiguous: boolean; // C-order contiguous?
+    OWNDATA: boolean;      // Owns the underlying buffer?
+    C_CONTIGUOUS: boolean; // C-order (row-major) contiguous?
+    F_CONTIGUOUS: boolean; // Fortran-order (column-major) contiguous?
   };
 
   // Properties
@@ -95,26 +102,32 @@ class NDArray {
 
 ### DType System
 
-Support all NumPy types:
+Support core NumPy numeric types:
 
 **Numeric:**
 - `int8`, `int16`, `int32`, `int64` (BigInt)
 - `uint8`, `uint16`, `uint32`, `uint64` (BigInt)
 - `float32`, `float64`
-- `complex64`, `complex128` (interleaved: [real, imag, real, imag, ...])
-
-**Others:**
 - `bool` (stored as uint8)
-- `datetime64`, `timedelta64`
+
+**Not currently supported:**
+- Complex numbers (`complex64`, `complex128`) - removed for simplicity
+- Date/time types (`datetime64`, `timedelta64`)
 - Structured dtypes
-- `object` (JavaScript objects, no pickle)
+- Object dtype
 
 ```typescript
-interface DType {
-  name: string;           // 'float64', 'int32', etc.
-  itemsize: number;       // Bytes per element
-  kind: string;           // 'f', 'i', 'u', 'c', 'b', 'M', 'm', 'O'
-  arrayType: TypedArrayConstructor;
+type DType =
+  | 'float64' | 'float32'
+  | 'int64' | 'int32' | 'int16' | 'int8'
+  | 'uint64' | 'uint32' | 'uint16' | 'uint8'
+  | 'bool';
+
+// All operations preserve dtype or follow NumPy promotion rules
+function promoteDTypes(dtype1: DType, dtype2: DType): DType {
+  // Float > Int > Uint > Bool
+  // Larger sizes > Smaller sizes
+  // Example: int8 + float32 → float32
 }
 ```
 
@@ -137,15 +150,48 @@ Element [i, j] at offset: i * stride[0] + j * stride[1]
 
 ### Views vs Copies
 
-**Views** (share data):
-- `transpose()` - just swap strides
-- `slice()` - adjust offset and strides
-- `reshape()` - if possible without copy
+**Views** (share data, tracked via `base` attribute):
+- `transpose()` - just swap strides, always a view
+- `slice()` - adjust offset and strides, always a view
+- `reshape()` - returns view if C-contiguous, copy otherwise
+- `ravel()` - returns view if C-contiguous, copy otherwise
+- `squeeze()` - removes singleton dimensions, always a view
+- `expand_dims()` - adds singleton dimensions, always a view
 
-**Copies** (new data):
-- `copy()` - explicit
-- `astype()` - dtype conversion
-- Non-contiguous reshape
+**Copies** (new data, `base` is null):
+- `copy()` - explicit copy
+- `flatten()` - always returns a copy (NumPy behavior)
+- `astype()` - dtype conversion requires copy
+- Non-contiguous reshape/ravel
+
+**View Tracking:**
+```typescript
+const arr = ones([4, 4]);
+const view = arr.slice('0:2', '0:2');
+
+console.log(view.base === arr);        // true - view tracks base
+console.log(arr.base === null);        // true - owns its data
+console.log(view.flags.OWNDATA);       // false - doesn't own data
+console.log(arr.flags.OWNDATA);        // true - owns data
+
+// View chains track the original base
+const transposed = view.transpose();
+console.log(transposed.base === arr);  // true - points to original
+```
+
+**Contiguity-Based Optimization:**
+```typescript
+// C-contiguous arrays can be reshaped as views (fast)
+const arr = ones([2, 6]);  // C-contiguous
+const reshaped = arr.reshape(3, 4);
+console.log(reshaped.flags.C_CONTIGUOUS);  // true
+console.log(reshaped.base === arr);        // true - view, not copy
+
+// Non-contiguous arrays require copying
+const transposed = arr.transpose();  // Not C-contiguous
+const reshaped2 = transposed.reshape(3, 4);
+console.log(reshaped2.base === null);  // true - had to copy
+```
 
 ---
 
@@ -377,33 +423,36 @@ result = A @ B
 ```
 src/
 ├── core/
-│   ├── ndarray.ts          # Main NDArray class
-│   ├── dtype.ts            # DType system
-│   ├── creation.ts         # zeros, ones, array, arange, linspace
-│   ├── indexing.ts         # Slicing implementation
-│   ├── broadcasting.ts     # Broadcasting rules
-│   └── strides.ts          # Stride calculations
+│   ├── ndarray.ts          # Main NDArray class with view tracking
+│   ├── dtype.ts            # DType system and promotion rules
+│   ├── storage.ts          # ArrayStorage abstraction over @stdlib
+│   ├── broadcasting.ts     # Broadcasting rules and utilities
+│   └── indexing.ts         # Slicing implementation
+│
+├── ops/                    # Modular operations (extracted from NDArray)
+│   ├── arithmetic.ts       # add, subtract, multiply, divide
+│   ├── comparisons.ts      # greater, less, equal, etc.
+│   ├── shape.ts            # reshape, flatten, ravel, transpose, squeeze
+│   ├── reductions.ts       # sum, mean, std, min, max
+│   └── linalg.ts           # matmul, dot
+│
+├── internal/
+│   └── compute.ts          # Low-level element-wise computation engine
 │
 ├── lib/
-│   ├── arithmetic.ts       # add, subtract, multiply, divide
-│   ├── comparison.ts       # greater, less, equal, etc.
-│   ├── math.ts             # sin, cos, exp, log, sqrt, etc.
-│   ├── reductions.ts       # sum, mean, std, min, max
-│   └── manipulation.ts     # reshape, transpose, concatenate
-│
-├── linalg/
-│   ├── basic.ts            # dot, matmul, norm
-│   ├── solve.ts            # solve, inv, det
-│   └── decomposition.ts    # svd, eig, qr, cholesky
-│
-├── random/
-│   └── index.ts            # random, randn, randint
-│
-├── backends/
-│   └── stdlib.ts           # @stdlib wrappers and utilities
+│   ├── creation.ts         # zeros, ones, array, arange, linspace, eye
+│   ├── math.ts             # sin, cos, exp, log, sqrt (planned)
+│   └── random.ts           # random, randn, randint (planned)
 │
 └── index.ts                # Public API exports
 ```
+
+**Key architectural changes (2025-10-20):**
+- **Modular operations**: Operations extracted from NDArray into `ops/` modules
+- **Storage abstraction**: `ArrayStorage` class wraps @stdlib/ndarray
+- **View tracking**: `base` attribute tracks view relationships
+- **Contiguity flags**: `C_CONTIGUOUS`, `F_CONTIGUOUS` for optimization
+- **DType preservation**: All operations preserve dtype or follow promotion rules
 
 ---
 
@@ -414,21 +463,28 @@ src/
 - **Tradeoff**: Different type, slightly slower
 - **Alternative**: Float64 with precision loss
 
-### 2. Complex Number Storage
-- **Decision**: Interleaved storage `[real, imag, real, imag, ...]`
-- **Input format**: Nested arrays `[[real, imag], ...]`
-- **Rationale**: Matches C layout, efficient memory
+### 2. No Complex Number Support
+- **Decision**: Removed complex64/complex128 support (2025-10-20)
+- **Rationale**: Simplified codebase (~268 lines removed), reduced maintenance burden
+- **Impact**: Focus on core numeric types used by 99% of users
+- **Future**: Can be added back if there's demand
 
 ### 3. Slicing Syntax
 - **Decision**: String-based `arr.slice('0:5', ':')`
 - **Rationale**: No build step, type-safe, familiar to Python devs
 - **Helpers**: `row()`, `col()`, `rows()`, `cols()`
 
-### 4. @stdlib Integration
+### 4. View Tracking and Memory Flags
+- **Decision**: Track base array for views, provide contiguity flags (2025-10-20)
+- **Implementation**: `base` attribute, `C_CONTIGUOUS`, `F_CONTIGUOUS`, `OWNDATA` flags
+- **Rationale**: NumPy compatibility, enables zero-copy optimizations
+- **Benefits**: Users understand memory relationships, operations can optimize based on contiguity
+
+### 5. @stdlib Integration
 - **Decision**: Use @stdlib/ndarray as foundation + @stdlib/blas for computations
 - **Rationale**: Battle-tested implementation, we focus purely on NumPy API compatibility
 
-### 5. Performance Strategy
+### 6. Performance Strategy
 - **Phase 1**: Correctness with @stdlib (pure JS)
 - **Phase 2**: Profile and identify bottlenecks
 - **Phase 3**: Add WASM for proven bottlenecks only
@@ -452,4 +508,15 @@ src/
 
 ---
 
-**Last Updated**: 2025-10-07
+## Recent Changes (2025-10-20)
+
+1. **Complex number removal**: Removed complex64/complex128 support for simplicity
+2. **View tracking**: Added `base` attribute to track view relationships
+3. **Contiguity flags**: Added `C_CONTIGUOUS` and `F_CONTIGUOUS` flags
+4. **DType preservation**: Fixed operations to preserve dtype (flatten, ravel, matmul)
+5. **Contiguity optimizations**: reshape/ravel return views for C-contiguous arrays
+6. **Modular architecture**: Extracted operations into `ops/` modules
+
+---
+
+**Last Updated**: 2025-10-20

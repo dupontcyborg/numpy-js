@@ -4,6 +4,50 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 
 ---
 
+## NDArray Properties
+
+### Core Properties
+- `shape: readonly number[]` - Array dimensions (e.g., `[2, 3]`)
+- `ndim: number` - Number of dimensions
+- `size: number` - Total number of elements
+- `dtype: DType` - Data type (e.g., `'float64'`, `'int32'`)
+- `data: TypedArray` - Underlying typed array buffer
+- `strides: readonly number[]` - Stride for each dimension (in elements)
+
+### View Tracking (Added 2025-10-20)
+- `base: NDArray | null` - Base array for views, `null` if owns data
+  ```typescript
+  const arr = ones([4, 4]);
+  const view = arr.slice('0:2', '0:2');
+  console.log(view.base === arr);  // true - view tracks base
+  console.log(arr.base === null);  // true - owns data
+  ```
+
+### Memory Layout Flags (Added 2025-10-20)
+- `flags.C_CONTIGUOUS: boolean` - Array is C-contiguous (row-major)
+- `flags.F_CONTIGUOUS: boolean` - Array is Fortran-contiguous (column-major)
+- `flags.OWNDATA: boolean` - Array owns its data buffer (not a view)
+  ```typescript
+  const arr = ones([3, 3]);
+  console.log(arr.flags.C_CONTIGUOUS);  // true - row-major layout
+  console.log(arr.flags.OWNDATA);       // true - owns data
+
+  const view = arr.slice(':', '0:2');
+  console.log(view.flags.OWNDATA);      // false - doesn't own data
+  ```
+
+### Type Preservation (Guaranteed as of 2025-10-20)
+All operations preserve dtype or follow NumPy promotion rules:
+- **Preserving operations**: reshape, transpose, slice, copy, etc. keep same dtype
+- **Scalar operations**: `arr.add(5)` preserves dtype
+- **Mixed-dtype operations**: Follow NumPy promotion hierarchy
+  - `float64 > float32 > int64 > int32 > int16 > int8 > uint64 > uint32 > uint16 > uint8 > bool`
+  - Example: `int8 + float32 → float32`
+- **Comparisons**: Always return `bool` dtype
+- **Reductions**: Most preserve dtype, except `mean()` converts integers to `float64`
+
+---
+
 ## Array Creation
 
 ### From Shape
@@ -36,11 +80,11 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 ## Array Manipulation
 
 ### Shape
-- [x] `reshape(a, shape)` - New shape _(implemented as NDArray.reshape() method)_
-- [x] `ravel(a)` - Flatten to 1D _(implemented as NDArray.ravel() method)_
-- [x] `flatten(a)` - Flatten (copy) _(implemented as NDArray.flatten() method)_
-- [x] `squeeze(a, axis?)` - Remove single-dimensional entries _(implemented as NDArray.squeeze() method)_
-- [x] `expand_dims(a, axis)` - Add dimension _(implemented as NDArray.expand_dims() method)_
+- [x] `reshape(a, shape)` - New shape _(view if C-contiguous, copy otherwise)_
+- [x] `ravel(a)` - Flatten to 1D _(view if C-contiguous, copy otherwise)_
+- [x] `flatten(a)` - Flatten (copy) _(always returns a copy, matching NumPy)_
+- [x] `squeeze(a, axis?)` - Remove single-dimensional entries _(always returns a view)_
+- [x] `expand_dims(a, axis)` - Add dimension _(always returns a view)_
 
 ### Transpose
 - [x] `transpose(a, axes?)` - Permute dimensions _(implemented as NDArray.transpose() method)_
@@ -356,7 +400,7 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 - ✅ zeros, ones, array, arange, linspace, eye
 
 **Arithmetic Operations** (4):
-- ✅ add, subtract, multiply, divide _(as NDArray methods)_
+- ✅ add, subtract, multiply, divide _(as NDArray methods, with dtype preservation)_
 
 **Reductions** (4):
 - ✅ sum, mean, max, min _(as NDArray methods with axis/keepdims support)_
@@ -366,17 +410,18 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 - ✅ isclose, allclose _(as NDArray methods with rtol/atol parameters)_
 
 **Reshape Operations** (6):
-- ✅ reshape, flatten, ravel, transpose, squeeze, expand_dims _(as NDArray methods)_
+- ✅ reshape, flatten, ravel, transpose, squeeze, expand_dims _(with view/copy semantics)_
 
 **Linear Algebra** (1):
-- ✅ matmul _(as NDArray method)_
+- ✅ matmul _(as NDArray method with dtype promotion)_
 
 ### Testing
 
-- **322 tests passing**
-  - 171 unit tests (creation, arithmetic, comparisons, reductions, reshape, slicing)
-  - 104 NumPy validation tests (cross-checked against Python NumPy 2.3.3)
-  - 47 additional tests (API comparison, edge cases, broadcasting)
+- **748/750 tests passing (99.7%)**
+  - 204 unit tests (creation, arithmetic, comparisons, reductions, reshape, slicing, dtype preservation, view tracking)
+  - 153 NumPy validation tests (cross-checked against Python NumPy 2.3.3)
+    - Including dtype edge cases, overflow/underflow, special values
+  - 391 additional tests (API comparison, edge cases, broadcasting, indexing)
 
 ### Priority Tiers
 
@@ -404,4 +449,25 @@ Complete NumPy 2.0+ API checklist. Check off as implemented.
 
 ---
 
-**Last Updated**: 2025-10-10
+## Recent Additions (2025-10-20)
+
+### New Properties
+- ✅ `base` - View tracking attribute
+- ✅ `flags.C_CONTIGUOUS` - C-contiguous flag
+- ✅ `flags.F_CONTIGUOUS` - Fortran-contiguous flag
+- ✅ `flags.OWNDATA` - Data ownership flag
+
+### Behavior Improvements
+- ✅ Complete dtype preservation across all operations
+- ✅ NumPy-compatible dtype promotion for mixed-dtype operations
+- ✅ View/copy semantics matching NumPy exactly
+- ✅ Contiguity-based optimization for reshape/ravel
+
+### Testing
+- ✅ Added 37 dtype preservation tests (unit + NumPy validation)
+- ✅ Added 22 view tracking tests
+- ✅ Added 26 dtype edge case tests (overflow, underflow, special values)
+
+---
+
+**Last Updated**: 2025-10-20

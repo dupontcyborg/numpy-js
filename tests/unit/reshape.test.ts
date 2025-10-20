@@ -131,17 +131,32 @@ describe('Reshape Operations', () => {
       expect(Array.from(flat.data)).toEqual([1, 2, 3, 4, 5, 6]);
     });
 
-    it('behaves like flatten (returns copy)', () => {
+    it('returns a view for C-contiguous arrays', () => {
       const arr = array([
         [1, 2],
         [3, 4],
       ]);
       const flat = arr.ravel();
       flat.data[0] = 999;
-      // Original should be unchanged (copy, not view)
+      // Original SHOULD be changed (view, not copy) for C-contiguous arrays
       expect(arr.toArray()).toEqual([
+        [999, 2],
+        [3, 4],
+      ]);
+    });
+
+    it('returns a copy for non-contiguous arrays', () => {
+      const arr = array([
         [1, 2],
         [3, 4],
+      ]);
+      const transposed = arr.transpose();
+      const flat = transposed.ravel();
+      flat.data[0] = 999;
+      // Original should be unchanged (copy, not view) for non-contiguous arrays
+      expect(transposed.toArray()).toEqual([
+        [1, 3],
+        [2, 4],
       ]);
     });
   });

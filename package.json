@@ -70,6 +70,7 @@
   },
   "homepage": "https://github.com/nicolasdupont/numpy-js#readme",
   "devDependencies": {
+    "@stdlib/types": "^0.4.3",
     "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
@@ -85,8 +86,8 @@
     "vitest": "^1.0.4"
   },
   "dependencies": {
-    "@stdlib/ndarray": "^0.3.3",
-    "@stdlib/blas": "^0.3.3"
+    "@stdlib/blas": "^0.3.3",
+    "@stdlib/ndarray": "^0.3.3"
   },
   "engines": {
     "node": ">=18.0.0"

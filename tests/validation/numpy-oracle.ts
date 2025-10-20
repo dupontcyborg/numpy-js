@@ -117,6 +117,23 @@ export function arraysClose(a: any, b: any, rtol: number = 1e-5, atol: number = 
     return a.every((val, i) => arraysClose(val, b[i], rtol, atol));
   } else if (typeof a === 'number' && typeof b === 'number') {
     return closeEnough(a, b, rtol, atol);
+  } else if (typeof a === 'bigint' || typeof b === 'bigint') {
+    // Convert both to Number for comparison
+    // This is necessary because NumPy returns regular numbers via JSON
+    const aNum = typeof a === 'bigint' ? Number(a) : a;
+    const bNum = typeof b === 'bigint' ? Number(b) : b;
+    // For exact integer comparisons, use strict equality
+    // (rtol/atol don't make sense for exact integer values)
+    if (Number.isInteger(aNum) && Number.isInteger(bNum)) {
+      return aNum === bNum;
+    }
+    return closeEnough(aNum, bNum, rtol, atol);
+  } else if (typeof a === 'boolean' || typeof b === 'boolean') {
+    // Handle boolean comparisons
+    // Our JS implementation uses 0/1 for boolean arrays, NumPy uses false/true
+    const aNum = typeof a === 'boolean' ? (a ? 1 : 0) : a;
+    const bNum = typeof b === 'boolean' ? (b ? 1 : 0) : b;
+    return aNum === bNum;
   } else {
     return a === b;
   }

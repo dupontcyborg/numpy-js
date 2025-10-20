@@ -4,13 +4,14 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Status**: 🚧 In Development - Phase 0 (Project Setup)
+> [!WARNING]
+> This project is under construction and is currently unstable. Expect breaking changes.
 
 ---
 
 ## What is NumPy.js?
 
-A complete, functionally-equivalent implementation of NumPy 2.0+ for the JavaScript ecosystem.
+A complete, functionally-equivalent implementation of NumPy 2.0+ for the JavaScript ecosystem. (At least that's the goal!)
 
 ### Goals
 
@@ -33,9 +34,17 @@ A complete, functionally-equivalent implementation of NumPy 2.0+ for the JavaScr
 ```typescript
 import * as np from 'numpy-js';
 
-// Create arrays
+// Create arrays (default float64 dtype)
 const A = np.array([[1, 2], [3, 4]]);
 const B = np.zeros([2, 2]);
+
+// Create arrays with specific dtypes
+const intArr = np.ones([3, 3], 'int32');
+const floatArr = np.arange(0, 10, 1, 'float32');
+const boolArr = np.array([1, 0, 1], 'bool');
+
+// Convert between dtypes
+const converted = intArr.astype('float64');
 
 // Matrix operations
 const C = A.matmul(B);
@@ -110,10 +119,12 @@ const loaded = np.load('matrix.npy');
 ## Key Features
 
 ### Comprehensive NumPy API
-- Array creation: `zeros`, `ones`, `arange`, `linspace`
+- Array creation: `zeros`, `ones`, `arange`, `linspace` (all support dtype parameter)
 - Math operations: `add`, `multiply`, `sin`, `cos`, `exp`, `log`
 - Linear algebra: `matmul`, `solve`, `inv`, `svd`, `eig`
 - Reductions: `sum`, `mean`, `std`, `min`, `max`
+- DTypes: 13 types supported (float32/64, int8/16/32/64, uint8/16/32/64, bool, complex64/128)
+- Type conversion: `astype()` with full dtype support
 - Random: `rand`, `randn`, distributions
 - FFT operations
 - I/O: .npy/.npz files
@@ -203,16 +214,16 @@ import * as np from 'numpy-js/browser';
 - [x] Reductions with axis support ✅ **COMPLETE** (`sum(axis, keepdims)`, `mean()`, `max()`, `min()`)
 - [x] Comparison operations ✅ **COMPLETE** (`greater()`, `less()`, `equal()`, `isclose()`, `allclose()` with broadcasting)
 - [x] Reshape operations ✅ **COMPLETE** (`reshape()`, `flatten()`, `ravel()`, `transpose()`, `squeeze()`, `expand_dims()`)
-- [ ] DType system (20+ types)
+- [x] DType system ✅ **COMPLETE** (13 types: float32/64, int8/16/32/64, uint8/16/32/64, bool, complex64/128)
 
 ### Phase 2: Benchmarks & CI/CD
 - [ ] CI/CD (GitHub Actions)
   - [ ] PR workflow
   - [ ] Publish workflow
-  - [ ] Benchmark workflow
 - [ ] Implement benchmarks
   - [ ] Regression (vs. previous runs)
   - [ ] Comparison against Python NumPy
+  - [ ] Automated in CI/CD
 
 ### Phase 3: Essential Operations
 - [ ] Matrix operations (using @stdlib BLAS)
@@ -220,6 +231,7 @@ import * as np from 'numpy-js/browser';
 - [ ] Reductions with axis support
 - [ ] Mathematical functions
 - [ ] Comparison operations
+- [ ] dtype consistency testing
 
 ### Phase 4: Extended Features
 - [ ] Random number generation

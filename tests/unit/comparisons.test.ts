@@ -11,7 +11,7 @@ describe('Comparison Operations', () => {
       it('compares 1D array with scalar', () => {
         const arr = array([1, 2, 3, 4, 5]);
         const result = arr.greater(3);
-        expect(result.dtype).toBe('uint8');
+        expect(result.dtype).toBe('bool');
         expect(result.shape).toEqual([5]);
         expect(Array.from(result.data)).toEqual([0, 0, 0, 1, 1]);
       });
@@ -173,14 +173,14 @@ describe('Comparison Operations', () => {
   });
 
   describe('result properties', () => {
-    it('returns uint8 dtype for all comparisons', () => {
+    it('returns bool dtype for all comparisons', () => {
       const arr = array([1, 2, 3]);
-      expect(arr.greater(2).dtype).toBe('uint8');
-      expect(arr.less(2).dtype).toBe('uint8');
-      expect(arr.equal(2).dtype).toBe('uint8');
-      expect(arr.not_equal(2).dtype).toBe('uint8');
-      expect(arr.greater_equal(2).dtype).toBe('uint8');
-      expect(arr.less_equal(2).dtype).toBe('uint8');
+      expect(arr.greater(2).dtype).toBe('bool');
+      expect(arr.less(2).dtype).toBe('bool');
+      expect(arr.equal(2).dtype).toBe('bool');
+      expect(arr.not_equal(2).dtype).toBe('bool');
+      expect(arr.greater_equal(2).dtype).toBe('bool');
+      expect(arr.less_equal(2).dtype).toBe('bool');
     });
 
     it('preserves shape in comparisons', () => {
@@ -247,7 +247,7 @@ describe('Comparison Operations', () => {
       it('compares with exact match', () => {
         const arr = array([1.0, 2.0, 3.0]);
         const result = arr.isclose(2.0);
-        expect(result.dtype).toBe('uint8');
+        expect(result.dtype).toBe('bool');
         expect(Array.from(result.data)).toEqual([0, 1, 0]);
       });
 

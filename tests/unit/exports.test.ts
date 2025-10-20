@@ -49,7 +49,7 @@ describe('API Exports - TypeScript Contracts', () => {
     it('array(object, dtype?)', () => {
       expect(np.array).toBeDefined();
       expect(typeof np.array).toBe('function');
-      expect(np.array.length).toBe(1); // Required: object
+      expect(np.array.length).toBe(2); // Parameters: object, dtype (optional)
 
       // Test nested arrays work
       expect(() =>
