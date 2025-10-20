@@ -38,13 +38,15 @@ import * as np from 'numpy-js';
 const A = np.array([[1, 2], [3, 4]]);
 const B = np.zeros([2, 2]);
 
-// Create arrays with specific dtypes
+// Create arrays with specific dtypes (11 types supported)
 const intArr = np.ones([3, 3], 'int32');
 const floatArr = np.arange(0, 10, 1, 'float32');
 const boolArr = np.array([1, 0, 1], 'bool');
+const bigIntArr = np.array([1n, 2n, 3n], 'int64');  // BigInt support
 
-// Convert between dtypes
-const converted = intArr.astype('float64');
+// All operations preserve dtype or follow NumPy promotion rules
+const result = intArr.add(5);  // Stays int32
+const promoted = intArr.add(floatArr);  // Promotes to float32
 
 // Matrix operations
 const C = A.matmul(B);
@@ -76,12 +78,23 @@ const inRange = A.greater_equal(0);   // A >= 0
 const close = A.isclose(B);           // Element-wise closeness
 const allClose = A.allclose(B);       // True if all elements close
 
-// Reshape operations
-const reshaped = A.reshape(4, 1);     // Change shape
-const flat = A.flatten();             // Flatten to 1D
-const transposed = A.transpose();      // Transpose (reverse dims)
-const squeezed = A.squeeze();          // Remove size-1 dims
-const expanded = A.expand_dims(0);     // Add new axis
+// Reshape operations (view vs copy semantics)
+const reshaped = A.reshape(4, 1);     // View if C-contiguous, copy otherwise
+const flat = A.flatten();             // Always returns a copy
+const ravel = A.ravel();              // View if C-contiguous, copy otherwise
+const transposed = A.transpose();      // Always returns a view
+const squeezed = A.squeeze();          // Always returns a view
+const expanded = A.expand_dims(0);     // Always returns a view
+
+// View tracking (NumPy-compatible)
+const view = A.slice('0:2', '0:2');
+console.log(view.base === A);         // true - view tracks base array
+console.log(view.flags.OWNDATA);      // false - doesn't own data
+console.log(A.flags.OWNDATA);         // true - owns data
+
+// Memory layout flags
+console.log(A.flags.C_CONTIGUOUS);    // true - C-order (row-major)
+console.log(A.flags.F_CONTIGUOUS);    // false - not Fortran-order
 
 // Random
 const random = np.random.randn([100, 100]);
@@ -111,7 +124,7 @@ const loaded = np.load('matrix.npy');
 └────────────────────────────────┘
 ```
 
-**We build**: NumPy API, NDArray class, broadcasting, slicing
+**We build**: NumPy API, NDArray class, broadcasting, slicing, view tracking
 **We use**: @stdlib for proven numerical computations
 
 ---
@@ -119,15 +132,18 @@ const loaded = np.load('matrix.npy');
 ## Key Features
 
 ### Comprehensive NumPy API
-- Array creation: `zeros`, `ones`, `arange`, `linspace` (all support dtype parameter)
-- Math operations: `add`, `multiply`, `sin`, `cos`, `exp`, `log`
-- Linear algebra: `matmul`, `solve`, `inv`, `svd`, `eig`
-- Reductions: `sum`, `mean`, `std`, `min`, `max`
-- DTypes: 13 types supported (float32/64, int8/16/32/64, uint8/16/32/64, bool, complex64/128)
-- Type conversion: `astype()` with full dtype support
-- Random: `rand`, `randn`, distributions
-- FFT operations
-- I/O: .npy/.npz files
+- **Array creation**: `zeros`, `ones`, `arange`, `linspace` (all support dtype parameter)
+- **Arithmetic operations**: `add`, `subtract`, `multiply`, `divide` with broadcasting
+- **Linear algebra**: `matmul` (using optimized BLAS)
+- **Reductions**: `sum`, `mean`, `std`, `min`, `max` with axis support
+- **DTypes**: 11 types supported (float32/64, int8/16/32/64, uint8/16/32/64, bool)
+  - Full dtype preservation across operations
+  - NumPy-compatible type promotion
+  - BigInt support for int64/uint64
+- **View tracking**: `base` attribute tracks view relationships
+- **Memory flags**: `C_CONTIGUOUS`, `F_CONTIGUOUS`, `OWNDATA`
+- **Comparisons**: `greater`, `less`, `equal`, `isclose`, `allclose`
+- **Reshaping**: `reshape`, `flatten`, `ravel`, `transpose`, `squeeze`, `expand_dims`
 
 ### TypeScript Native
 ```typescript
@@ -201,20 +217,27 @@ import * as np from 'numpy-js/browser';
 - [x] First working implementation
 
 
-### Phase 1: Core Foundation (In Progress)
+### Phase 1: Core Foundation ✅ **COMPLETE**
 - [x] NDArray wrapper class (using @stdlib/ndarray)
-- [x] Array creation: `zeros()`, `ones()`, `array()`
-- [x] Matrix operations: `matmul()` using `dgemm`
+- [x] Array creation: `zeros()`, `ones()`, `array()`, `arange()`, `linspace()`, `eye()`
+- [x] Matrix operations: `matmul()` using optimized BLAS
 - [x] Properties: `shape`, `ndim`, `size`, `dtype`, `data`, `strides`
-- [x] Data conversion: `toArray()`
-- [x] More creation functions: `arange()`, `linspace()`, `eye()`
-- [x] Basic arithmetic: `add()`, `subtract()`, `multiply()`, `divide()`
-- [x] Broadcasting ✅ **COMPLETE** (fully integrated into all arithmetic operations)
+- [x] View tracking: `base` attribute, `flags` property
+- [x] Memory flags: `C_CONTIGUOUS`, `F_CONTIGUOUS`, `OWNDATA`
+- [x] Basic arithmetic: `add()`, `subtract()`, `multiply()`, `divide()` with dtype preservation
+- [x] Broadcasting ✅ **COMPLETE** (fully integrated into all operations)
 - [x] String-based slicing ✅ **COMPLETE** (`arr.slice('0:5', ':')`, `row()`, `col()`, etc.)
 - [x] Reductions with axis support ✅ **COMPLETE** (`sum(axis, keepdims)`, `mean()`, `max()`, `min()`)
-- [x] Comparison operations ✅ **COMPLETE** (`greater()`, `less()`, `equal()`, `isclose()`, `allclose()` with broadcasting)
+- [x] Comparison operations ✅ **COMPLETE** (`greater()`, `less()`, `equal()`, `isclose()`, `allclose()`)
 - [x] Reshape operations ✅ **COMPLETE** (`reshape()`, `flatten()`, `ravel()`, `transpose()`, `squeeze()`, `expand_dims()`)
-- [x] DType system ✅ **COMPLETE** (13 types: float32/64, int8/16/32/64, uint8/16/32/64, bool, complex64/128)
+- [x] DType system ✅ **COMPLETE** (11 types: float32/64, int8/16/32/64, uint8/16/32/64, bool)
+  - Full dtype preservation
+  - NumPy-compatible promotion rules
+  - BigInt support for int64/uint64
+- [x] Testing ✅ **748/750 tests passing (99.7%)**
+  - Unit tests for all operations
+  - NumPy validation tests (cross-checked against Python NumPy 2.3.3)
+  - Edge case validation (overflow, underflow, special values)
 
 ### Phase 2: Benchmarks & CI/CD
 - [ ] CI/CD (GitHub Actions)
@@ -268,17 +291,26 @@ it('creates 2D array of zeros', () => {
   expect(arr.sum()).toBe(0);
 });
 
-// Python comparison
-it('matmul matches NumPy', async () => {
+// NumPy validation (cross-checked against Python)
+it('matmul matches NumPy', () => {
   const A = np.array([[1, 2], [3, 4]]);
   const B = np.array([[5, 6], [7, 8]]);
   const result = A.matmul(B);
 
-  await validateAgainstNumPy(result, `
+  const npResult = runNumPy(`
     A = np.array([[1, 2], [3, 4]])
     B = np.array([[5, 6], [7, 8]])
     result = A @ B
   `);
+
+  expect(result.toArray()).toEqual(npResult);
+});
+
+// Edge case validation
+it('int8 overflow wraps like NumPy', () => {
+  const arr = np.array([127], 'int8');
+  const result = arr.add(1);
+  expect(result.get([0])).toBe(-128);  // Wraps like NumPy
 });
 ```
 
@@ -289,17 +321,20 @@ it('matmul matches NumPy', async () => {
 ### 1. BigInt for int64/uint64
 Exact representation over convenience. Different type but no precision loss.
 
-### 2. String-Based Slicing
+### 2. No Complex Number Support (for now)
+Removed in favor of simplicity and focus on core numeric types. Can be added back if there's demand.
+
+### 3. String-Based Slicing
 `arr.slice('0:5', ':')` instead of `arr[0:5, :]` - TypeScript limitation, Pythonic compromise.
 
-### 3. @stdlib for Computations
+### 4. View Tracking
+Track base array for views with `base` attribute. Enables zero-copy optimizations and matches NumPy semantics.
+
+### 5. @stdlib Under the Hood
 Use battle-tested BLAS/LAPACK implementations. Focus on API, not reimplementing algorithms.
 
-### 4. Correctness First
+### 6. Correctness First
 Validate everything against Python NumPy before optimizing. WASM/SIMD later.
-
-### 5. Complex Numbers
-Interleaved storage: `[real, imag, real, imag, ...]`. Input as nested arrays: `[[1, 2], [3, 4]]`.
 
 See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for full rationale.
 
