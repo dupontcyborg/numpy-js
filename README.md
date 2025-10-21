@@ -270,9 +270,14 @@ See [API-REFERENCE.md](./docs/API-REFERENCE.md) for complete function checklist.
 
 ## Documentation
 
-- [ARCHITECTURE.md](./docs/ARCHITECTURE.md) - Design and implementation details
+### User Documentation
 - [API-REFERENCE.md](./docs/API-REFERENCE.md) - Complete API checklist
-- [IMPLEMENTATION-NOTES.md](./docs/IMPLEMENTATION-NOTES.md) - Development notes
+
+### Developer Documentation
+- [ARCHITECTURE.md](./docs/ARCHITECTURE.md) - Design and implementation details
+- [TESTING-GUIDE.md](./docs/TESTING-GUIDE.md) - How to add tests (unit, validation, benchmarks)
+- [IMPLEMENTATION-NOTES.md](./docs/IMPLEMENTATION-NOTES.md) - Development notes and decisions
+- [benchmarks/README.md](./benchmarks/README.md) - Performance benchmarking guide
 
 ---
 
@@ -342,7 +347,9 @@ See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for full rationale.
 
 ## Contributing
 
-Project is in early development. Setup:
+Project is in early development. We welcome contributions!
+
+### Setup
 
 ```bash
 git clone https://github.com/nicolasdupont/numpy-js.git
@@ -351,7 +358,19 @@ npm install
 npm test
 ```
 
-Pick a function from [API-REFERENCE.md](./docs/API-REFERENCE.md) and implement it!
+### Adding New Features
+
+1. Pick a function from [API-REFERENCE.md](./docs/API-REFERENCE.md)
+2. Follow the [TESTING-GUIDE.md](./docs/TESTING-GUIDE.md) to add:
+   - Implementation in `src/`
+   - Unit tests in `tests/unit/`
+   - NumPy validation tests in `tests/validation/`
+   - Performance benchmarks in `benchmarks/`
+3. Ensure all tests pass: `npm test`
+4. Run benchmarks: `npm run bench:quick`
+5. Submit a pull request
+
+See [TESTING-GUIDE.md](./docs/TESTING-GUIDE.md) for detailed instructions on adding tests.
 
 ---
 
@@ -364,6 +383,40 @@ Pick a function from [API-REFERENCE.md](./docs/API-REFERENCE.md) and implement i
 | .npy files | Yes | No | No | No |
 | Python-compatible | Yes | Mostly | No | No |
 | Size | TBD | Small | Tiny | Large |
+
+---
+
+## Benchmarking
+
+Compare NumPy-JS performance against Python NumPy:
+
+```bash
+# Run quick benchmarks (~1-2 min)
+npm run bench:quick
+
+# Run standard benchmarks (~5-10 min)
+npm run bench
+
+# Run comprehensive benchmarks (~30-60 min)
+npm run bench:full
+
+# View interactive HTML report
+npm run bench:view
+```
+
+**Quick Mode Results** (50x50 arrays):
+
+| Category | Avg Slowdown | Best | Worst |
+|----------|--------------|------|-------|
+| **Creation** | 13.3x | 1.0x (linspace) | 56.8x (zeros 1D) |
+| **Arithmetic** | 135.3x | 106.6x (multiply) | 155.4x (multiply) |
+| **Linear Algebra** | 64.8x | 38.1x (transpose) | 91.6x (matmul) |
+| **Reductions** | 54.1x | 19.9x (mean) | 124.5x (sum axis) |
+| **Reshape** | 28.5x | 9.4x (reshape) | 64.0x (flatten) |
+
+**Overall**: 55x slower on average (quick mode, small arrays)
+
+See [benchmarks/README.md](./benchmarks/README.md) for detailed benchmarking guide.
 
 ---
 

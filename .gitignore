@@ -20,3 +20,6 @@ build/
 
 # Husky
 .husky/
+
+# Benchmarks
+benchmarks/results/history

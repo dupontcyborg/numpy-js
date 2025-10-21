@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NumPy vs NumPy-JS Benchmark Results</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+    }
+
+    .subtitle {
+      color: #7f8c8d;
+      margin-bottom: 30px;
+      font-size: 1.1em;
+    }
+
+    .meta {
+      background: #ecf0f1;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 30px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .summary-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .summary-card.best {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .summary-card.worst {
+      background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+    }
+
+    .summary-card h3 {
+      font-size: 0.9em;
+      opacity: 0.9;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .summary-card .value {
+      font-size: 2.5em;
+      font-weight: bold;
+    }
+
+    .chart-container {
+      margin: 40px 0;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .chart-container h2 {
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    th {
+      background: #34495e;
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.85em;
+      letter-spacing: 0.5px;
+    }
+
+    tr:hover {
+      background: #f8f9fa;
+    }
+
+    .ratio {
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .ratio.good {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .ratio.ok {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .ratio.bad {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .category-section {
+      margin: 40px 0;
+    }
+
+    .category-section h2 {
+      color: #2c3e50;
+      border-bottom: 3px solid #3498db;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 2px solid #e0e0e0;
+      text-align: center;
+      color: #7f8c8d;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 NumPy vs NumPy-JS Benchmark Results</h1>
+    <p class="subtitle">Performance comparison of NumPy-JS against Python NumPy</p>
+
+    <div class="meta">
+      <div><strong>Timestamp:</strong> 10/20/2025, 9:27:32 PM</div>
+      <div><strong>Node:</strong> v22.11.0</div>
+      <div><strong>Python:</strong> 3.13.0</div>
+      <div><strong>NumPy:</strong> 2.3.3</div>
+      <div><strong>NumPy-JS:</strong> 0.0.1</div>
+      <div><strong>Total Benchmarks:</strong> 19</div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <h3>Average Slowdown</h3>
+        <div class="value">55.37x</div>
+      </div>
+      <div class="summary-card">
+        <h3>Median Slowdown</h3>
+        <div class="value">38.06x</div>
+      </div>
+      <div class="summary-card best">
+        <h3>Best Case</h3>
+        <div class="value">1.03x</div>
+      </div>
+      <div class="summary-card worst">
+        <h3>Worst Case</h3>
+        <div class="value">155.41x</div>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <h2>📊 Average Slowdown by Category</h2>
+      <canvas id="categoryChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+      <h2>📈 Detailed Results (All Benchmarks)</h2>
+      <canvas id="detailedChart"></canvas>
+    </div>
+
+    
+    <div class="category-section">
+      <h2>CREATION</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Benchmark</th>
+            <th>NumPy (ms)</th>
+            <th>NumPy-JS (ms)</th>
+            <th>Ratio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>zeros [100]</td>
+            <td>0.22μs</td>
+            <td>12.56μs</td>
+            <td><span class="ratio bad">56.84x</span></td>
+          </tr>
+          <tr>
+            <td>zeros [50x50]</td>
+            <td>0.60μs</td>
+            <td>3.12μs</td>
+            <td><span class="ratio bad">5.24x</span></td>
+          </tr>
+          <tr>
+            <td>ones [50x50]</td>
+            <td>0.76μs</td>
+            <td>3.18μs</td>
+            <td><span class="ratio ok">4.17x</span></td>
+          </tr>
+          <tr>
+            <td>arange(100)</td>
+            <td>0.28μs</td>
+            <td>1.94μs</td>
+            <td><span class="ratio bad">7.06x</span></td>
+          </tr>
+          <tr>
+            <td>linspace(0, 100, 100)</td>
+            <td>2.55μs</td>
+            <td>2.63μs</td>
+            <td><span class="ratio good">1.03x</span></td>
+          </tr>
+          <tr>
+            <td>eye(50)</td>
+            <td>1.20μs</td>
+            <td>6.43μs</td>
+            <td><span class="ratio bad">5.34x</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="category-section">
+      <h2>ARITHMETIC</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Benchmark</th>
+            <th>NumPy (ms)</th>
+            <th>NumPy-JS (ms)</th>
+            <th>Ratio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>add [50x50] + scalar</td>
+            <td>0.95μs</td>
+            <td>137.25μs</td>
+            <td><span class="ratio bad">143.83x</span></td>
+          </tr>
+          <tr>
+            <td>add [50x50] + [50x50]</td>
+            <td>0.87μs</td>
+            <td>118.43μs</td>
+            <td><span class="ratio bad">135.34x</span></td>
+          </tr>
+          <tr>
+            <td>multiply [50x50] * scalar</td>
+            <td>0.92μs</td>
+            <td>97.72μs</td>
+            <td><span class="ratio bad">106.64x</span></td>
+          </tr>
+          <tr>
+            <td>multiply [50x50] * [50x50]</td>
+            <td>0.65μs</td>
+            <td>100.41μs</td>
+            <td><span class="ratio bad">155.41x</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="category-section">
+      <h2>LINALG</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Benchmark</th>
+            <th>NumPy (ms)</th>
+            <th>NumPy-JS (ms)</th>
+            <th>Ratio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>matmul [50x50] @ [50x50]</td>
+            <td>2.78μs</td>
+            <td>254.45μs</td>
+            <td><span class="ratio bad">91.56x</span></td>
+          </tr>
+          <tr>
+            <td>transpose [50x50]</td>
+            <td>0.18μs</td>
+            <td>6.81μs</td>
+            <td><span class="ratio bad">38.06x</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="category-section">
+      <h2>REDUCTIONS</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Benchmark</th>
+            <th>NumPy (ms)</th>
+            <th>NumPy-JS (ms)</th>
+            <th>Ratio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>sum [50x50]</td>
+            <td>1.02μs</td>
+            <td>31.45μs</td>
+            <td><span class="ratio bad">30.80x</span></td>
+          </tr>
+          <tr>
+            <td>sum [50x50] axis=0</td>
+            <td>1.33μs</td>
+            <td>165.97μs</td>
+            <td><span class="ratio bad">124.50x</span></td>
+          </tr>
+          <tr>
+            <td>mean [50x50]</td>
+            <td>1.65μs</td>
+            <td>32.76μs</td>
+            <td><span class="ratio bad">19.85x</span></td>
+          </tr>
+          <tr>
+            <td>max [50x50]</td>
+            <td>0.77μs</td>
+            <td>31.81μs</td>
+            <td><span class="ratio bad">41.05x</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="category-section">
+      <h2>RESHAPE</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Benchmark</th>
+            <th>NumPy (ms)</th>
+            <th>NumPy-JS (ms)</th>
+            <th>Ratio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>reshape [50x50] -> [50x50] (contiguous)</td>
+            <td>0.22μs</td>
+            <td>2.03μs</td>
+            <td><span class="ratio bad">9.37x</span></td>
+          </tr>
+          <tr>
+            <td>flatten [50x50]</td>
+            <td>1.09μs</td>
+            <td>69.77μs</td>
+            <td><span class="ratio bad">63.91x</span></td>
+          </tr>
+          <tr>
+            <td>ravel [50x50]</td>
+            <td>0.19μs</td>
+            <td>2.27μs</td>
+            <td><span class="ratio bad">12.09x</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <p>Generated by NumPy-JS Benchmark Suite</p>
+      <p>Lower ratios are better (closer to NumPy performance)</p>
+    </div>
+  </div>
+
+  <script>
+    // Category chart
+    new Chart(document.getElementById('categoryChart'), {
+      type: 'bar',
+      data: {
+        labels: ["creation","arithmetic","linalg","reductions","reshape"],
+        datasets: [{
+          label: 'Average Slowdown (x times slower than NumPy)',
+          data: [13.280567938384047,135.30803606921864,64.80800575119525,54.04959655614031,28.455189590538154],
+          backgroundColor: 'rgba(102, 126, 234, 0.8)',
+          borderColor: 'rgba(102, 126, 234, 1)',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            display: true
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Slowdown Ratio'
+            }
+          }
+        }
+      }
+    });
+
+    // Detailed chart
+    new Chart(document.getElementById('detailedChart'), {
+      type: 'bar',
+      data: {
+        labels: ["zeros [100]","zeros [50x50]","ones [50x50]","arange(100)","linspace(0, 100, 100)","eye(50)","add [50x50] + scalar","add [50x50] + [50x50]","multiply [50x50] * scalar","multiply [50x50] * [50x50]","matmul [50x50] @ [50x50]","transpose [50x50]","sum [50x50]","sum [50x50] axis=0","mean [50x50]","max [50x50]","reshape [50x50] -> [50x50] (contiguous)","flatten [50x50]","ravel [50x50]"],
+        datasets: [{
+          label: 'Slowdown Ratio (x times slower)',
+          data: [56.84281559622085,5.236078061566127,4.174821744555098,7.060710871486857,1.0309699044715281,5.338011452003815,143.83341757379242,135.34289573152026,106.64289832098189,155.41293265058,91.55835718304006,38.05765431935044,30.79882939942714,124.49674975340419,19.85471228035989,41.048094791370005,9.367490555519733,63.910099898621745,12.087978317472986],
+          backgroundColor: ["rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)"],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        indexAxis: 'y',
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Slowdown Ratio'
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
