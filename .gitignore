@@ -22,4 +22,8 @@ build/
 .husky/
 
 # Benchmarks
-benchmarks/results/history
+benchmarks/results/history/
+benchmarks/dist/
+
+# Keep latest benchmark results for README
+!benchmarks/results/plots/latest.png

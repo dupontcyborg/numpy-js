@@ -11,6 +11,7 @@ import { runBenchmarks } from './runner';
 import { runPythonBenchmarks } from './python-runner';
 import { compareResults, calculateSummary, printResults } from './analysis';
 import { generateHTMLReport } from './visualization';
+import { generatePNGChart } from './chart-generator';
 import type { BenchmarkMode, BenchmarkOptions, BenchmarkReport } from './types';
 
 async function main() {
@@ -120,6 +121,12 @@ async function main() {
     const htmlPath = path.join(plotsDir, 'latest.html');
     generateHTMLReport(report, htmlPath);
     console.log(`HTML report saved to: ${htmlPath}`);
+
+    // Generate PNG chart
+    const pngPath = path.join(plotsDir, 'latest.png');
+    await generatePNGChart(report, pngPath);
+    console.log(`PNG chart saved to: ${pngPath}`);
+
     console.log(`\nView report: open ${htmlPath}`);
   } catch (error) {
     console.error('❌ Benchmark failed:', error);

@@ -111,6 +111,13 @@ Features:
 - Detailed horizontal bar chart for all benchmarks
 - Color-coded results tables
 
+### PNG Chart
+
+A static PNG chart is also generated for easy sharing:
+- `benchmarks/results/plots/latest.png`
+
+This chart is displayed in the main README and shows the average slowdown by category. It's tracked in git so performance changes are visible in pull requests.
+
 ## Requirements
 
 - **Node.js**: >= 18.0.0
