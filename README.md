@@ -408,18 +408,6 @@ npm run bench:view
 
 ![Benchmark Results](./benchmarks/results/plots/latest.png)
 
-**Quick Mode Results** (50x50 arrays):
-
-| Category | Avg Slowdown | Best | Worst |
-|----------|--------------|------|-------|
-| **Creation** | 12.0x | 0.9x (linspace) | 47.7x (zeros 1D) |
-| **Arithmetic** | 116.1x | 94.3x (add arrays) | 140.6x (multiply) |
-| **Linear Algebra** | 69.7x | 52.0x (transpose) | 87.4x (matmul) |
-| **Reductions** | 46.9x | 20.4x (mean) | 109.0x (sum axis) |
-| **Reshape** | 35.0x | 7.6x (reshape) | 86.7x (flatten) |
-
-**Overall**: 51x slower on average (quick mode, small arrays)
-
 See [benchmarks/README.md](./benchmarks/README.md) for detailed benchmarking guide.
 
 ---
