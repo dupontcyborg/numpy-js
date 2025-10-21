@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { zeros, ones, array } from '../../src/core/ndarray';
+import { ones } from '../../src/core/ndarray';
 import { checkNumPyAvailable, runNumPy } from './numpy-oracle';
 import type { DType } from '../../src/core/dtype';
 

@@ -15,23 +15,6 @@ describe('NumPy Validation: DType Promotion', () => {
     }
   });
 
-  // Test all dtype pairs to ensure our promotion matches NumPy
-  const dtypes: DType[] = [
-    'bool',
-    'int8',
-    'int16',
-    'int32',
-    'int64',
-    'uint8',
-    'uint16',
-    'uint32',
-    'uint64',
-    'float32',
-    'float64',
-    'complex64',
-    'complex128',
-  ];
-
   // Map our dtypes to NumPy dtypes
   const dtypeMap: Record<DType, string> = {
     bool: 'bool_',

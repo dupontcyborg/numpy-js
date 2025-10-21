@@ -114,14 +114,6 @@ export function getDTypeSize(dtype: DType): number {
 }
 
 /**
- * Check if dtype is complex
- * @deprecated Complex numbers are no longer supported
- */
-export function isComplexDType(dtype: DType): boolean {
-  return false;
-}
-
-/**
  * Check if dtype is integer
  */
 export function isIntegerDType(dtype: DType): boolean {

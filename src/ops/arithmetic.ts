@@ -9,7 +9,7 @@
  */
 
 import { ArrayStorage } from '../core/storage';
-import { isBigIntDType, isComplexDType } from '../core/dtype';
+import { isBigIntDType } from '../core/dtype';
 import { elementwiseBinaryOp } from '../internal/compute';
 
 /**
@@ -90,14 +90,6 @@ function addScalar(storage: ArrayStorage, scalar: number): ArrayStorage {
     for (let i = 0; i < size; i++) {
       resultTyped[i] = thisTyped[i]! + scalarBig;
     }
-  } else if (isComplexDType(dtype)) {
-    // Complex arithmetic: (a+bi) + c = (a+c) + bi
-    const thisTyped = data as Float32Array | Float64Array;
-    const resultTyped = resultData as Float32Array | Float64Array;
-    for (let i = 0; i < size; i++) {
-      resultTyped[i * 2] = thisTyped[i * 2]! + scalar; // real part
-      resultTyped[i * 2 + 1] = thisTyped[i * 2 + 1]!; // imaginary part unchanged
-    }
   } else {
     // Regular numeric types
     for (let i = 0; i < size; i++) {
@@ -129,14 +121,6 @@ function subtractScalar(storage: ArrayStorage, scalar: number): ArrayStorage {
     const scalarBig = BigInt(Math.round(scalar));
     for (let i = 0; i < size; i++) {
       resultTyped[i] = thisTyped[i]! - scalarBig;
-    }
-  } else if (isComplexDType(dtype)) {
-    // Complex arithmetic: (a+bi) - c = (a-c) + bi
-    const thisTyped = data as Float32Array | Float64Array;
-    const resultTyped = resultData as Float32Array | Float64Array;
-    for (let i = 0; i < size; i++) {
-      resultTyped[i * 2] = thisTyped[i * 2]! - scalar; // real part
-      resultTyped[i * 2 + 1] = thisTyped[i * 2 + 1]!; // imaginary part unchanged
     }
   } else {
     // Regular numeric types
@@ -170,14 +154,6 @@ function multiplyScalar(storage: ArrayStorage, scalar: number): ArrayStorage {
     for (let i = 0; i < size; i++) {
       resultTyped[i] = thisTyped[i]! * scalarBig;
     }
-  } else if (isComplexDType(dtype)) {
-    // Complex arithmetic: (a+bi) * c = (ac) + (bc)i
-    const thisTyped = data as Float32Array | Float64Array;
-    const resultTyped = resultData as Float32Array | Float64Array;
-    for (let i = 0; i < size; i++) {
-      resultTyped[i * 2] = thisTyped[i * 2]! * scalar; // real part
-      resultTyped[i * 2 + 1] = thisTyped[i * 2 + 1]! * scalar; // imaginary part
-    }
   } else {
     // Regular numeric types
     for (let i = 0; i < size; i++) {
@@ -209,14 +185,6 @@ function divideScalar(storage: ArrayStorage, scalar: number): ArrayStorage {
     const scalarBig = BigInt(Math.round(scalar));
     for (let i = 0; i < size; i++) {
       resultTyped[i] = thisTyped[i]! / scalarBig;
-    }
-  } else if (isComplexDType(dtype)) {
-    // Complex division by scalar: (a+bi) / c = (a/c) + (b/c)i
-    const thisTyped = data as Float32Array | Float64Array;
-    const resultTyped = resultData as Float32Array | Float64Array;
-    for (let i = 0; i < size; i++) {
-      resultTyped[i * 2] = thisTyped[i * 2]! / scalar; // real part
-      resultTyped[i * 2 + 1] = thisTyped[i * 2 + 1]! / scalar; // imaginary part
     }
   } else {
     // Regular numeric types

@@ -245,7 +245,7 @@ import * as np from 'numpy-js/browser';
   - [ ] Publish workflow
 - [ ] Implement benchmarks
   - [ ] Regression (vs. previous runs)
-  - [ ] Comparison against Python NumPy
+  - [X] Comparison against Python NumPy
   - [ ] Automated in CI/CD
 
 ### Phase 3: Essential Operations

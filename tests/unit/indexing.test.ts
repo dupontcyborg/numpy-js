@@ -464,7 +464,9 @@ describe('Array Indexing', () => {
 
       it('throws when too many indices provided', () => {
         const arr = zeros([3], 'float64');
-        expect(() => arr.set([0, 0], 1)).toThrow(/Index has 2 dimensions, but array has 1 dimensions/);
+        expect(() => arr.set([0, 0], 1)).toThrow(
+          /Index has 2 dimensions, but array has 1 dimensions/
+        );
       });
 
       it('provides clear error message with axis information', () => {

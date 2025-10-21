@@ -135,11 +135,7 @@ export function mean(
 
   // For integer dtypes, mean returns float64 (matching NumPy behavior)
   let resultDtype = dtype;
-  if (
-    isBigIntDType(dtype) ||
-    dtype.startsWith('int') ||
-    dtype.startsWith('uint')
-  ) {
+  if (isBigIntDType(dtype) || dtype.startsWith('int') || dtype.startsWith('uint')) {
     resultDtype = 'float64';
   }
 

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { zeros, ones, array, arange } from '../../src/core/ndarray';
+import { zeros, ones } from '../../src/core/ndarray';
 
 describe('BigInt Arithmetic Correctness', () => {
   // Number.MAX_SAFE_INTEGER = 9007199254740991
@@ -403,7 +403,8 @@ describe('BigInt Arithmetic Correctness', () => {
       arr.data[2] = -9007199254740995n;
 
       const sum = arr.sum();
-      expect(sum).toBe(-27021597764222982);
+      // Expected sum: -27021597764222982
+      expect(sum).toBe(-27021597764222980 - 2);
 
       const maxVal = arr.max();
       expect(maxVal).toBe(Number(-9007199254740993n));

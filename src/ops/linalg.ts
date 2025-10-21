@@ -25,16 +25,15 @@ export function matmul(a: ArrayStorage, b: ArrayStorage): ArrayStorage {
   const [k2 = 0, n = 0] = b.shape;
 
   if (k !== k2) {
-    throw new Error(
-      `matmul shape mismatch: (${m},${k}) @ (${k2},${n})`
-    );
+    throw new Error(`matmul shape mismatch: (${m},${k}) @ (${k2},${n})`);
   }
 
   // Determine result dtype (promote inputs, but use float64 for integer types)
   const resultDtype = promoteDTypes(a.dtype, b.dtype);
-  const computeDtype = resultDtype.startsWith('int') || resultDtype.startsWith('uint') || resultDtype === 'bool'
-    ? 'float64'
-    : resultDtype;
+  const computeDtype =
+    resultDtype.startsWith('int') || resultDtype.startsWith('uint') || resultDtype === 'bool'
+      ? 'float64'
+      : resultDtype;
 
   // For now, we only support float64 matmul (using dgemm)
   // TODO: Add float32 support using sgemm
@@ -43,8 +42,14 @@ export function matmul(a: ArrayStorage, b: ArrayStorage): ArrayStorage {
   }
 
   // Convert inputs to Float64Array if needed
-  const aData = a.dtype === 'float64' ? (a.data as Float64Array) : Float64Array.from(a.data as any);
-  const bData = b.dtype === 'float64' ? (b.data as Float64Array) : Float64Array.from(b.data as any);
+  const aData =
+    a.dtype === 'float64'
+      ? (a.data as Float64Array)
+      : Float64Array.from(Array.from(a.data).map(Number));
+  const bData =
+    b.dtype === 'float64'
+      ? (b.data as Float64Array)
+      : Float64Array.from(Array.from(b.data).map(Number));
 
   // Create result array
   const result = ArrayStorage.zeros([m, n], 'float64');

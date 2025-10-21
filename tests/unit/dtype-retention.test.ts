@@ -135,7 +135,16 @@ describe('DType Retention', () => {
 
     it('mean() converts integer types to float64', () => {
       // Integer types should convert to float64
-      const intTypes: DType[] = ['int32', 'int16', 'int8', 'uint32', 'uint16', 'uint8', 'int64', 'uint64'];
+      const intTypes: DType[] = [
+        'int32',
+        'int16',
+        'int8',
+        'uint32',
+        'uint16',
+        'uint8',
+        'int64',
+        'uint64',
+      ];
       for (const dtype of intTypes) {
         const arr = ones([2, 3], dtype);
         const result = arr.mean(0);
@@ -202,7 +211,10 @@ describe('DType Retention', () => {
       const testTypes = allDTypes.filter((d) => d !== 'int64' && d !== 'uint64');
       for (const dtype of testTypes) {
         const arr = zeros([4, 5], dtype);
-        const sliced = arr.slice([[0, 2], [1, 3]]);
+        const sliced = arr.slice([
+          [0, 2],
+          [1, 3],
+        ]);
         expect(sliced.dtype).toBe(dtype);
       }
     });

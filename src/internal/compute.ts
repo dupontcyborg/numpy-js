@@ -41,7 +41,7 @@ export function elementwiseBinaryOp(
   try {
     [aBroadcast, bBroadcast] = broadcastArrays([a.stdlib, b.stdlib]) as [
       StdlibNDArrayInternal,
-      StdlibNDArrayInternal
+      StdlibNDArrayInternal,
     ];
   } catch (error) {
     // Re-throw with NumPy-compatible error message
@@ -121,7 +121,7 @@ export function elementwiseComparisonOp(
   try {
     [aBroadcast, bBroadcast] = broadcastArrays([a.stdlib, b.stdlib]) as [
       StdlibNDArrayInternal,
-      StdlibNDArrayInternal
+      StdlibNDArrayInternal,
     ];
   } catch (error) {
     // Re-throw with NumPy-compatible error message

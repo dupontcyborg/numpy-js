@@ -27,3 +27,9 @@ benchmarks/dist/
 
 # Keep latest benchmark results for README
 !benchmarks/results/plots/latest.png
+
+# Coverage
+coverage/
+
+# macOS
+.DS_Store
