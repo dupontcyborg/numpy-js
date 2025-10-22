@@ -1,8 +1,8 @@
 # NumPy.js Remaining Tasks
 
 **Status**: Updated October 20, 2025
-**Progress**: 22/33 original tasks complete (67%)
-**Remaining**: 7 tasks
+**Progress**: 23/33 original tasks complete (70%)
+**Remaining**: 6 tasks
 
 ---
 
@@ -99,45 +99,14 @@ arr.add(1);  // Silently wraps to -128
 
 ---
 
-### Design Improvements (1 task)
+### Design Improvements (0 tasks)
 
-
-#### **Task #6**: Add comprehensive dtype promotion matrix tests
-
-**Location**: Expand `tests/unit/dtype-promotion-matrix.test.ts` or add to existing tests
-**Priority**: Medium
-**Estimated time**: 1-2 hours
-
-**Coverage**: Test all 11×11 dtype combinations (complex removed)
-
-**Current**: ~34 promotion tests
-**Target**: ~121 combinations (11 dtypes × 11 dtypes)
-
-**Implementation**:
-```typescript
-describe('Complete dtype promotion matrix', () => {
-  const allDTypes: DType[] = [
-    'float64', 'float32',
-    'int64', 'int32', 'int16', 'int8',
-    'uint64', 'uint32', 'uint16', 'uint8',
-    'bool'
-  ];
-
-  for (const dtype1 of allDTypes) {
-    for (const dtype2 of allDTypes) {
-      it(`promotes ${dtype1} + ${dtype2}`, () => {
-        const a = ones([2], dtype1);
-        const b = ones([2], dtype2);
-        const result = a.add(b);
-        // Verify result dtype follows NumPy rules
-        expect(result.dtype).toBe(expectedPromotion[dtype1][dtype2]);
-      });
-    }
-  }
-});
-```
-
-**Note**: Can generate expected promotions from NumPy for validation
+✅ **COMPLETED**: Task #6 - Comprehensive dtype promotion matrix tests (October 20, 2025)
+- Created `tests/unit/dtype-promotion-matrix.test.ts` with all 121 combinations (385 tests)
+- Created `tests/validation/dtype-promotion-matrix.numpy.test.ts` with NumPy validation (165 tests)
+- Fixed `promoteDTypes()` implementation to match NumPy behavior exactly
+- Optimized validation tests with batched Python calls (9s → 3.4s, 2.6x faster)
+- All tests pass: 385 unit tests + 165 NumPy validation tests
 
 ---
 

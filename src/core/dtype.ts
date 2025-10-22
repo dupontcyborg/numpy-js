@@ -182,14 +182,40 @@ export function promoteDTypes(dtype1: DType, dtype2: DType): DType {
 
   // Float types - integer + float always promotes to float
   if (isFloatDType(dtype1) || isFloatDType(dtype2)) {
-    // NumPy behavior: int32 + float32 → float64 (conservative)
-    // But float32 + float32 → float32
+    // NumPy behavior: Promote to the float type
+    // float64 always wins
     if (dtype1 === 'float64' || dtype2 === 'float64') return 'float64';
-    if (isFloatDType(dtype1) && isFloatDType(dtype2)) {
-      return 'float32'; // Both are float32
+
+    // float32 with small integers (8, 16 bit) → float32
+    // float32 with large integers (32, 64 bit) → float64 (precision safety)
+    // This is because float32 has 24-bit mantissa, can't hold all int32 values
+    if (dtype1 === 'float32') {
+      const intDtype = dtype2;
+      if (
+        intDtype === 'int32' ||
+        intDtype === 'int64' ||
+        intDtype === 'uint32' ||
+        intDtype === 'uint64'
+      ) {
+        return 'float64';
+      }
+      return 'float32';
     }
-    // int + float → float64 for safety
-    return 'float64';
+    if (dtype2 === 'float32') {
+      const intDtype = dtype1;
+      if (
+        intDtype === 'int32' ||
+        intDtype === 'int64' ||
+        intDtype === 'uint32' ||
+        intDtype === 'uint64'
+      ) {
+        return 'float64';
+      }
+      return 'float32';
+    }
+
+    // Both are float32
+    return 'float32';
   }
 
   // Integer types - complex promotion rules
@@ -243,13 +269,38 @@ export function promoteDTypes(dtype1: DType, dtype2: DType): DType {
     }
   }
 
-  // Different signedness, different sizes: promote to larger type that can hold both
-  // This is complex, so we use conservative rules
-  const maxSize = Math.max(size1, size2);
-  if (maxSize === 64) return 'float64'; // Can't safely hold both in integer
-  if (maxSize === 32) return 'int64';
-  if (maxSize === 16) return 'int32';
-  return 'int16';
+  // Different signedness, different sizes: promote to type that can hold both
+  // NumPy behavior: If signed type is larger, use it; otherwise promote conservatively
+
+  // If signed int is larger than unsigned int, signed int can hold unsigned
+  if (isSigned1 && isUnsigned2) {
+    if (size1 > size2) {
+      // e.g., int16 + uint8 → int16, int32 + uint16 → int32
+      return dtype1;
+    }
+    // Otherwise need larger signed type
+    // e.g., int8 + uint16 → int32
+    if (size2 === 8) return 'int16';
+    if (size2 === 16) return 'int32';
+    if (size2 === 32) return 'int64';
+    return 'float64'; // uint64 with smaller signed → float64
+  }
+
+  if (isUnsigned1 && isSigned2) {
+    if (size2 > size1) {
+      // e.g., uint8 + int16 → int16, uint16 + int32 → int32
+      return dtype2;
+    }
+    // Otherwise need larger signed type
+    // e.g., uint16 + int8 → int32
+    if (size1 === 8) return 'int16';
+    if (size1 === 16) return 'int32';
+    if (size1 === 32) return 'int64';
+    return 'float64'; // uint64 with smaller signed → float64
+  }
+
+  // Fallback (shouldn't reach here if logic above is complete)
+  return 'float64';
 }
 
 /**
