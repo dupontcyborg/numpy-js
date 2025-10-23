@@ -28,6 +28,24 @@ export interface NumPyResult {
 }
 
 /**
+ * Deserialize values from Python, converting special markers back to Infinity/NaN
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function deserializeValue(val: any): any {
+  if (Array.isArray(val)) {
+    return val.map((v) => deserializeValue(v));
+  } else if (val === '__Infinity__') {
+    return Infinity;
+  } else if (val === '__-Infinity__') {
+    return -Infinity;
+  } else if (val === '__NaN__') {
+    return NaN;
+  } else {
+    return val;
+  }
+}
+
+/**
  * Execute Python NumPy code and return the result
  */
 export function runNumPy(code: string): NumPyResult {
@@ -41,12 +59,37 @@ export function runNumPy(code: string): NumPyResult {
   const pythonCode = `import numpy as np
 import json
 import sys
+import math
+
+def serialize_value(val):
+    """Convert NumPy arrays/values to JSON-serializable format, handling inf/nan"""
+    if isinstance(val, np.ndarray):
+        # Convert array to nested lists, then recursively serialize
+        # tolist() handles multi-dimensional arrays correctly
+        return serialize_value(val.tolist())
+    elif isinstance(val, list):
+        return [serialize_value(v) for v in val]
+    # Check bool BEFORE int (Python bool is subclass of int)
+    elif isinstance(val, (bool, np.bool_)):
+        return bool(val)
+    elif isinstance(val, (float, np.floating)):
+        if math.isnan(val):
+            return "__NaN__"
+        elif math.isinf(val):
+            return "__Infinity__" if val > 0 else "__-Infinity__"
+        else:
+            return float(val)
+    elif isinstance(val, (int, np.integer)):
+        return int(val)
+    else:
+        return val
+
 try:
 ${indentedCode}
     if isinstance(result, np.ndarray):
-        output = {'value': result.tolist(), 'dtype': str(result.dtype), 'shape': list(result.shape)}
+        output = {'value': serialize_value(result), 'dtype': str(result.dtype), 'shape': list(result.shape)}
     elif isinstance(result, (np.integer, np.floating)):
-        output = {'value': float(result), 'dtype': str(type(result).__name__), 'shape': []}
+        output = {'value': serialize_value(result), 'dtype': str(type(result).__name__), 'shape': []}
     else:
         output = {'value': result, 'dtype': str(type(result).__name__), 'shape': []}
     print(json.dumps(output))
@@ -71,6 +114,8 @@ except Exception as e:
     if ('error' in parsed) {
       throw new Error(`NumPy error: ${parsed.error}`);
     }
+    // Deserialize special float values
+    parsed.value = deserializeValue(parsed.value);
     return parsed as NumPyResult;
   } catch (error: unknown) {
     const err = error as { stderr?: Buffer; message?: string };
@@ -104,6 +149,12 @@ export function closeEnough(
   rtol: number = 1e-5,
   atol: number = 1e-8
 ): boolean {
+  // Handle special values
+  if (Number.isNaN(a) && Number.isNaN(b)) return true;
+  if (a === Infinity && b === Infinity) return true;
+  if (a === -Infinity && b === -Infinity) return true;
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+
   return Math.abs(a - b) <= atol + rtol * Math.abs(b);
 }
 

@@ -134,14 +134,24 @@ result = arr / 2
       const b = array([1, 0, 1], 'int32');
       const result = a.divide(b);
 
-      // NumPy promotes int32/int32 division to float64 (verified separately)
-      // Can't use runNumPy here because result contains Infinity which isn't valid JSON
-      expect(result.dtype).toBe('float64');
+      const npResult = runNumPy(`
+import numpy as np
+import warnings
+a = np.array([1, 2, 3], dtype=np.int32)
+b = np.array([1, 0, 1], dtype=np.int32)
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    result = a / b
+      `);
 
-      // Check our result values match NumPy behavior
-      expect(result.get([0])).toBe(1); // 1 / 1 = 1
-      expect(result.get([1])).toBe(Infinity); // 2 / 0 = Inf (NumPy returns inf)
-      expect(result.get([2])).toBe(3); // 3 / 1 = 3
+      // NumPy promotes int32/int32 division to float64
+      expect(result.dtype).toBe('float64');
+      expect(npResult.dtype).toBe('float64');
+
+      // Check our result values match NumPy exactly (including Infinity)
+      expect(result.get([0])).toBe(npResult.value[0]); // 1 / 1 = 1
+      expect(result.get([1])).toBe(npResult.value[1]); // 2 / 0 = Inf
+      expect(result.get([2])).toBe(npResult.value[2]); // 3 / 1 = 3
     });
 
     it('float64 array / array without zeros matches NumPy', () => {

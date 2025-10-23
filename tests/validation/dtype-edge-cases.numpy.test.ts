@@ -122,52 +122,91 @@ result = arr - 1
       const arr = array([Infinity], 'float64');
       const doubled = arr.multiply(2);
 
-      // Can't serialize Infinity in JSON, so just verify behavior
+      const npResult = runNumPy(`
+arr = np.array([np.inf], dtype=np.float64)
+result = arr * 2
+      `);
+
       expect(doubled.get([0])).toBe(Infinity);
+      expect(doubled.get([0])).toBe(npResult.value[0]);
     });
 
     it('handles negative infinity like NumPy', () => {
       const arr = array([-Infinity], 'float64');
       const doubled = arr.multiply(2);
 
-      // Can't serialize -Infinity in JSON, so just verify behavior
+      const npResult = runNumPy(`
+arr = np.array([-np.inf], dtype=np.float64)
+result = arr * 2
+      `);
+
       expect(doubled.get([0])).toBe(-Infinity);
+      expect(doubled.get([0])).toBe(npResult.value[0]);
     });
 
     it('handles NaN like NumPy', () => {
       const arr = array([NaN], 'float64');
       const added = arr.add(1);
 
-      // Can't serialize NaN in JSON, so just verify behavior
+      const npResult = runNumPy(`
+arr = np.array([np.nan], dtype=np.float64)
+result = arr + 1
+      `);
+
       expect(Number.isNaN(added.get([0]))).toBe(true);
+      expect(Number.isNaN(npResult.value[0])).toBe(true);
     });
 
     it('inf + inf = inf like NumPy', () => {
       const arr = array([Infinity], 'float64');
       const result = arr.add(Infinity);
 
+      const npResult = runNumPy(`
+arr = np.array([np.inf], dtype=np.float64)
+result = arr + np.inf
+      `);
+
       expect(result.get([0])).toBe(Infinity);
+      expect(result.get([0])).toBe(npResult.value[0]);
     });
 
     it('inf - inf = NaN like NumPy', () => {
       const arr = array([Infinity], 'float64');
       const result = arr.subtract(Infinity);
 
+      const npResult = runNumPy(`
+arr = np.array([np.inf], dtype=np.float64)
+result = arr - np.inf
+      `);
+
       expect(Number.isNaN(result.get([0]))).toBe(true);
+      expect(Number.isNaN(npResult.value[0])).toBe(true);
     });
 
     it('0 * inf = NaN like NumPy', () => {
       const arr = array([0], 'float64');
       const result = arr.multiply(Infinity);
 
+      const npResult = runNumPy(`
+arr = np.array([0], dtype=np.float64)
+result = arr * np.inf
+      `);
+
       expect(Number.isNaN(result.get([0]))).toBe(true);
+      expect(Number.isNaN(npResult.value[0])).toBe(true);
     });
 
     it('inf / inf = NaN like NumPy', () => {
       const arr = array([Infinity], 'float64');
       const result = arr.divide(Infinity);
 
+      const npResult = runNumPy(`
+arr = np.array([np.inf], dtype=np.float64)
+result = arr / np.inf
+      `);
+
       expect(Number.isNaN(result.get([0]))).toBe(true);
+      expect(Number.isNaN(npResult.value[0])).toBe(true);
     });
   });
 
@@ -176,24 +215,48 @@ result = arr - 1
       const arr = array([1.0], 'float64');
       const result = arr.divide(0);
 
-      // JavaScript naturally produces Infinity, matching NumPy
+      const npResult = runNumPy(`
+import warnings
+arr = np.array([1.0], dtype=np.float64)
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    result = arr / 0
+      `);
+
       expect(result.get([0])).toBe(Infinity);
+      expect(result.get([0])).toBe(npResult.value[0]);
     });
 
     it('negative float / 0 = -inf like NumPy', () => {
       const arr = array([-1.0], 'float64');
       const result = arr.divide(0);
 
-      // JavaScript naturally produces -Infinity, matching NumPy
+      const npResult = runNumPy(`
+import warnings
+arr = np.array([-1.0], dtype=np.float64)
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    result = arr / 0
+      `);
+
       expect(result.get([0])).toBe(-Infinity);
+      expect(result.get([0])).toBe(npResult.value[0]);
     });
 
     it('0.0 / 0.0 = NaN like NumPy', () => {
       const arr = array([0.0], 'float64');
       const result = arr.divide(0);
 
-      // JavaScript naturally produces NaN, matching NumPy
+      const npResult = runNumPy(`
+import warnings
+arr = np.array([0.0], dtype=np.float64)
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    result = arr / 0
+      `);
+
       expect(Number.isNaN(result.get([0]))).toBe(true);
+      expect(Number.isNaN(npResult.value[0])).toBe(true);
     });
   });
 
