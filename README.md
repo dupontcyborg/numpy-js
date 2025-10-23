@@ -125,6 +125,7 @@ const loaded = np.load('matrix.npy');
 ```
 
 **We build**: NumPy API, NDArray class, broadcasting, slicing, view tracking
+
 **We use**: @stdlib for proven numerical computations
 
 ---
