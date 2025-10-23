@@ -66,8 +66,8 @@ All operations preserve dtype or follow NumPy promotion rules:
 ### Numerical Ranges
 - [x] `arange(start, stop, step?, dtype?)` - Evenly spaced values
 - [x] `linspace(start, stop, num?)` - Evenly spaced over interval
-- [ ] `logspace(start, stop, num?, base?)` - Log-spaced values
-- [ ] `geomspace(start, stop, num?)` - Geometric progression
+- [x] `logspace(start, stop, num?, base?)` - Log-spaced values
+- [x] `geomspace(start, stop, num?)` - Geometric progression
 
 ### Like Functions
 - [x] `zeros_like(a, dtype?)` - Zeros with same shape
@@ -392,12 +392,12 @@ All operations preserve dtype or follow NumPy promotion rules:
 ## Progress Summary
 
 **Total Functions**: ~350 core functions
-**Implemented**: 36 functions (10%)
+**Implemented**: 38 functions (11%)
 
-### Completed (36)
+### Completed (38)
 
-**Array Creation** (15):
-- ✅ zeros, ones, array, arange, linspace, eye, empty, full, identity, asarray, copy
+**Array Creation** (17):
+- ✅ zeros, ones, array, arange, linspace, logspace, geomspace, eye, empty, full, identity, asarray, copy
 - ✅ zeros_like, ones_like, empty_like, full_like
 
 **Arithmetic Operations** (4):
@@ -418,16 +418,16 @@ All operations preserve dtype or follow NumPy promotion rules:
 
 ### Testing
 
-- **1473/1475 tests passing (99.9%)**
-  - 250 unit tests (creation, arithmetic, comparisons, reductions, reshape, slicing, dtype preservation, view tracking)
-  - 201 NumPy validation tests (cross-checked against Python NumPy 2.3.3)
+- **1499/1501 tests passing (99.9%)**
+  - 264 unit tests (creation, arithmetic, comparisons, reductions, reshape, slicing, dtype preservation, view tracking)
+  - 213 NumPy validation tests (cross-checked against Python NumPy 2.3.3)
     - Including dtype edge cases, overflow/underflow, special values
   - 1022 additional tests (API comparison, edge cases, broadcasting, indexing, dtype promotion matrix)
 
 ### Priority Tiers
 
 **Tier 1 - Essential** (~50 functions):
-- Array creation: ✅ zeros, ones, array, arange, linspace, eye, empty, full, identity, asarray, copy (complete)
+- Array creation: ✅ zeros, ones, array, arange, linspace, logspace, geomspace, eye, empty, full, identity, asarray, copy (complete)
 - Basic math: ✅ add, ✅ multiply, ✅ matmul, ⬜ dot
 - Slicing and indexing: ⬜ TODO
 - Broadcasting: ⬜ TODO (partial support)

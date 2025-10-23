@@ -9,6 +9,8 @@ import {
   array,
   arange,
   linspace,
+  logspace,
+  geomspace,
   eye,
   empty,
   full,
@@ -193,6 +195,106 @@ describe('NumPy Validation: Array Creation', () => {
     it('matches NumPy for single point', () => {
       const jsResult = linspace(5, 10, 1);
       const pyResult = runNumPy('result = np.linspace(5, 10, 1)');
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+  });
+
+  describe('logspace', () => {
+    it('matches NumPy for default base 10', () => {
+      const jsResult = logspace(0, 2, 11);
+      const pyResult = runNumPy('result = np.logspace(0, 2, 11)');
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy with custom base', () => {
+      const jsResult = logspace(0, 4, 5, 2);
+      const pyResult = runNumPy('result = np.logspace(0, 4, 5, base=2)');
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for negative exponents', () => {
+      const jsResult = logspace(-2, 0, 5);
+      const pyResult = runNumPy('result = np.logspace(-2, 0, 5)');
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for single point', () => {
+      const jsResult = logspace(1, 3, 1);
+      const pyResult = runNumPy('result = np.logspace(1, 3, 1)');
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for default 50 points', () => {
+      const jsResult = logspace(0, 1);
+      const pyResult = runNumPy('result = np.logspace(0, 1)');
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for base e', () => {
+      const jsResult = logspace(0, 2, 5, Math.E);
+      const pyResult = runNumPy('import math; result = np.logspace(0, 2, 5, base=math.e)');
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+  });
+
+  describe('geomspace', () => {
+    it('matches NumPy for basic geometric progression', () => {
+      const jsResult = geomspace(1, 1000, 4);
+      const pyResult = runNumPy('result = np.geomspace(1, 1000, 4)');
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for small values', () => {
+      const jsResult = geomspace(0.01, 1, 5);
+      const pyResult = runNumPy('result = np.geomspace(0.01, 1, 5)');
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for negative values', () => {
+      const jsResult = geomspace(-1, -1000, 4);
+      const pyResult = runNumPy('result = np.geomspace(-1, -1000, 4)');
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for single point', () => {
+      const jsResult = geomspace(5, 10, 1);
+      const pyResult = runNumPy('result = np.geomspace(5, 10, 1)');
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for default 50 points', () => {
+      const jsResult = geomspace(1, 100);
+      const pyResult = runNumPy('result = np.geomspace(1, 100)');
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for large range', () => {
+      const jsResult = geomspace(1, 1e6, 7);
+      const pyResult = runNumPy('result = np.geomspace(1, 1e6, 7)');
 
       expect(jsResult.shape).toEqual(pyResult.shape);
       expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);

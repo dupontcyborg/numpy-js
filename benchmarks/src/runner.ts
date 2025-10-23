@@ -76,6 +76,10 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
     return np.arange(0, arrays['n'], 1);
   } else if (operation === 'linspace') {
     return np.linspace(0, 100, arrays['n']);
+  } else if (operation === 'logspace') {
+    return np.logspace(0, 3, arrays['n']);
+  } else if (operation === 'geomspace') {
+    return np.geomspace(1, 1000, arrays['n']);
   } else if (operation === 'eye') {
     return np.eye(arrays['n']);
   } else if (operation === 'identity') {

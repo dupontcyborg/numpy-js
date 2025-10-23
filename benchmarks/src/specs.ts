@@ -89,6 +89,28 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
     warmup
   });
 
+  specs.push({
+    name: `logspace(0, 3, ${sizes.small})`,
+    category: 'creation',
+    operation: 'logspace',
+    setup: {
+      n: { shape: [sizes.small] }
+    },
+    iterations,
+    warmup
+  });
+
+  specs.push({
+    name: `geomspace(1, 1000, ${sizes.small})`,
+    category: 'creation',
+    operation: 'geomspace',
+    setup: {
+      n: { shape: [sizes.small] }
+    },
+    iterations,
+    warmup
+  });
+
   if (Array.isArray(sizes.medium)) {
     const eyeSize = sizes.medium[0]!;
     specs.push({

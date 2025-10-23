@@ -12,6 +12,8 @@ export {
   array,
   arange,
   linspace,
+  logspace,
+  geomspace,
   eye,
   empty,
   full,

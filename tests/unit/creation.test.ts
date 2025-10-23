@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   arange,
   linspace,
+  logspace,
+  geomspace,
   eye,
   empty,
   full,
@@ -87,6 +89,109 @@ describe('Array Creation Functions', () => {
       expect(arr.toArray()[0]).toBe(-5);
       expect(arr.toArray()[5]).toBe(0);
       expect(arr.toArray()[10]).toBe(5);
+    });
+  });
+
+  describe('logspace', () => {
+    it('creates 50 points by default (base 10)', () => {
+      const arr = logspace(0, 2);
+      expect(arr.shape).toEqual([50]);
+      expect(arr.toArray()[0]).toBeCloseTo(1); // 10^0
+      expect(arr.toArray()[49]).toBeCloseTo(100); // 10^2
+    });
+
+    it('creates logarithmically spaced values', () => {
+      const arr = logspace(0, 3, 4);
+      expect(arr.shape).toEqual([4]);
+      expect(arr.toArray()[0]).toBeCloseTo(1); // 10^0
+      expect(arr.toArray()[1]).toBeCloseTo(10); // 10^1
+      expect(arr.toArray()[2]).toBeCloseTo(100); // 10^2
+      expect(arr.toArray()[3]).toBeCloseTo(1000); // 10^3
+    });
+
+    it('works with custom base', () => {
+      const arr = logspace(0, 3, 4, 2);
+      expect(arr.shape).toEqual([4]);
+      expect(arr.toArray()[0]).toBeCloseTo(1); // 2^0
+      expect(arr.toArray()[1]).toBeCloseTo(2); // 2^1
+      expect(arr.toArray()[2]).toBeCloseTo(4); // 2^2
+      expect(arr.toArray()[3]).toBeCloseTo(8); // 2^3
+    });
+
+    it('creates single point', () => {
+      const arr = logspace(2, 3, 1);
+      expect(arr.shape).toEqual([1]);
+      expect(arr.toArray()[0]).toBeCloseTo(100); // 10^2
+    });
+
+    it('creates empty array for num=0', () => {
+      const arr = logspace(0, 1, 0);
+      expect(arr.shape).toEqual([0]);
+    });
+
+    it('works with negative exponents', () => {
+      const arr = logspace(-2, 0, 3);
+      expect(arr.shape).toEqual([3]);
+      expect(arr.toArray()[0]).toBeCloseTo(0.01); // 10^-2
+      expect(arr.toArray()[1]).toBeCloseTo(0.1); // 10^-1
+      expect(arr.toArray()[2]).toBeCloseTo(1); // 10^0
+    });
+  });
+
+  describe('geomspace', () => {
+    it('creates 50 points by default', () => {
+      const arr = geomspace(1, 1000);
+      expect(arr.shape).toEqual([50]);
+      expect(arr.toArray()[0]).toBeCloseTo(1);
+      expect(arr.toArray()[49]).toBeCloseTo(1000);
+    });
+
+    it('creates geometrically spaced values', () => {
+      const arr = geomspace(1, 1000, 4);
+      expect(arr.shape).toEqual([4]);
+      expect(arr.toArray()[0]).toBeCloseTo(1);
+      expect(arr.toArray()[1]).toBeCloseTo(10);
+      expect(arr.toArray()[2]).toBeCloseTo(100);
+      expect(arr.toArray()[3]).toBeCloseTo(1000);
+    });
+
+    it('creates single point', () => {
+      const arr = geomspace(5, 10, 1);
+      expect(arr.shape).toEqual([1]);
+      expect(arr.toArray()[0]).toBeCloseTo(5);
+    });
+
+    it('creates empty array for num=0', () => {
+      const arr = geomspace(1, 10, 0);
+      expect(arr.shape).toEqual([0]);
+    });
+
+    it('works with small values', () => {
+      const arr = geomspace(0.01, 1, 3);
+      expect(arr.shape).toEqual([3]);
+      expect(arr.toArray()[0]).toBeCloseTo(0.01);
+      expect(arr.toArray()[1]).toBeCloseTo(0.1);
+      expect(arr.toArray()[2]).toBeCloseTo(1);
+    });
+
+    it('works with negative values', () => {
+      const arr = geomspace(-1, -1000, 4);
+      expect(arr.shape).toEqual([4]);
+      expect(arr.toArray()[0]).toBeCloseTo(-1);
+      expect(arr.toArray()[1]).toBeCloseTo(-10);
+      expect(arr.toArray()[2]).toBeCloseTo(-100);
+      expect(arr.toArray()[3]).toBeCloseTo(-1000);
+    });
+
+    it('throws error for zero values', () => {
+      expect(() => geomspace(0, 100, 10)).toThrow('Geometric sequence cannot include zero');
+      expect(() => geomspace(1, 0, 10)).toThrow('Geometric sequence cannot include zero');
+    });
+
+    it('throws error for mixed signs', () => {
+      expect(() => geomspace(-1, 100, 10)).toThrow(
+        'Geometric sequence cannot contain both positive and negative values'
+      );
     });
   });
 

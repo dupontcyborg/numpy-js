@@ -1014,6 +1014,142 @@ export function linspace(
 }
 
 /**
+ * Create array with logarithmically spaced values
+ * Returns num samples, equally spaced on a log scale from base^start to base^stop
+ */
+export function logspace(
+  start: number,
+  stop: number,
+  num: number = 50,
+  base: number = 10.0,
+  dtype: DType = DEFAULT_DTYPE
+): NDArray {
+  if (num < 0) {
+    throw new Error('num must be non-negative');
+  }
+
+  if (num === 0) {
+    return array([], dtype);
+  }
+
+  if (num === 1) {
+    return array([Math.pow(base, start)], dtype);
+  }
+
+  const Constructor = getTypedArrayConstructor(dtype);
+  if (!Constructor) {
+    throw new Error(`Cannot create logspace array with dtype ${dtype}`);
+  }
+
+  const data = new Constructor(num);
+  const step = (stop - start) / (num - 1);
+
+  // Fill with logarithmically spaced values: base^(start + i*step)
+  if (isBigIntDType(dtype)) {
+    for (let i = 0; i < num; i++) {
+      const exponent = start + i * step;
+      (data as BigInt64Array | BigUint64Array)[i] = BigInt(Math.round(Math.pow(base, exponent)));
+    }
+  } else if (dtype === 'bool') {
+    for (let i = 0; i < num; i++) {
+      const exponent = start + i * step;
+      (data as Uint8Array)[i] = Math.pow(base, exponent) !== 0 ? 1 : 0;
+    }
+  } else {
+    for (let i = 0; i < num; i++) {
+      const exponent = start + i * step;
+      (data as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[i] = Math.pow(base, exponent);
+    }
+  }
+
+  const stdlibArray = stdlib_ndarray.ndarray(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    toStdlibDType(dtype) as any,
+    data,
+    [num],
+    [1],
+    0,
+    'row-major'
+  );
+  return new NDArray(stdlibArray, dtype);
+}
+
+/**
+ * Create array with geometrically spaced values
+ * Returns num samples, equally spaced on a log scale (geometric progression)
+ */
+export function geomspace(
+  start: number,
+  stop: number,
+  num: number = 50,
+  dtype: DType = DEFAULT_DTYPE
+): NDArray {
+  if (num < 0) {
+    throw new Error('num must be non-negative');
+  }
+
+  if (start === 0 || stop === 0) {
+    throw new Error('Geometric sequence cannot include zero');
+  }
+
+  if (num === 0) {
+    return array([], dtype);
+  }
+
+  if (num === 1) {
+    return array([start], dtype);
+  }
+
+  // For geometric progression, we need to handle negative values carefully
+  // NumPy uses: sign * exp(linspace(log(abs(start)), log(abs(stop)), num))
+  const signStart = Math.sign(start);
+  const signStop = Math.sign(stop);
+
+  if (signStart !== signStop) {
+    throw new Error('Geometric sequence cannot contain both positive and negative values');
+  }
+
+  const Constructor = getTypedArrayConstructor(dtype);
+  if (!Constructor) {
+    throw new Error(`Cannot create geomspace array with dtype ${dtype}`);
+  }
+
+  const data = new Constructor(num);
+  const logStart = Math.log(Math.abs(start));
+  const logStop = Math.log(Math.abs(stop));
+  const step = (logStop - logStart) / (num - 1);
+
+  // Fill with geometrically spaced values
+  if (isBigIntDType(dtype)) {
+    for (let i = 0; i < num; i++) {
+      const value = signStart * Math.exp(logStart + i * step);
+      (data as BigInt64Array | BigUint64Array)[i] = BigInt(Math.round(value));
+    }
+  } else if (dtype === 'bool') {
+    for (let i = 0; i < num; i++) {
+      const value = signStart * Math.exp(logStart + i * step);
+      (data as Uint8Array)[i] = value !== 0 ? 1 : 0;
+    }
+  } else {
+    for (let i = 0; i < num; i++) {
+      const value = signStart * Math.exp(logStart + i * step);
+      (data as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[i] = value;
+    }
+  }
+
+  const stdlibArray = stdlib_ndarray.ndarray(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    toStdlibDType(dtype) as any,
+    data,
+    [num],
+    [1],
+    0,
+    'row-major'
+  );
+  return new NDArray(stdlibArray, dtype);
+}
+
+/**
  * Create identity matrix
  */
 export function eye(n: number, m?: number, k: number = 0, dtype: DType = DEFAULT_DTYPE): NDArray {

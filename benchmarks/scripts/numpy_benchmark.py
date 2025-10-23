@@ -58,6 +58,10 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         return np.arange(arrays['n'])
     elif operation == 'linspace':
         return np.linspace(0, 100, arrays['n'])
+    elif operation == 'logspace':
+        return np.logspace(0, 3, arrays['n'])
+    elif operation == 'geomspace':
+        return np.geomspace(1, 1000, arrays['n'])
     elif operation == 'eye':
         return np.eye(arrays['n'])
     elif operation == 'identity':
