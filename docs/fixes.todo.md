@@ -1,8 +1,8 @@
 # NumPy.js Remaining Tasks
 
-**Status**: Updated October 20, 2025
-**Progress**: 23/33 original tasks complete (70%)
-**Remaining**: 6 tasks
+**Status**: Updated October 22, 2025
+**Progress**: 24/33 original tasks complete (73%)
+**Remaining**: 5 tasks
 
 ---
 
@@ -16,47 +16,28 @@
 - Performance optimizations for reshape/ravel (2 tasks partial)
 - Dtype retention tests (3 tasks)
 - Flags property (C_CONTIGUOUS, F_CONTIGUOUS) (1 task)
+- Division by zero handling with NumPy-compliant promotion (1 task)
 
 🚀 **DEFERRED**: Performance optimizations → See `docs/performance-tasks.md`
 
-📋 **REMAINING**: 7 tasks (listed below)
+📋 **REMAINING**: 5 tasks (listed below)
 
 ---
 
 ## 🔧 Remaining Tasks
 
-### Validation & Error Handling (3 tasks)
+### Validation & Error Handling (2 tasks)
 
-#### **Task #1**: Add division by zero handling
-
-**Location**: `src/ops/arithmetic.ts` (divide functions)
-**Priority**: Medium
-**Estimated time**: 30 minutes
-
-**NumPy behavior**:
-- Float types: Returns `Infinity` or `-Infinity`
-- Integer types: Raises error
-- Special case: `0 / 0` returns `NaN` for floats
-
-**Implementation**:
-```typescript
-function divideScalar(storage: ArrayStorage, scalar: number): ArrayStorage {
-  if (scalar === 0) {
-    if (dtype.startsWith('int') || dtype.startsWith('uint')) {
-      throw new Error('integer division by zero');
-    }
-    // For float types, JavaScript naturally produces Inf/NaN
-  }
-  // ... rest of implementation
-}
-```
-
-**Test**: Add division by zero tests
-```typescript
-expect(() => ones([2], 'int32').divide(0)).toThrow('division by zero');
-expect(ones([2], 'float64').divide(0).get([0])).toBe(Infinity);
-expect(zeros([2], 'float64').divide(0).get([0])).toBe(NaN);
-```
+✅ **COMPLETED**: Task #1 - Division by zero handling (October 22, 2025)
+- **Implemented NumPy-compliant division behavior**:
+  - All integer division now promotes to float64 (NumPy behavior)
+  - Division by zero returns Infinity/NaN (not errors)
+  - float32 / integer → float32, float64 / anything → float64
+- **Created comprehensive test coverage**:
+  - 42 unit tests in `tests/unit/division.test.ts`
+  - 29 NumPy validation tests in `tests/validation/division.numpy.test.ts`
+- **Updated existing tests** to match NumPy behavior (6 tests in bigint-arithmetic, dtype-retention, dtype-promotion-matrix)
+- All 900 unit tests pass, all 29 NumPy validation tests pass
 
 ---
 

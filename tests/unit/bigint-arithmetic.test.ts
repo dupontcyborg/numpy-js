@@ -52,16 +52,17 @@ describe('BigInt Arithmetic Correctness', () => {
       expect(result.data[1]).toBe(18014398509481988n);
     });
 
-    it('preserves precision in int64 division with large numbers', () => {
+    it('int64 division promotes to float64 (NumPy behavior)', () => {
       const arr = zeros([2], 'int64');
       arr.data[0] = 9007199254740992n;
       arr.data[1] = 9007199254740994n;
 
       const result = arr.divide(2);
 
-      expect(result.dtype).toBe('int64');
-      expect(result.data[0]).toBe(4503599627370496n);
-      expect(result.data[1]).toBe(4503599627370497n);
+      // NumPy promotes integer division to float64
+      expect(result.dtype).toBe('float64');
+      expect(result.data[0]).toBe(4503599627370496);
+      expect(result.data[1]).toBe(4503599627370497);
     });
   });
 
@@ -114,7 +115,7 @@ describe('BigInt Arithmetic Correctness', () => {
       expect(result.data[1]).toBe(370370367037035n);
     });
 
-    it('preserves precision in int64 array division', () => {
+    it('int64 array division promotes to float64 (NumPy behavior)', () => {
       const a = zeros([2], 'int64');
       a.data[0] = 18014398509481986n;
       a.data[1] = 370370367037035n;
@@ -125,9 +126,10 @@ describe('BigInt Arithmetic Correctness', () => {
 
       const result = a.divide(b);
 
-      expect(result.dtype).toBe('int64');
-      expect(result.data[0]).toBe(9007199254740993n);
-      expect(result.data[1]).toBe(123456789012345n);
+      // NumPy promotes integer division to float64
+      expect(result.dtype).toBe('float64');
+      expect(result.data[0]).toBe(Number(9007199254740993n));
+      expect(result.data[1]).toBe(Number(123456789012345n));
     });
   });
 
@@ -200,7 +202,7 @@ describe('BigInt Arithmetic Correctness', () => {
       expect(result.data[1]).toBe(18446744073709551613n);
     });
 
-    it('handles int64 division truncation', () => {
+    it('int64 division promotes to float64 and returns float results', () => {
       const arr = zeros([3], 'int64');
       arr.data[0] = 9007199254740993n;
       arr.data[1] = 9007199254740994n;
@@ -208,15 +210,16 @@ describe('BigInt Arithmetic Correctness', () => {
 
       const result = arr.divide(3);
 
-      // BigInt division truncates towards zero
-      expect(result.data[0]).toBe(3002399751580331n);
-      expect(result.data[1]).toBe(3002399751580331n);
-      expect(result.data[2]).toBe(3002399751580331n);
+      // NumPy promotes to float64, so we get floating-point division
+      expect(result.dtype).toBe('float64');
+      expect(result.data[0]).toBe(3002399751580330.5);
+      expect(result.data[1]).toBe(3002399751580331.5);
+      expect(result.data[2]).toBe(3002399751580332.0);
     });
   });
 
   describe('Dtype preservation', () => {
-    it('preserves int64 dtype through arithmetic operations', () => {
+    it('preserves int64 dtype through arithmetic operations (except division)', () => {
       const arr = ones([2, 2], 'int64');
 
       const result1 = arr.add(1);
@@ -228,8 +231,9 @@ describe('BigInt Arithmetic Correctness', () => {
       const result3 = result2.subtract(1);
       expect(result3.dtype).toBe('int64');
 
+      // Division promotes to float64 (NumPy behavior)
       const result4 = result3.divide(2);
-      expect(result4.dtype).toBe('int64');
+      expect(result4.dtype).toBe('float64');
     });
 
     it('preserves uint64 dtype through arithmetic operations', () => {

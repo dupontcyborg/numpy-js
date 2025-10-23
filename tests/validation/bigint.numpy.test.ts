@@ -89,7 +89,7 @@ result = a * 2
       expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
     });
 
-    it('should match NumPy for int64 division', () => {
+    it('should match NumPy for int64 division (promotes to float64)', () => {
       const a = zeros([3], 'int64');
       a.data[0] = 9007199254740992n;
       a.data[1] = 9007199254740994n;
@@ -98,11 +98,12 @@ result = a * 2
       const jsResult = a.divide(2);
       const pyResult = runNumPy(`
 a = np.array([9007199254740992, 9007199254740994, 9007199254740996], dtype=np.int64)
-result = a // 2  # Integer division
+result = a / 2  # True division (promotes to float64)
       `);
 
       expect(jsResult.shape).toEqual(pyResult.shape);
-      expect(jsResult.dtype).toBe('int64');
+      expect(jsResult.dtype).toBe('float64'); // NumPy promotes integer division to float64
+      expect(pyResult.dtype).toBe('float64');
       expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
     });
 
@@ -375,7 +376,7 @@ result = a // 3  # Integer division truncates
       `);
 
       expect(jsResult.shape).toEqual(pyResult.shape);
-      expect(jsResult.dtype).toBe('int64');
+      expect(jsResult.dtype).toBe('float64');
       expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
     });
   });

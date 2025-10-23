@@ -99,11 +99,28 @@ describe('DType Retention', () => {
       }
     });
 
-    it('divide scalar preserves dtype', () => {
-      for (const dtype of numericDTypes) {
+    it('divide scalar preserves float types, promotes integers to float64', () => {
+      // Float types are preserved
+      for (const dtype of ['float32', 'float64'] as const) {
         const arr = ones([2, 3], dtype);
         const result = arr.divide(2);
         expect(result.dtype).toBe(dtype);
+      }
+
+      // Integer types promote to float64 (NumPy behavior)
+      for (const dtype of [
+        'int8',
+        'int16',
+        'int32',
+        'int64',
+        'uint8',
+        'uint16',
+        'uint32',
+        'uint64',
+      ] as const) {
+        const arr = ones([2, 3], dtype);
+        const result = arr.divide(2);
+        expect(result.dtype).toBe('float64');
       }
     });
   });
