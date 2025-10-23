@@ -1,5 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { arange, linspace, eye } from '../../src/core/ndarray';
+import {
+  arange,
+  linspace,
+  eye,
+  empty,
+  full,
+  identity,
+  asarray,
+  copy,
+  zeros,
+  ones,
+  zeros_like,
+  ones_like,
+  empty_like,
+  full_like,
+  array,
+} from '../../src/core/ndarray';
 
 describe('Array Creation Functions', () => {
   describe('arange', () => {
@@ -111,6 +127,314 @@ describe('Array Creation Functions', () => {
         [0, 0, 0],
         [1, 0, 0],
         [0, 1, 0],
+      ]);
+    });
+  });
+
+  describe('empty', () => {
+    it('creates uninitialized array with given shape', () => {
+      const arr = empty([2, 3]);
+      expect(arr.shape).toEqual([2, 3]);
+      expect(arr.size).toBe(6);
+      expect(arr.dtype).toBe('float64');
+    });
+
+    it('creates empty array with specified dtype', () => {
+      const arr = empty([3, 2], 'int32');
+      expect(arr.shape).toEqual([3, 2]);
+      expect(arr.dtype).toBe('int32');
+    });
+
+    it('creates 1D empty array', () => {
+      const arr = empty([5]);
+      expect(arr.shape).toEqual([5]);
+      expect(arr.size).toBe(5);
+    });
+  });
+
+  describe('full', () => {
+    it('creates array filled with constant value', () => {
+      const arr = full([2, 3], 7);
+      expect(arr.shape).toEqual([2, 3]);
+      expect(arr.toArray()).toEqual([
+        [7, 7, 7],
+        [7, 7, 7],
+      ]);
+    });
+
+    it('creates array with negative fill value', () => {
+      const arr = full([2, 2], -3.5);
+      expect(arr.toArray()).toEqual([
+        [-3.5, -3.5],
+        [-3.5, -3.5],
+      ]);
+    });
+
+    it('creates array with specified dtype', () => {
+      const arr = full([2, 2], 5, 'int32');
+      expect(arr.dtype).toBe('int32');
+      expect(arr.toArray()).toEqual([
+        [5, 5],
+        [5, 5],
+      ]);
+    });
+
+    it('creates array with boolean fill value', () => {
+      const arr = full([2, 2], true);
+      expect(arr.dtype).toBe('bool');
+      expect(arr.toArray()).toEqual([
+        [1, 1],
+        [1, 1],
+      ]);
+    });
+
+    it('creates array with bigint fill value', () => {
+      const arr = full([2, 2], BigInt(42));
+      expect(arr.dtype).toBe('int64');
+    });
+
+    it('infers int32 dtype for integer fill values', () => {
+      const arr = full([2, 2], 42);
+      expect(arr.dtype).toBe('int32');
+    });
+
+    it('infers float64 dtype for float fill values', () => {
+      const arr = full([2, 2], 3.14);
+      expect(arr.dtype).toBe('float64');
+    });
+  });
+
+  describe('identity', () => {
+    it('creates square identity matrix', () => {
+      const arr = identity(3);
+      expect(arr.shape).toEqual([3, 3]);
+      expect(arr.toArray()).toEqual([
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+      ]);
+    });
+
+    it('creates identity matrix with specified dtype', () => {
+      const arr = identity(2, 'int32');
+      expect(arr.shape).toEqual([2, 2]);
+      expect(arr.dtype).toBe('int32');
+      expect(arr.toArray()).toEqual([
+        [1, 0],
+        [0, 1],
+      ]);
+    });
+
+    it('creates 1x1 identity matrix', () => {
+      const arr = identity(1);
+      expect(arr.shape).toEqual([1, 1]);
+      expect(arr.toArray()).toEqual([[1]]);
+    });
+  });
+
+  describe('asarray', () => {
+    it('converts nested arrays to NDArray', () => {
+      const arr = asarray([
+        [1, 2],
+        [3, 4],
+      ]);
+      expect(arr.shape).toEqual([2, 2]);
+      expect(arr.toArray()).toEqual([
+        [1, 2],
+        [3, 4],
+      ]);
+    });
+
+    it('returns existing NDArray unchanged', () => {
+      const original = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const converted = asarray(original);
+      expect(converted).toBe(original); // Same object
+    });
+
+    it('converts dtype when specified', () => {
+      const original = array(
+        [
+          [1, 2],
+          [3, 4],
+        ],
+        'int32'
+      );
+      const converted = asarray(original, 'float64');
+      expect(converted.dtype).toBe('float64');
+      expect(converted).not.toBe(original); // Different object
+      expect(converted.toArray()).toEqual([
+        [1, 2],
+        [3, 4],
+      ]);
+    });
+
+    it('preserves dtype when not specified', () => {
+      const original = array([[1, 2]], 'int16');
+      const converted = asarray(original);
+      expect(converted.dtype).toBe('int16');
+      expect(converted).toBe(original); // Same object
+    });
+  });
+
+  describe('copy', () => {
+    it('creates deep copy of array', () => {
+      const original = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const copied = copy(original);
+
+      expect(copied.shape).toEqual(original.shape);
+      expect(copied.toArray()).toEqual(original.toArray());
+      expect(copied).not.toBe(original);
+      expect(copied.data).not.toBe(original.data);
+    });
+
+    it('copy is independent of original', () => {
+      const original = zeros([2, 2]);
+      const copied = copy(original);
+
+      original.set([0, 0], 42);
+      expect(original.get([0, 0])).toBe(42);
+      expect(copied.get([0, 0])).toBe(0);
+    });
+
+    it('copies views correctly', () => {
+      const original = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      const view = original.slice(':', '1:3');
+      const copied = copy(view);
+
+      expect(copied.shape).toEqual([2, 2]);
+      expect(copied.toArray()).toEqual([
+        [2, 3],
+        [5, 6],
+      ]);
+      expect(copied.flags.OWNDATA).toBe(true);
+    });
+
+    it('preserves dtype', () => {
+      const original = array([[1, 2]], 'int16');
+      const copied = copy(original);
+      expect(copied.dtype).toBe('int16');
+    });
+  });
+
+  describe('zeros_like', () => {
+    it('creates zeros array with same shape', () => {
+      const original = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = zeros_like(original);
+
+      expect(result.shape).toEqual([2, 2]);
+      expect(result.toArray()).toEqual([
+        [0, 0],
+        [0, 0],
+      ]);
+      expect(result.dtype).toBe(original.dtype);
+    });
+
+    it('creates zeros array with different dtype', () => {
+      const original = array([[1, 2]], 'int32');
+      const result = zeros_like(original, 'float64');
+
+      expect(result.shape).toEqual([1, 2]);
+      expect(result.dtype).toBe('float64');
+      expect(result.toArray()).toEqual([[0, 0]]);
+    });
+
+    it('works with multi-dimensional arrays', () => {
+      const original = ones([2, 3, 4]);
+      const result = zeros_like(original);
+
+      expect(result.shape).toEqual([2, 3, 4]);
+      expect(result.size).toBe(24);
+    });
+  });
+
+  describe('ones_like', () => {
+    it('creates ones array with same shape', () => {
+      const original = zeros([2, 3]);
+      const result = ones_like(original);
+
+      expect(result.shape).toEqual([2, 3]);
+      expect(result.toArray()).toEqual([
+        [1, 1, 1],
+        [1, 1, 1],
+      ]);
+    });
+
+    it('creates ones array with different dtype', () => {
+      const original = zeros([2, 2], 'float64');
+      const result = ones_like(original, 'int32');
+
+      expect(result.dtype).toBe('int32');
+      expect(result.toArray()).toEqual([
+        [1, 1],
+        [1, 1],
+      ]);
+    });
+  });
+
+  describe('empty_like', () => {
+    it('creates empty array with same shape', () => {
+      const original = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      const result = empty_like(original);
+
+      expect(result.shape).toEqual([2, 3]);
+      expect(result.dtype).toBe(original.dtype);
+    });
+
+    it('creates empty array with different dtype', () => {
+      const original = zeros([3, 3], 'float64');
+      const result = empty_like(original, 'int16');
+
+      expect(result.shape).toEqual([3, 3]);
+      expect(result.dtype).toBe('int16');
+    });
+  });
+
+  describe('full_like', () => {
+    it('creates filled array with same shape', () => {
+      const original = zeros([2, 2]);
+      const result = full_like(original, 42);
+
+      expect(result.shape).toEqual([2, 2]);
+      expect(result.toArray()).toEqual([
+        [42, 42],
+        [42, 42],
+      ]);
+    });
+
+    it('creates filled array with different dtype', () => {
+      const original = zeros([2, 2], 'float64');
+      const result = full_like(original, 7, 'int32');
+
+      expect(result.dtype).toBe('int32');
+      expect(result.toArray()).toEqual([
+        [7, 7],
+        [7, 7],
+      ]);
+    });
+
+    it('works with negative fill values', () => {
+      const original = ones([3, 2]);
+      const result = full_like(original, -1.5);
+
+      expect(result.toArray()).toEqual([
+        [-1.5, -1.5],
+        [-1.5, -1.5],
+        [-1.5, -1.5],
       ]);
     });
   });

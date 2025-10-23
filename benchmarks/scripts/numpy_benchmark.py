@@ -21,8 +21,8 @@ def setup_arrays(setup: Dict[str, Any]) -> Dict[str, np.ndarray]:
         dtype = spec.get('dtype', 'float64')
         fill_type = spec.get('fill', 'zeros')
 
-        # Handle scalar values (n, axis, new_shape, shape)
-        if key in ['n', 'axis', 'new_shape', 'shape']:
+        # Handle scalar values (n, axis, new_shape, shape, fill_value)
+        if key in ['n', 'axis', 'new_shape', 'shape', 'fill_value']:
             if len(shape) == 1:
                 arrays[key] = shape[0]
             else:
@@ -50,12 +50,28 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         return np.zeros(arrays['shape'])
     elif operation == 'ones':
         return np.ones(arrays['shape'])
+    elif operation == 'empty':
+        return np.empty(arrays['shape'])
+    elif operation == 'full':
+        return np.full(arrays['shape'], arrays['fill_value'])
     elif operation == 'arange':
         return np.arange(arrays['n'])
     elif operation == 'linspace':
         return np.linspace(0, 100, arrays['n'])
     elif operation == 'eye':
         return np.eye(arrays['n'])
+    elif operation == 'identity':
+        return np.identity(arrays['n'])
+    elif operation == 'copy':
+        return np.copy(arrays['a'])
+    elif operation == 'zeros_like':
+        return np.zeros_like(arrays['a'])
+    elif operation == 'ones_like':
+        return np.ones_like(arrays['a'])
+    elif operation == 'empty_like':
+        return np.empty_like(arrays['a'])
+    elif operation == 'full_like':
+        return np.full_like(arrays['a'], 7)
 
     # Arithmetic
     elif operation == 'add':

@@ -22,7 +22,6 @@ import * as comparisonOps from '../ops/comparison';
 import * as reductionOps from '../ops/reduction';
 import * as shapeOps from '../ops/shape';
 import * as linalgOps from '../ops/linalg';
-import { computeStrides } from '../internal/indexing';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type StdlibNDArray = any; // @stdlib types not available yet
@@ -1042,4 +1041,231 @@ export function eye(n: number, m?: number, k: number = 0, dtype: DType = DEFAULT
   }
 
   return result;
+}
+
+/**
+ * Create an uninitialized array
+ * Note: Unlike NumPy, TypedArrays are zero-initialized by default in JavaScript
+ */
+export function empty(shape: number[], dtype: DType = DEFAULT_DTYPE): NDArray {
+  const Constructor = getTypedArrayConstructor(dtype);
+  if (!Constructor) {
+    throw new Error(`Cannot create empty array with dtype ${dtype}`);
+  }
+  const size = shape.reduce((a, b) => a * b, 1);
+  const data = new Constructor(size);
+  const stdlibArray = stdlib_ndarray.ndarray(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    toStdlibDType(dtype) as any,
+    data,
+    shape,
+    computeStrides(shape),
+    0,
+    'row-major'
+  );
+  return new NDArray(stdlibArray, dtype);
+}
+
+/**
+ * Create array filled with a constant value
+ */
+export function full(
+  shape: number[],
+  fill_value: number | bigint | boolean,
+  dtype?: DType
+): NDArray {
+  // Infer dtype from fill_value if not specified
+  let actualDtype = dtype;
+  if (!actualDtype) {
+    if (typeof fill_value === 'bigint') {
+      actualDtype = 'int64';
+    } else if (typeof fill_value === 'boolean') {
+      actualDtype = 'bool';
+    } else if (Number.isInteger(fill_value)) {
+      actualDtype = 'int32';
+    } else {
+      actualDtype = DEFAULT_DTYPE;
+    }
+  }
+
+  const Constructor = getTypedArrayConstructor(actualDtype);
+  if (!Constructor) {
+    throw new Error(`Cannot create full array with dtype ${actualDtype}`);
+  }
+  const size = shape.reduce((a, b) => a * b, 1);
+  const data = new Constructor(size);
+
+  // Fill with value
+  if (isBigIntDType(actualDtype)) {
+    const bigintValue =
+      typeof fill_value === 'bigint' ? fill_value : BigInt(Math.round(Number(fill_value)));
+    (data as BigInt64Array | BigUint64Array).fill(bigintValue);
+  } else if (actualDtype === 'bool') {
+    (data as Uint8Array).fill(fill_value ? 1 : 0);
+  } else {
+    (data as Exclude<TypedArray, BigInt64Array | BigUint64Array>).fill(Number(fill_value));
+  }
+
+  const stdlibArray = stdlib_ndarray.ndarray(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    toStdlibDType(actualDtype) as any,
+    data,
+    shape,
+    computeStrides(shape),
+    0,
+    'row-major'
+  );
+  return new NDArray(stdlibArray, actualDtype);
+}
+
+/**
+ * Create a square identity matrix
+ */
+export function identity(n: number, dtype: DType = DEFAULT_DTYPE): NDArray {
+  return eye(n, n, 0, dtype);
+}
+
+/**
+ * Convert input to an ndarray
+ * If input is already an NDArray, optionally convert dtype
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function asarray(a: NDArray | any, dtype?: DType): NDArray {
+  // If already an NDArray
+  if (a instanceof NDArray) {
+    // If dtype matches or not specified, return as-is
+    if (!dtype || a.dtype === dtype) {
+      return a;
+    }
+    // Need to convert dtype - create new array from data
+    const shape = Array.from(a.shape);
+    const size = a.size;
+    const Constructor = getTypedArrayConstructor(dtype);
+    if (!Constructor) {
+      throw new Error(`Cannot create array with dtype ${dtype}`);
+    }
+    const newData = new Constructor(size);
+    const oldData = a.data;
+
+    // Convert values
+    if (isBigIntDType(dtype)) {
+      for (let i = 0; i < size; i++) {
+        (newData as BigInt64Array | BigUint64Array)[i] = BigInt(Math.round(Number(oldData[i])));
+      }
+    } else if (dtype === 'bool') {
+      for (let i = 0; i < size; i++) {
+        (newData as Uint8Array)[i] = oldData[i] ? 1 : 0;
+      }
+    } else {
+      for (let i = 0; i < size; i++) {
+        (newData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[i] = Number(oldData[i]);
+      }
+    }
+
+    const newStdlibArray = stdlib_ndarray.ndarray(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      toStdlibDType(dtype) as any,
+      newData,
+      shape,
+      computeStrides(shape),
+      0,
+      'row-major'
+    );
+    return new NDArray(newStdlibArray, dtype);
+  }
+
+  // Otherwise, use array() to create from data
+  return array(a, dtype);
+}
+
+/**
+ * Create a deep copy of an array
+ */
+export function copy(a: NDArray): NDArray {
+  const shape = Array.from(a.shape);
+  const dtype = a.dtype as DType;
+  const Constructor = getTypedArrayConstructor(dtype);
+  if (!Constructor) {
+    throw new Error(`Cannot copy array with dtype ${dtype}`);
+  }
+
+  const size = a.size;
+  const oldData = a.data;
+  const newData = new Constructor(size);
+
+  // For C-contiguous arrays, we can just copy the buffer
+  if (a.flags.C_CONTIGUOUS) {
+    if (isBigIntDType(dtype)) {
+      (newData as BigInt64Array | BigUint64Array).set(oldData as BigInt64Array | BigUint64Array);
+    } else {
+      (newData as Exclude<TypedArray, BigInt64Array | BigUint64Array>).set(
+        oldData as Exclude<TypedArray, BigInt64Array | BigUint64Array>
+      );
+    }
+  } else {
+    // For non-contiguous arrays, iterate through elements
+    // Convert flat index to multi-index and read using get()
+    const shapeArr = Array.from(shape);
+    const strides = computeStrides(shapeArr);
+    for (let flatIdx = 0; flatIdx < size; flatIdx++) {
+      // Convert flat index to multi-index
+      const indices: number[] = [];
+      let remaining = flatIdx;
+      for (let dim = 0; dim < shapeArr.length; dim++) {
+        const stride = strides[dim]!;
+        const idx = Math.floor(remaining / stride);
+        indices.push(idx);
+        remaining -= idx * stride;
+      }
+      const value = a.get(indices);
+      if (isBigIntDType(dtype)) {
+        (newData as BigInt64Array | BigUint64Array)[flatIdx] = value as bigint;
+      } else {
+        (newData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[flatIdx] = value as number;
+      }
+    }
+  }
+
+  const stdlibArray = stdlib_ndarray.ndarray(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    toStdlibDType(dtype) as any,
+    newData,
+    shape,
+    computeStrides(shape),
+    0,
+    'row-major'
+  );
+  return new NDArray(stdlibArray, dtype);
+}
+
+/**
+ * Create array of zeros with the same shape as another array
+ */
+export function zeros_like(a: NDArray, dtype?: DType): NDArray {
+  return zeros(Array.from(a.shape), dtype ?? (a.dtype as DType));
+}
+
+/**
+ * Create array of ones with the same shape as another array
+ */
+export function ones_like(a: NDArray, dtype?: DType): NDArray {
+  return ones(Array.from(a.shape), dtype ?? (a.dtype as DType));
+}
+
+/**
+ * Create uninitialized array with the same shape as another array
+ */
+export function empty_like(a: NDArray, dtype?: DType): NDArray {
+  return empty(Array.from(a.shape), dtype ?? (a.dtype as DType));
+}
+
+/**
+ * Create array filled with a constant value, same shape as another array
+ */
+export function full_like(
+  a: NDArray,
+  fill_value: number | bigint | boolean,
+  dtype?: DType
+): NDArray {
+  return full(Array.from(a.shape), fill_value, dtype ?? (a.dtype as DType));
 }

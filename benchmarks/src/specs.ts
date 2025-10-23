@@ -101,6 +101,62 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       iterations,
       warmup
     });
+
+    specs.push({
+      name: `identity(${eyeSize})`,
+      category: 'creation',
+      operation: 'identity',
+      setup: {
+        n: { shape: [eyeSize] }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `empty [${sizes.medium.join('x')}]`,
+      category: 'creation',
+      operation: 'empty',
+      setup: {
+        shape: { shape: sizes.medium }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `full [${sizes.medium.join('x')}]`,
+      category: 'creation',
+      operation: 'full',
+      setup: {
+        shape: { shape: sizes.medium },
+        fill_value: { shape: [7] }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `copy [${sizes.medium.join('x')}]`,
+      category: 'creation',
+      operation: 'copy',
+      setup: {
+        a: { shape: sizes.medium, fill: 'ones' }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `zeros_like [${sizes.medium.join('x')}]`,
+      category: 'creation',
+      operation: 'zeros_like',
+      setup: {
+        a: { shape: sizes.medium, fill: 'ones' }
+      },
+      iterations,
+      warmup
+    });
   }
 
   // ========================================

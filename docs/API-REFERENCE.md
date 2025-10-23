@@ -53,15 +53,15 @@ All operations preserve dtype or follow NumPy promotion rules:
 ### From Shape
 - [x] `zeros(shape, dtype?)` - Array of zeros
 - [x] `ones(shape, dtype?)` - Array of ones
-- [ ] `empty(shape, dtype?)` - Uninitialized array
-- [ ] `full(shape, fill_value, dtype?)` - Array filled with value
+- [x] `empty(shape, dtype?)` - Uninitialized array
+- [x] `full(shape, fill_value, dtype?)` - Array filled with value
 - [x] `eye(n, m?, k?, dtype?)` - Identity matrix
-- [ ] `identity(n, dtype?)` - Square identity matrix
+- [x] `identity(n, dtype?)` - Square identity matrix
 
 ### From Data
 - [x] `array(object, dtype?)` - Create from nested arrays
-- [ ] `asarray(a, dtype?)` - Convert to array
-- [ ] `copy(a)` - Deep copy
+- [x] `asarray(a, dtype?)` - Convert to array
+- [x] `copy(a)` - Deep copy
 
 ### Numerical Ranges
 - [x] `arange(start, stop, step?, dtype?)` - Evenly spaced values
@@ -70,10 +70,10 @@ All operations preserve dtype or follow NumPy promotion rules:
 - [ ] `geomspace(start, stop, num?)` - Geometric progression
 
 ### Like Functions
-- [ ] `zeros_like(a, dtype?)` - Zeros with same shape
-- [ ] `ones_like(a, dtype?)` - Ones with same shape
-- [ ] `empty_like(a, dtype?)` - Empty with same shape
-- [ ] `full_like(a, fill_value, dtype?)` - Full with same shape
+- [x] `zeros_like(a, dtype?)` - Zeros with same shape
+- [x] `ones_like(a, dtype?)` - Ones with same shape
+- [x] `empty_like(a, dtype?)` - Empty with same shape
+- [x] `full_like(a, fill_value, dtype?)` - Full with same shape
 
 ---
 
@@ -392,12 +392,13 @@ All operations preserve dtype or follow NumPy promotion rules:
 ## Progress Summary
 
 **Total Functions**: ~350 core functions
-**Implemented**: 27 functions (8%)
+**Implemented**: 36 functions (10%)
 
-### Completed (27)
+### Completed (36)
 
-**Array Creation** (6):
-- ✅ zeros, ones, array, arange, linspace, eye
+**Array Creation** (15):
+- ✅ zeros, ones, array, arange, linspace, eye, empty, full, identity, asarray, copy
+- ✅ zeros_like, ones_like, empty_like, full_like
 
 **Arithmetic Operations** (4):
 - ✅ add, subtract, multiply, divide _(as NDArray methods, with dtype preservation)_
@@ -417,16 +418,16 @@ All operations preserve dtype or follow NumPy promotion rules:
 
 ### Testing
 
-- **748/750 tests passing (99.7%)**
-  - 204 unit tests (creation, arithmetic, comparisons, reductions, reshape, slicing, dtype preservation, view tracking)
-  - 153 NumPy validation tests (cross-checked against Python NumPy 2.3.3)
+- **1473/1475 tests passing (99.9%)**
+  - 250 unit tests (creation, arithmetic, comparisons, reductions, reshape, slicing, dtype preservation, view tracking)
+  - 201 NumPy validation tests (cross-checked against Python NumPy 2.3.3)
     - Including dtype edge cases, overflow/underflow, special values
-  - 391 additional tests (API comparison, edge cases, broadcasting, indexing)
+  - 1022 additional tests (API comparison, edge cases, broadcasting, indexing, dtype promotion matrix)
 
 ### Priority Tiers
 
 **Tier 1 - Essential** (~50 functions):
-- Array creation: ✅ zeros, ones, array, arange, ⚠️ linspace, ✅ eye
+- Array creation: ✅ zeros, ones, array, arange, linspace, eye, empty, full, identity, asarray, copy (complete)
 - Basic math: ✅ add, ✅ multiply, ✅ matmul, ⬜ dot
 - Slicing and indexing: ⬜ TODO
 - Broadcasting: ⬜ TODO (partial support)

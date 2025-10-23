@@ -32,7 +32,7 @@ function setupArrays(setup: BenchmarkSetup): Record<string, any> {
     const { shape, dtype = 'float64', fill = 'zeros', value } = spec;
 
     // Handle scalar values
-    if (key === 'n' || key === 'axis' || key === 'new_shape' || key === 'shape') {
+    if (key === 'n' || key === 'axis' || key === 'new_shape' || key === 'shape' || key === 'fill_value') {
       arrays[key] = shape[0];
       if (key === 'new_shape' || key === 'shape') {
         arrays[key] = shape;
@@ -68,12 +68,28 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
     return np.zeros(arrays['shape']);
   } else if (operation === 'ones') {
     return np.ones(arrays['shape']);
+  } else if (operation === 'empty') {
+    return np.empty(arrays['shape']);
+  } else if (operation === 'full') {
+    return np.full(arrays['shape'], arrays['fill_value']);
   } else if (operation === 'arange') {
     return np.arange(0, arrays['n'], 1);
   } else if (operation === 'linspace') {
     return np.linspace(0, 100, arrays['n']);
   } else if (operation === 'eye') {
     return np.eye(arrays['n']);
+  } else if (operation === 'identity') {
+    return np.identity(arrays['n']);
+  } else if (operation === 'copy') {
+    return np.copy(arrays['a']);
+  } else if (operation === 'zeros_like') {
+    return np.zeros_like(arrays['a']);
+  } else if (operation === 'ones_like') {
+    return np.ones_like(arrays['a']);
+  } else if (operation === 'empty_like') {
+    return np.empty_like(arrays['a']);
+  } else if (operation === 'full_like') {
+    return np.full_like(arrays['a'], 7);
   }
 
   // Arithmetic
