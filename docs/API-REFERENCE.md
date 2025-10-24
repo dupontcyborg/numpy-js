@@ -175,29 +175,29 @@ All operations preserve dtype or follow NumPy promotion rules:
 ## Reductions
 
 ### Sum and Product
-- [x] `sum(a, axis?, keepdims?)` - Sum _(implemented as NDArray.sum() method, no axis/keepdims yet)_
-- [ ] `prod(a, axis?, keepdims?)` - Product
+- [x] `sum(a, axis?, keepdims?)` - Sum
+- [x] `prod(a, axis?, keepdims?)` - Product
 - [ ] `cumsum(a, axis?)` - Cumulative sum
 - [ ] `cumprod(a, axis?)` - Cumulative product
 
 ### Statistics
-- [x] `mean(a, axis?, keepdims?)` - Mean _(implemented as NDArray.mean() method, no axis/keepdims yet)_
+- [x] `mean(a, axis?, keepdims?)` - Mean
 - [ ] `median(a, axis?, keepdims?)` - Median
-- [ ] `std(a, axis?, ddof?, keepdims?)` - Standard deviation
-- [ ] `var(a, axis?, ddof?, keepdims?)` - Variance
+- [x] `std(a, axis?, ddof?, keepdims?)` - Standard deviation
+- [x] `var(a, axis?, keepdims?)` - Variance
 - [ ] `percentile(a, q, axis?)` - Percentile
 - [ ] `quantile(a, q, axis?)` - Quantile
 
 ### Min/Max
-- [x] `min(a, axis?, keepdims?)` - Minimum _(implemented as NDArray.min() method, no axis/keepdims yet)_
-- [x] `max(a, axis?, keepdims?)` - Maximum _(implemented as NDArray.max() method, no axis/keepdims yet)_
-- [ ] `argmin(a, axis?)` - Index of minimum
-- [ ] `argmax(a, axis?)` - Index of maximum
+- [x] `min(a, axis?, keepdims?)` - Minimum
+- [x] `max(a, axis?, keepdims?)` - Maximum
+- [x] `argmin(a, axis?)` - Index of minimum
+- [x] `argmax(a, axis?)` - Index of maximum
 - [ ] `ptp(a, axis?)` - Peak-to-peak (max - min)
 
 ### Logic
-- [ ] `all(a, axis?, keepdims?)` - Test if all True
-- [ ] `any(a, axis?, keepdims?)` - Test if any True
+- [x] `all(a, axis?, keepdims?)` - Test if all True
+- [x] `any(a, axis?, keepdims?)` - Test if any True
 
 ---
 

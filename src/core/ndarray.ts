@@ -539,6 +539,83 @@ export class NDArray {
     return typeof result === 'number' ? result : NDArray._fromStorage(result);
   }
 
+  /**
+   * Product of array elements over a given axis
+   * @param axis - Axis along which to compute the product. If undefined, product of all elements.
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Product of array elements, or array of products along axis
+   */
+  prod(axis?: number, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.prod(this._storage, axis, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Indices of the minimum values along an axis
+   * @param axis - Axis along which to find minimum indices. If undefined, index of global minimum.
+   * @returns Indices of minimum values
+   */
+  argmin(axis?: number): NDArray | number {
+    const result = reductionOps.argmin(this._storage, axis);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Indices of the maximum values along an axis
+   * @param axis - Axis along which to find maximum indices. If undefined, index of global maximum.
+   * @returns Indices of maximum values
+   */
+  argmax(axis?: number): NDArray | number {
+    const result = reductionOps.argmax(this._storage, axis);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Compute variance along the specified axis
+   * @param axis - Axis along which to compute variance. If undefined, variance of all elements.
+   * @param ddof - Delta degrees of freedom (default: 0)
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Variance of array elements
+   */
+  var(axis?: number, ddof: number = 0, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.variance(this._storage, axis, ddof, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Compute standard deviation along the specified axis
+   * @param axis - Axis along which to compute std. If undefined, std of all elements.
+   * @param ddof - Delta degrees of freedom (default: 0)
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Standard deviation of array elements
+   */
+  std(axis?: number, ddof: number = 0, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.std(this._storage, axis, ddof, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Test whether all array elements along a given axis evaluate to True
+   * @param axis - Axis along which to perform logical AND. If undefined, test all elements.
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Boolean or array of booleans
+   */
+  all(axis?: number, keepdims: boolean = false): NDArray | boolean {
+    const result = reductionOps.all(this._storage, axis, keepdims);
+    return typeof result === 'boolean' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Test whether any array elements along a given axis evaluate to True
+   * @param axis - Axis along which to perform logical OR. If undefined, test all elements.
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Boolean or array of booleans
+   */
+  any(axis?: number, keepdims: boolean = false): NDArray | boolean {
+    const result = reductionOps.any(this._storage, axis, keepdims);
+    return typeof result === 'boolean' ? result : NDArray._fromStorage(result);
+  }
+
   // Shape manipulation
   /**
    * Reshape array to a new shape

@@ -369,4 +369,216 @@ describe('Reductions with Axis Support', () => {
       expect(meanOfSum).toBe(7); // [5, 7, 9] -> mean = 7
     });
   });
+
+  describe('prod()', () => {
+    it('computes product of all elements', () => {
+      const arr = array([2, 3, 4]);
+      expect(arr.prod()).toBe(24);
+    });
+
+    it('computes product along axis=0', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.prod(0) as any;
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()).toEqual([3, 8]);
+    });
+
+    it('computes product along axis=1', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.prod(1) as any;
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()).toEqual([2, 12]);
+    });
+
+    it('computes product with keepdims=true', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.prod(1, true) as any;
+      expect(result.shape).toEqual([2, 1]);
+      expect(result.toArray()).toEqual([[2], [12]]);
+    });
+  });
+
+  describe('argmin()', () => {
+    it('finds index of minimum value', () => {
+      const arr = array([3, 1, 4, 1, 5]);
+      expect(arr.argmin()).toBe(1);
+    });
+
+    it('finds indices of minimum along axis=0', () => {
+      const arr = array([
+        [3, 1],
+        [2, 4],
+      ]);
+      const result = arr.argmin(0) as any;
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()).toEqual([1, 0]);
+    });
+
+    it('finds indices of minimum along axis=1', () => {
+      const arr = array([
+        [3, 1],
+        [2, 4],
+      ]);
+      const result = arr.argmin(1) as any;
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()).toEqual([1, 0]);
+    });
+  });
+
+  describe('argmax()', () => {
+    it('finds index of maximum value', () => {
+      const arr = array([3, 1, 4, 1, 5]);
+      expect(arr.argmax()).toBe(4);
+    });
+
+    it('finds indices of maximum along axis=0', () => {
+      const arr = array([
+        [3, 1],
+        [2, 4],
+      ]);
+      const result = arr.argmax(0) as any;
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()).toEqual([0, 1]);
+    });
+
+    it('finds indices of maximum along axis=1', () => {
+      const arr = array([
+        [3, 1],
+        [2, 4],
+      ]);
+      const result = arr.argmax(1) as any;
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()).toEqual([0, 1]);
+    });
+  });
+
+  describe('var()', () => {
+    it('computes variance of all elements', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const result = arr.var();
+      expect(result).toBeCloseTo(2.0, 5);
+    });
+
+    it('computes variance with ddof=1', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const result = arr.var(undefined, 1);
+      expect(result).toBeCloseTo(2.5, 5);
+    });
+
+    it('computes variance along axis=0', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.var(0) as any;
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()[0]).toBeCloseTo(1.0, 5);
+      expect(result.toArray()[1]).toBeCloseTo(1.0, 5);
+    });
+
+    it('computes variance with keepdims=true', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.var(0, 0, true) as any;
+      expect(result.shape).toEqual([1, 2]);
+    });
+  });
+
+  describe('std()', () => {
+    it('computes std of all elements', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const result = arr.std();
+      expect(result).toBeCloseTo(Math.sqrt(2.0), 5);
+    });
+
+    it('computes std with ddof=1', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const result = arr.std(undefined, 1);
+      expect(result).toBeCloseTo(Math.sqrt(2.5), 5);
+    });
+
+    it('computes std along axis=0', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.std(0) as any;
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()[0]).toBeCloseTo(1.0, 5);
+      expect(result.toArray()[1]).toBeCloseTo(1.0, 5);
+    });
+  });
+
+  describe('all()', () => {
+    it('returns true when all elements are truthy', () => {
+      const arr = array([1, 2, 3]);
+      expect(arr.all()).toBe(true);
+    });
+
+    it('returns false when any element is falsy', () => {
+      const arr = array([1, 0, 3]);
+      expect(arr.all()).toBe(false);
+    });
+
+    it('tests all along axis=0', () => {
+      const arr = array([
+        [1, 0],
+        [1, 1],
+      ]);
+      const result = arr.all(0) as any;
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()).toEqual([1, 0]);
+    });
+
+    it('tests all with keepdims=true', () => {
+      const arr = array([
+        [1, 0],
+        [1, 1],
+      ]);
+      const result = arr.all(0, true) as any;
+      expect(result.shape).toEqual([1, 2]);
+    });
+  });
+
+  describe('any()', () => {
+    it('returns false when all elements are falsy', () => {
+      const arr = array([0, 0, 0]);
+      expect(arr.any()).toBe(false);
+    });
+
+    it('returns true when any element is truthy', () => {
+      const arr = array([0, 1, 0]);
+      expect(arr.any()).toBe(true);
+    });
+
+    it('tests any along axis=0', () => {
+      const arr = array([
+        [0, 0],
+        [1, 0],
+      ]);
+      const result = arr.any(0) as any;
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()).toEqual([1, 0]);
+    });
+
+    it('tests any with keepdims=true', () => {
+      const arr = array([
+        [0, 0],
+        [1, 0],
+      ]);
+      const result = arr.any(0, true) as any;
+      expect(result.shape).toEqual([1, 2]);
+    });
+  });
 });

@@ -525,4 +525,345 @@ result = arr.max(axis=1, keepdims=True)
       expect(arraysClose((result as any).toArray(), npResult.value)).toBe(true);
     });
   });
+
+  describe('prod() with axis', () => {
+    it('validates prod() without axis', () => {
+      const arr = array([
+        [2, 3],
+        [4, 5],
+      ]);
+      const result = arr.prod();
+
+      const npResult = runNumPy(`
+arr = np.array([[2, 3], [4, 5]])
+result = arr.prod()
+`);
+
+      expect(result).toBe(npResult.value);
+    });
+
+    it('validates prod(axis=0) for 2D array', () => {
+      const arr = array([
+        [2, 3],
+        [4, 5],
+      ]);
+      const result = arr.prod(0);
+
+      const npResult = runNumPy(`
+arr = np.array([[2, 3], [4, 5]])
+result = arr.prod(axis=0)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+      expect(arraysClose((result as any).toArray(), npResult.value)).toBe(true);
+    });
+
+    it('validates prod(axis=1, keepdims=True)', () => {
+      const arr = array([
+        [2, 3],
+        [4, 5],
+      ]);
+      const result = arr.prod(1, true);
+
+      const npResult = runNumPy(`
+arr = np.array([[2, 3], [4, 5]])
+result = arr.prod(axis=1, keepdims=True)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+      expect(arraysClose((result as any).toArray(), npResult.value)).toBe(true);
+    });
+  });
+
+  describe('argmin() with axis', () => {
+    it('validates argmin() without axis', () => {
+      const arr = array([
+        [3, 1],
+        [2, 4],
+      ]);
+      const result = arr.argmin();
+
+      const npResult = runNumPy(`
+arr = np.array([[3, 1], [2, 4]])
+result = arr.argmin()
+`);
+
+      expect(result).toBe(npResult.value);
+    });
+
+    it('validates argmin(axis=0)', () => {
+      const arr = array([
+        [3, 1],
+        [2, 4],
+      ]);
+      const result = arr.argmin(0);
+
+      const npResult = runNumPy(`
+arr = np.array([[3, 1], [2, 4]])
+result = arr.argmin(axis=0)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+      expect(arraysClose((result as any).toArray(), npResult.value)).toBe(true);
+    });
+
+    it('validates argmin(axis=1)', () => {
+      const arr = array([
+        [3, 1],
+        [2, 4],
+      ]);
+      const result = arr.argmin(1);
+
+      const npResult = runNumPy(`
+arr = np.array([[3, 1], [2, 4]])
+result = arr.argmin(axis=1)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+      expect(arraysClose((result as any).toArray(), npResult.value)).toBe(true);
+    });
+  });
+
+  describe('argmax() with axis', () => {
+    it('validates argmax() without axis', () => {
+      const arr = array([
+        [3, 1],
+        [2, 4],
+      ]);
+      const result = arr.argmax();
+
+      const npResult = runNumPy(`
+arr = np.array([[3, 1], [2, 4]])
+result = arr.argmax()
+`);
+
+      expect(result).toBe(npResult.value);
+    });
+
+    it('validates argmax(axis=0)', () => {
+      const arr = array([
+        [3, 1],
+        [2, 4],
+      ]);
+      const result = arr.argmax(0);
+
+      const npResult = runNumPy(`
+arr = np.array([[3, 1], [2, 4]])
+result = arr.argmax(axis=0)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+      expect(arraysClose((result as any).toArray(), npResult.value)).toBe(true);
+    });
+  });
+
+  describe('var() with axis', () => {
+    it('validates var() without axis', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.var();
+
+      const npResult = runNumPy(`
+arr = np.array([[1, 2], [3, 4]])
+result = arr.var()
+`);
+
+      expect(Math.abs((result as number) - npResult.value)).toBeLessThan(1e-10);
+    });
+
+    it('validates var(axis=0)', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.var(0);
+
+      const npResult = runNumPy(`
+arr = np.array([[1, 2], [3, 4]])
+result = arr.var(axis=0)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+      expect(arraysClose((result as any).toArray(), npResult.value)).toBe(true);
+    });
+
+    it('validates var(axis=0, ddof=1)', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.var(0, 1);
+
+      const npResult = runNumPy(`
+arr = np.array([[1, 2], [3, 4]])
+result = arr.var(axis=0, ddof=1)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+      expect(arraysClose((result as any).toArray(), npResult.value)).toBe(true);
+    });
+
+    it('validates var(axis=0, keepdims=True)', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.var(0, 0, true);
+
+      const npResult = runNumPy(`
+arr = np.array([[1, 2], [3, 4]])
+result = arr.var(axis=0, keepdims=True)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+      expect(arraysClose((result as any).toArray(), npResult.value)).toBe(true);
+    });
+  });
+
+  describe('std() with axis', () => {
+    it('validates std() without axis', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.std();
+
+      const npResult = runNumPy(`
+arr = np.array([[1, 2], [3, 4]])
+result = arr.std()
+`);
+
+      expect(Math.abs((result as number) - npResult.value)).toBeLessThan(1e-10);
+    });
+
+    it('validates std(axis=0)', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.std(0);
+
+      const npResult = runNumPy(`
+arr = np.array([[1, 2], [3, 4]])
+result = arr.std(axis=0)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+      expect(arraysClose((result as any).toArray(), npResult.value)).toBe(true);
+    });
+
+    it('validates std(axis=0, ddof=1)', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.std(0, 1);
+
+      const npResult = runNumPy(`
+arr = np.array([[1, 2], [3, 4]])
+result = arr.std(axis=0, ddof=1)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+      expect(arraysClose((result as any).toArray(), npResult.value)).toBe(true);
+    });
+  });
+
+  describe('all() with axis', () => {
+    it('validates all() without axis', () => {
+      const arr = array([
+        [1, 1],
+        [1, 0],
+      ]);
+      const result = arr.all();
+
+      const npResult = runNumPy(`
+arr = np.array([[1, 1], [1, 0]])
+result = bool(arr.all())
+`);
+
+      expect(result).toBe(npResult.value);
+    });
+
+    it('validates all(axis=0)', () => {
+      const arr = array([
+        [1, 1],
+        [1, 0],
+      ]);
+      const result = arr.all(0);
+
+      const npResult = runNumPy(`
+arr = np.array([[1, 1], [1, 0]])
+result = arr.all(axis=0)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+      expect((result as any).toArray()).toEqual(npResult.value.map((v: number) => (v ? 1 : 0)));
+    });
+
+    it('validates all(axis=0, keepdims=True)', () => {
+      const arr = array([
+        [1, 1],
+        [1, 0],
+      ]);
+      const result = arr.all(0, true);
+
+      const npResult = runNumPy(`
+arr = np.array([[1, 1], [1, 0]])
+result = arr.all(axis=0, keepdims=True)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+    });
+  });
+
+  describe('any() with axis', () => {
+    it('validates any() without axis', () => {
+      const arr = array([
+        [0, 0],
+        [1, 0],
+      ]);
+      const result = arr.any();
+
+      const npResult = runNumPy(`
+arr = np.array([[0, 0], [1, 0]])
+result = bool(arr.any())
+`);
+
+      expect(result).toBe(npResult.value);
+    });
+
+    it('validates any(axis=0)', () => {
+      const arr = array([
+        [0, 0],
+        [1, 0],
+      ]);
+      const result = arr.any(0);
+
+      const npResult = runNumPy(`
+arr = np.array([[0, 0], [1, 0]])
+result = arr.any(axis=0)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+      expect((result as any).toArray()).toEqual(npResult.value.map((v: number) => (v ? 1 : 0)));
+    });
+
+    it('validates any(axis=0, keepdims=True)', () => {
+      const arr = array([
+        [0, 0],
+        [1, 0],
+      ]);
+      const result = arr.any(0, true);
+
+      const npResult = runNumPy(`
+arr = np.array([[0, 0], [1, 0]])
+result = arr.any(axis=0, keepdims=True)
+`);
+
+      expect((result as any).shape).toEqual(npResult.shape);
+    });
+  });
 });
