@@ -1,0 +1,38 @@
+# Auto-labeling configuration for PRs
+# See https://github.com/actions/labeler
+
+# Label based on changed files
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file: 'docs/**/*'
+    - any-glob-to-any-file: '*.md'
+    - any-glob-to-any-file: 'README.md'
+
+tests:
+  - changed-files:
+    - any-glob-to-any-file: 'tests/**/*'
+
+benchmarks:
+  - changed-files:
+    - any-glob-to-any-file: 'benchmarks/**/*'
+
+core:
+  - changed-files:
+    - any-glob-to-any-file: 'src/core/**/*'
+
+operations:
+  - changed-files:
+    - any-glob-to-any-file: 'src/ops/**/*'
+
+build:
+  - changed-files:
+    - any-glob-to-any-file: 'build.ts'
+    - any-glob-to-any-file: 'tsconfig.json'
+    - any-glob-to-any-file: 'package.json'
+    - any-glob-to-any-file: '.github/workflows/**'
+
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file: 'package.json'
+    - any-glob-to-any-file: 'package-lock.json'
