@@ -98,6 +98,9 @@ jobs:
       - name: Run all tests (quick for now)
         run: npm run test:quick
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
       - name: Run bundle tests
         run: npm run test:bundles
 
