@@ -1,8 +1,8 @@
 name: Benchmark Tracking
 
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
   workflow_dispatch:
 
 # Don't run multiple benchmark jobs at once

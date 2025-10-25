@@ -242,9 +242,9 @@ import * as np from 'numpy-js/browser';
   - Edge case validation (overflow, underflow, special values)
 
 ### Phase 2: Benchmarks & CI/CD
-- [ ] CI/CD (GitHub Actions)
-  - [ ] PR workflow
-  - [ ] Publish workflow
+- [X] CI/CD (GitHub Actions)
+  - [X] PR workflow
+  - [X] Publish workflow
 - [ ] Implement benchmarks
   - [ ] Regression (vs. previous runs)
   - [X] Comparison against Python NumPy
