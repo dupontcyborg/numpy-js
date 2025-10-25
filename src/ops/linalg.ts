@@ -45,11 +45,11 @@ export function matmul(a: ArrayStorage, b: ArrayStorage): ArrayStorage {
   const aData =
     a.dtype === 'float64'
       ? (a.data as Float64Array)
-      : Float64Array.from(Array.from(a.data).map(Number));
+      : Float64Array.from(Array.from(a.data as ArrayLike<number>).map(Number));
   const bData =
     b.dtype === 'float64'
       ? (b.data as Float64Array)
-      : Float64Array.from(Array.from(b.data).map(Number));
+      : Float64Array.from(Array.from(b.data as ArrayLike<number>).map(Number));
 
   // Create result array
   const result = ArrayStorage.zeros([m, n], 'float64');

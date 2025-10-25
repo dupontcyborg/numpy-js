@@ -2,21 +2,30 @@
   "name": "numpy-js",
   "version": "0.0.1",
   "description": "Complete NumPy implementation for TypeScript and JavaScript",
-  "main": "dist/numpy.node.js",
+  "main": "dist/numpy.node.cjs",
   "browser": "dist/numpy.browser.js",
   "module": "dist/numpy.esm.js",
   "types": "dist/types/index.d.ts",
   "type": "module",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.cjs",
+    "dist/**/*.js.map",
+    "dist/**/*.cjs.map",
+    "dist/types/**/*.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "node": "./dist/numpy.node.js",
+      "node": "./dist/numpy.node.cjs",
       "browser": "./dist/numpy.browser.js",
       "default": "./dist/numpy.esm.js"
     },
     "./node": {
       "types": "./dist/types/node.d.ts",
-      "default": "./dist/numpy.node.js"
+      "default": "./dist/numpy.node.cjs"
     },
     "./browser": {
       "types": "./dist/types/browser.d.ts",
@@ -25,17 +34,16 @@
   },
   "scripts": {
     "dev": "esbuild src/index.ts --bundle --sourcemap --watch --outfile=dist/numpy.dev.js",
-    "build": "npm run build:clean && npm run build:node && npm run build:browser && npm run build:esm && npm run build:types",
+    "build": "npm run build:clean && tsx build.ts && npm run build:types",
     "build:clean": "rm -rf dist",
-    "build:node": "esbuild src/index.ts --bundle --platform=node --format=cjs --sourcemap --outfile=dist/numpy.node.js",
-    "build:browser": "esbuild src/index.ts --bundle --platform=browser --format=iife --global-name=np --sourcemap --outfile=dist/numpy.browser.js",
-    "build:esm": "esbuild src/index.ts --bundle --platform=neutral --format=esm --sourcemap --outfile=dist/numpy.esm.js",
     "build:types": "tsc --emitDeclarationOnly --outDir dist/types",
     "test": "vitest run",
     "test:quick": "vitest run --coverage --exclude tests/validation/exports.numpy.test.ts",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:validation": "vitest run tests/validation",
+    "test:bundles": "npm run build && vitest run --workspace=vitest.workspace.ts --project=bundle-*",
+    "test:ci": "npm run lint && npm run typecheck && npm test && npm run test:bundles",
     "test:summary": "vitest run --reporter=tap | grep -E 'not ok|# tests'",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run tests/unit --coverage; open coverage/index.html",
@@ -82,6 +90,7 @@
     "@types/node": "^20.19.23",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
+    "@vitest/browser": "^1.6.1",
     "@vitest/coverage-v8": "^1.0.4",
     "chart.js": "^4.5.1",
     "chartjs-node-canvas": "^5.0.0",
@@ -91,11 +100,12 @@
     "eslint-plugin-prettier": "^5.0.1",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0",
+    "playwright": "^1.56.1",
     "prettier": "^3.1.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
     "typescript": "^5.3.3",
-    "vitest": "^1.0.4"
+    "vitest": "^1.6.1"
   },
   "dependencies": {
     "@stdlib/blas": "^0.3.3",

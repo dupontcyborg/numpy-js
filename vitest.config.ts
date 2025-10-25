@@ -18,5 +18,12 @@ export default defineConfig({
         '**/tests/**',
       ],
     },
+    // Browser-specific configuration
+    browser: {
+      enabled: false, // Enable per-test with workspace config
+      name: 'chromium',
+      provider: 'playwright',
+      headless: true,
+    },
   },
 });
