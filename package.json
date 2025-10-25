@@ -1,7 +1,7 @@
 {
   "name": "numpy-js",
   "version": "0.1.0",
-  "description": "Complete NumPy implementation for TypeScript and JavaScript",
+  "description": "Complete NumPy implementation for TypeScript and JavaScript (under construction)",
   "main": "dist/numpy.node.cjs",
   "browser": "dist/numpy.browser.js",
   "module": "dist/numpy.esm.js",
