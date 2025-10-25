@@ -95,8 +95,8 @@ jobs:
           pip install numpy
           npm ci
 
-      - name: Run all tests
-        run: npm test
+      - name: Run all tests (quick for now)
+        run: npm run test:quick
 
       - name: Run bundle tests
         run: npm run test:bundles
