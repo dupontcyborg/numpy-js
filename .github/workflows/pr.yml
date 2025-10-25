@@ -1,0 +1,271 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+
+# Cancel in-progress runs when a new commit is pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # Auto-label PRs based on changed files
+  label:
+    name: Auto-label PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Label PR
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          sync-labels: true
+
+  # Run linting and type checks
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+  # Run unit tests (fast, no Python needed)
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+  # Run validation tests (requires Python + NumPy)
+  test-validation:
+    name: Validation Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install Python dependencies
+        run: pip install numpy
+
+      - name: Verify NumPy installation
+        run: python -c "import numpy as np; print(f'NumPy {np.__version__} installed')"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run validation tests
+        run: npm run test:validation
+
+  # Build and test bundles
+  test-bundles:
+    name: Bundle Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build bundles
+        run: npm run build
+
+      - name: Test bundles
+        run: npm run test:bundles
+
+      - name: Check bundle sizes
+        run: |
+          echo "## Bundle Sizes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Bundle | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
+          for file in dist/*.js dist/*.cjs; do
+            if [ -f "$file" ]; then
+              size=$(ls -lh "$file" | awk '{print $5}')
+              echo "| $(basename $file) | $size |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  # Run benchmarks and compare against main
+  benchmark:
+    name: Benchmark Comparison
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history to compare with main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          pip install numpy
+          npm ci
+
+      # Run benchmarks on PR branch
+      - name: Run benchmarks (PR branch)
+        run: npm run bench:quick
+
+      - name: Save PR benchmark results
+        run: |
+          mkdir -p benchmark-results
+          cp benchmarks/results/latest.json benchmark-results/pr-results.json
+
+      # Switch to main and run benchmarks
+      - name: Checkout main branch
+        run: git checkout main
+
+      - name: Install dependencies (main)
+        run: npm ci
+
+      - name: Run benchmarks (main branch)
+        run: npm run bench:quick
+
+      - name: Save main benchmark results
+        run: cp benchmarks/results/latest.json benchmark-results/main-results.json
+
+      # Compare results
+      - name: Compare benchmarks
+        id: compare
+        run: |
+          node -e "
+          const prResults = require('./benchmark-results/pr-results.json');
+          const mainResults = require('./benchmark-results/main-results.json');
+
+          let hasRegression = false;
+          let comment = '## 📊 Benchmark Comparison\n\n';
+          comment += '| Operation | Main | PR | Change | Status |\n';
+          comment += '|-----------|------|----|---------|---------|\n';
+
+          // Compare results (simplified - adjust based on your benchmark structure)
+          const prOps = prResults.benchmarks || [];
+          const mainOps = mainResults.benchmarks || [];
+
+          const threshold = 1.2; // 20% regression threshold
+
+          prOps.forEach(prOp => {
+            const mainOp = mainOps.find(m => m.name === prOp.name);
+            if (mainOp) {
+              const ratio = prOp.time / mainOp.time;
+              const change = ((ratio - 1) * 100).toFixed(1);
+              const status = ratio > threshold ? '⚠️ Regression' :
+                           ratio > 1.05 ? '⚡ Slower' :
+                           ratio < 0.95 ? '🚀 Faster' : '✅ Similar';
+
+              if (ratio > threshold) hasRegression = true;
+
+              comment += \`| \${prOp.name} | \${mainOp.time.toFixed(2)}ms | \${prOp.time.toFixed(2)}ms | \${change > 0 ? '+' : ''}\${change}% | \${status} |\n\`;
+            }
+          });
+
+          if (hasRegression) {
+            comment += '\n⚠️ **Warning**: Performance regression detected (>20% slower)\n';
+          }
+
+          console.log('COMMENT<<EOF');
+          console.log(comment);
+          console.log('EOF');
+          console.log('HAS_REGRESSION=' + hasRegression);
+          " > comparison.txt
+
+          # Output for GitHub Actions
+          echo "comment<<EOF" >> $GITHUB_OUTPUT
+          cat comparison.txt | grep -A 1000 "COMMENT<<EOF" | grep -B 1000 "^EOF$" | grep -v "COMMENT<<EOF" | grep -v "^EOF$" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          has_regression=$(cat comparison.txt | grep "HAS_REGRESSION=true" || echo "HAS_REGRESSION=false")
+          echo "${has_regression##*=}" | xargs -I {} echo "has_regression={}" >> $GITHUB_OUTPUT
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const comment = `${{ steps.compare.outputs.comment }}`;
+
+            // Find existing benchmark comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('📊 Benchmark Comparison')
+            );
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+      - name: Fail if regression detected
+        if: steps.compare.outputs.has_regression == 'true'
+        run: |
+          echo "::error::Performance regression detected! Review the benchmark comparison comment."
+          exit 1
