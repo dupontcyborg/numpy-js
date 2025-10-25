@@ -2,6 +2,11 @@
 import { build, Plugin } from 'esbuild';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
+
+// Read version from package.json
+const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'));
+const VERSION = packageJson.version;
 
 // Selective alias: Only redirect @stdlib packages that try to load native addons
 // This bypasses the native addon loading in lib/index.js and uses pure JS implementations
@@ -77,6 +82,9 @@ async function buildAll() {
     outfile: 'dist/numpy.node.cjs',
     sourcemap: true,
     minify: true,
+    define: {
+      '__VERSION_PLACEHOLDER__': JSON.stringify(VERSION)
+    }
   });
   console.log('✓ Node.js build complete');
 
@@ -92,6 +100,9 @@ async function buildAll() {
     sourcemap: true,
     minify: true,
     plugins: [stdlibAutoMainAlias()],
+    define: {
+      '__VERSION_PLACEHOLDER__': JSON.stringify(VERSION)
+    }
   });
   console.log('✓ Browser build complete');
 
@@ -109,6 +120,9 @@ async function buildAll() {
     sourcemap: true,
     minify: true,
     plugins: [stdlibAutoMainAlias()],
+    define: {
+      '__VERSION_PLACEHOLDER__': JSON.stringify(VERSION)
+    }
   });
   console.log('✓ ESM build complete');
 

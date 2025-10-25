@@ -14,11 +14,16 @@ import { generateHTMLReport } from './visualization';
 import { generatePNGChart } from './chart-generator';
 import type { BenchmarkMode, BenchmarkOptions, BenchmarkReport } from './types';
 
+// Read version from root package.json
+const packageJson = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8')
+);
+
 async function main() {
   // Parse command line arguments
   const args = process.argv.slice(2);
   const options: BenchmarkOptions = {
-    mode: 'standard'
+    mode: 'standard',
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -65,9 +70,7 @@ async function main() {
 
     // Run Python NumPy benchmarks
     console.log('\nRunning Python NumPy benchmarks...');
-    const { results: numpyResults, pythonVersion, numpyVersion } = await runPythonBenchmarks(
-      specs
-    );
+    const { results: numpyResults, pythonVersion, numpyVersion } = await runPythonBenchmarks(specs);
 
     // Compare results
     const comparisons = compareResults(specs, numpyResults, numpyjsResults);
@@ -83,10 +86,10 @@ async function main() {
         node_version: process.version,
         python_version: pythonVersion,
         numpy_version: numpyVersion,
-        numpyjs_version: '0.0.1'
+        numpyjs_version: packageJson.version,
       },
       results: comparisons,
-      summary
+      summary,
     };
 
     // Save results

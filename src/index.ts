@@ -26,5 +26,6 @@ export {
   full_like,
 } from './core/ndarray';
 
-// Version
-export const __version__ = '0.0.1';
+// Version (replaced at build time from package.json)
+declare const __VERSION_PLACEHOLDER__: string;
+export const __version__ = __VERSION_PLACEHOLDER__;
