@@ -127,6 +127,27 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
   } else if (operation === 'min') {
     const axis = arrays['axis'];
     return arrays['a'].min(axis);
+  } else if (operation === 'prod') {
+    const axis = arrays['axis'];
+    return arrays['a'].prod(axis);
+  } else if (operation === 'argmin') {
+    const axis = arrays['axis'];
+    return arrays['a'].argmin(axis);
+  } else if (operation === 'argmax') {
+    const axis = arrays['axis'];
+    return arrays['a'].argmax(axis);
+  } else if (operation === 'var') {
+    const axis = arrays['axis'];
+    return arrays['a'].var(axis);
+  } else if (operation === 'std') {
+    const axis = arrays['axis'];
+    return arrays['a'].std(axis);
+  } else if (operation === 'all') {
+    const axis = arrays['axis'];
+    return arrays['a'].all(axis);
+  } else if (operation === 'any') {
+    const axis = arrays['axis'];
+    return arrays['a'].any(axis);
   }
 
   // Reshape

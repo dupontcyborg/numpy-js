@@ -106,6 +106,27 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
     elif operation == 'min':
         axis = arrays.get('axis')
         return arrays['a'].min(axis=axis)
+    elif operation == 'prod':
+        axis = arrays.get('axis')
+        return arrays['a'].prod(axis=axis)
+    elif operation == 'argmin':
+        axis = arrays.get('axis')
+        return arrays['a'].argmin(axis=axis)
+    elif operation == 'argmax':
+        axis = arrays.get('axis')
+        return arrays['a'].argmax(axis=axis)
+    elif operation == 'var':
+        axis = arrays.get('axis')
+        return arrays['a'].var(axis=axis)
+    elif operation == 'std':
+        axis = arrays.get('axis')
+        return arrays['a'].std(axis=axis)
+    elif operation == 'all':
+        axis = arrays.get('axis')
+        return arrays['a'].all(axis=axis)
+    elif operation == 'any':
+        axis = arrays.get('axis')
+        return arrays['a'].any(axis=axis)
 
     # Reshape
     elif operation == 'reshape':

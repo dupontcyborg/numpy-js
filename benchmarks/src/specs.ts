@@ -330,6 +330,94 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       iterations,
       warmup
     });
+
+    specs.push({
+      name: `min [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'min',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `prod [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'prod',
+      setup: {
+        a: { shape: sizes.medium, fill: 'ones' }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `argmin [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'argmin',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `argmax [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'argmax',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `var [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'var',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `std [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'std',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `all [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'all',
+      setup: {
+        a: { shape: sizes.medium, fill: 'ones' }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `any [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'any',
+      setup: {
+        a: { shape: sizes.medium, fill: 'zeros' }
+      },
+      iterations,
+      warmup
+    });
   }
 
   // ========================================
