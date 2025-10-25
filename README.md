@@ -1,8 +1,9 @@
 # NumPy.js
 
-> Complete NumPy implementation for TypeScript and JavaScript
+Complete NumPy implementation for TypeScript and JavaScript
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Under Construction](https://img.shields.io/badge/Under%20Construction-red)]
 
 > [!WARNING]
 > This project is under construction and is currently unstable. Expect breaking changes.
