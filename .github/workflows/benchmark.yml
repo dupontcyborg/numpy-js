@@ -14,12 +14,15 @@ jobs:
   benchmark:
     name: Run and Track Benchmarks
     runs-on: ubuntu-latest
+    environment: benchmark
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Need full history for regression detection
+          token: ${{ secrets.PAT_TOKEN }}
+          persist-credentials: true
 
       - uses: actions/setup-node@v4
         with:

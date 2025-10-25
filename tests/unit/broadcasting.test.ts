@@ -3,7 +3,12 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { computeBroadcastShape, areBroadcastable } from '../../src/core/broadcasting';
+import {
+  computeBroadcastShape,
+  areBroadcastable,
+  broadcastStdlibArrays,
+  broadcastErrorMessage,
+} from '../../src/core/broadcasting';
 import { array, zeros, ones } from '../../src/core/ndarray';
 
 describe('Broadcasting utilities', () => {
@@ -113,6 +118,129 @@ describe('Broadcasting utilities', () => {
 
     it('returns true for same shapes', () => {
       expect(areBroadcastable([3, 4], [3, 4])).toBe(true);
+    });
+  });
+
+  describe('broadcastStdlibArrays', () => {
+    it('returns empty array for no inputs', () => {
+      const result = broadcastStdlibArrays([]);
+      expect(result).toEqual([]);
+    });
+
+    it('returns same array for single input', () => {
+      const a = array([1, 2, 3]);
+      // @ts-expect-error - accessing private _data for internal testing
+      const result = broadcastStdlibArrays([a._data]);
+      // @ts-expect-error - accessing private _data for internal testing
+      expect(result).toEqual([a._data]);
+    });
+
+    it('broadcasts two compatible arrays', () => {
+      const a = ones([3, 4]);
+      const b = array([1, 2, 3, 4]);
+
+      // @ts-expect-error - accessing private _data for internal testing
+      const result = broadcastStdlibArrays([a._data, b._data]);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]?.shape).toEqual([3, 4]);
+      expect(result[1]?.shape).toEqual([3, 4]);
+    });
+
+    it('broadcasts arrays with size-1 dimensions', () => {
+      const a = array([[1], [2], [3]]); // shape (3, 1)
+      const b = array([[10, 20, 30, 40]]); // shape (1, 4)
+
+      // @ts-expect-error - accessing private _data for internal testing
+      const result = broadcastStdlibArrays([a._data, b._data]);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]?.shape).toEqual([3, 4]);
+      expect(result[1]?.shape).toEqual([3, 4]);
+    });
+
+    it('broadcasts multiple arrays', () => {
+      const a = array([[[1]]]);
+      const b = array([[1, 2]]);
+      const c = array([[[1], [2], [3]]]);
+
+      // @ts-expect-error - accessing private _data for internal testing
+      const result = broadcastStdlibArrays([a._data, b._data, c._data]);
+
+      expect(result).toHaveLength(3);
+      // All should be broadcast to (1, 3, 2)
+      expect(result[0]?.shape).toEqual([1, 3, 2]);
+      expect(result[1]?.shape).toEqual([1, 3, 2]);
+      expect(result[2]?.shape).toEqual([1, 3, 2]);
+    });
+
+    it('throws error for incompatible shapes', () => {
+      const a = array([1, 2, 3]);
+      const b = array([1, 2, 3, 4]);
+
+      expect(() =>
+        // @ts-expect-error - accessing private _data for internal testing
+        broadcastStdlibArrays([a._data, b._data])
+      ).toThrow(/operands could not be broadcast together/);
+    });
+
+    it('throws descriptive error message on broadcast failure', () => {
+      const a = array([[1, 2], [3, 4]]);
+      const b = array([1, 2, 3]);
+
+      expect(() =>
+        // @ts-expect-error - accessing private _data for internal testing
+        broadcastStdlibArrays([a._data, b._data])
+      ).toThrow(/operands could not be broadcast together/);
+    });
+  });
+
+  describe('broadcastErrorMessage', () => {
+    it('generates error message without operation', () => {
+      const shapes = [
+        [3, 4],
+        [5, 6],
+      ];
+      const message = broadcastErrorMessage(shapes);
+
+      expect(message).toBe('operands could not be broadcast together with shapes (3,4) (5,6)');
+    });
+
+    it('generates error message with operation', () => {
+      const shapes = [
+        [3, 4],
+        [5, 6],
+      ];
+      const message = broadcastErrorMessage(shapes, 'add');
+
+      expect(message).toBe('operands could not be broadcast together for add with shapes (3,4) (5,6)');
+    });
+
+    it('handles single shape', () => {
+      const shapes = [[2, 3]];
+      const message = broadcastErrorMessage(shapes);
+
+      expect(message).toBe('operands could not be broadcast together with shapes (2,3)');
+    });
+
+    it('handles empty shapes (scalars)', () => {
+      const shapes = [[], [3, 4]];
+      const message = broadcastErrorMessage(shapes, 'multiply');
+
+      expect(message).toBe('operands could not be broadcast together for multiply with shapes () (3,4)');
+    });
+
+    it('handles multiple shapes', () => {
+      const shapes = [
+        [3, 4],
+        [4],
+        [5, 1],
+      ];
+      const message = broadcastErrorMessage(shapes, 'subtract');
+
+      expect(message).toBe(
+        'operands could not be broadcast together for subtract with shapes (3,4) (4) (5,1)'
+      );
     });
   });
 });
