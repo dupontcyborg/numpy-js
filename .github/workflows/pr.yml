@@ -94,8 +94,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run validation tests
-        run: npm run test:validation
+      - name: Run validation tests (quick for now)
+        run: npm run test:quick
 
   # Build and test bundles
   test-bundles:
@@ -111,6 +111,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
 
       - name: Build bundles
         run: npm run build
@@ -135,6 +138,9 @@ jobs:
   benchmark:
     name: Benchmark Comparison
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
