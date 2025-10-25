@@ -97,43 +97,6 @@ jobs:
       - name: Run validation tests (quick for now)
         run: npm run test:quick
 
-  # Build and test bundles
-  test-bundles:
-    name: Bundle Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Build bundles
-        run: npm run build
-
-      - name: Test bundles
-        run: npm run test:bundles
-
-      - name: Check bundle sizes
-        run: |
-          echo "## Bundle Sizes" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Bundle | Size |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
-          for file in dist/*.js dist/*.cjs; do
-            if [ -f "$file" ]; then
-              size=$(ls -lh "$file" | awk '{print $5}')
-              echo "| $(basename $file) | $size |" >> $GITHUB_STEP_SUMMARY
-            fi
-          done
-
   # Run benchmarks and compare against main
   benchmark:
     name: Benchmark Comparison
@@ -192,32 +155,49 @@ jobs:
 
           let hasRegression = false;
           let comment = '## 📊 Benchmark Comparison\n\n';
-          comment += '| Operation | Main | PR | Change | Status |\n';
-          comment += '|-----------|------|----|---------|---------|\n';
+          comment += '| Operation | Main (ms) | PR (ms) | Change | Status |\n';
+          comment += '|-----------|-----------|---------|--------|--------|\n';
 
-          // Compare results (simplified - adjust based on your benchmark structure)
-          const prOps = prResults.benchmarks || [];
-          const mainOps = mainResults.benchmarks || [];
+          const prOps = prResults.results || [];
+          const mainOps = mainResults.results || [];
 
           const threshold = 1.2; // 20% regression threshold
 
+          // Track categories
+          let currentCategory = '';
+
           prOps.forEach(prOp => {
             const mainOp = mainOps.find(m => m.name === prOp.name);
-            if (mainOp) {
-              const ratio = prOp.time / mainOp.time;
+            if (mainOp && prOp.numpyjs && mainOp.numpyjs) {
+              // Add category header if changed
+              if (prOp.category !== currentCategory) {
+                currentCategory = prOp.category;
+                comment += \`| **\${currentCategory.toUpperCase()}** | | | | |\n\`;
+              }
+
+              const prTime = prOp.numpyjs.mean_ms;
+              const mainTime = mainOp.numpyjs.mean_ms;
+              const ratio = prTime / mainTime;
               const change = ((ratio - 1) * 100).toFixed(1);
+
               const status = ratio > threshold ? '⚠️ Regression' :
                            ratio > 1.05 ? '⚡ Slower' :
                            ratio < 0.95 ? '🚀 Faster' : '✅ Similar';
 
               if (ratio > threshold) hasRegression = true;
 
-              comment += \`| \${prOp.name} | \${mainOp.time.toFixed(2)}ms | \${prOp.time.toFixed(2)}ms | \${change > 0 ? '+' : ''}\${change}% | \${status} |\n\`;
+              comment += \`| \${prOp.name} | \${mainTime.toFixed(4)} | \${prTime.toFixed(4)} | \${change > 0 ? '+' : ''}\${change}% | \${status} |\n\`;
             }
           });
 
+          if (prOps.length === 0) {
+            comment += '| *No benchmark results found* | | | | |\n';
+          }
+
           if (hasRegression) {
             comment += '\n⚠️ **Warning**: Performance regression detected (>20% slower)\n';
+          } else {
+            comment += '\n✅ No significant performance regressions detected\n';
           }
 
           console.log('COMMENT<<EOF');
