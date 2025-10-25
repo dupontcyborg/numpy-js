@@ -19,9 +19,7 @@ import { join } from 'path';
 // Get Python command from environment or use default
 const PYTHON_CMD = process.env.NUMPY_PYTHON || 'python3';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface NumPyResult {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
   dtype: string;
   shape: number[];
@@ -30,7 +28,7 @@ export interface NumPyResult {
 /**
  * Deserialize values from Python, converting special markers back to Infinity/NaN
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 function deserializeValue(val: any): any {
   if (Array.isArray(val)) {
     return val.map((v) => deserializeValue(v));
@@ -161,7 +159,7 @@ export function closeEnough(
 /**
  * Recursively compare arrays/nested arrays with tolerance
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export function arraysClose(a: any, b: any, rtol: number = 1e-5, atol: number = 1e-8): boolean {
   if (Array.isArray(a) && Array.isArray(b)) {
     if (a.length !== b.length) return false;

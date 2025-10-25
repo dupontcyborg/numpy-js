@@ -88,12 +88,6 @@ result = a + b
       const expectedDtype = reverseMap[pyResult.dtype] || 'uint64';
       expect(jsResult).toBe(expectedDtype);
     });
-
-    it.skip('should promote float32 + complex64 correctly (complex serialization issue)', () => {
-      const jsResult = promoteDTypes('float32', 'complex64');
-      // TODO: Fix complex number serialization in numpy-oracle
-      expect(jsResult).toBe('complex64');
-    });
   });
 
   describe('Comprehensive promotion matrix', () => {

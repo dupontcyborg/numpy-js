@@ -43,7 +43,7 @@ export function elementwiseBinaryOp(
       StdlibNDArrayInternal,
       StdlibNDArrayInternal,
     ];
-  } catch (error) {
+  } catch {
     // Re-throw with NumPy-compatible error message
     throw new Error(
       `operands could not be broadcast together with shapes ${JSON.stringify(a.shape)} ${JSON.stringify(b.shape)}`
@@ -123,7 +123,7 @@ export function elementwiseComparisonOp(
       StdlibNDArrayInternal,
       StdlibNDArrayInternal,
     ];
-  } catch (error) {
+  } catch {
     // Re-throw with NumPy-compatible error message
     throw new Error(
       `operands could not be broadcast together with shapes ${JSON.stringify(a.shape)} ${JSON.stringify(b.shape)}`
