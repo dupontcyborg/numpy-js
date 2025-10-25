@@ -185,7 +185,10 @@ describe('Broadcasting utilities', () => {
     });
 
     it('throws descriptive error message on broadcast failure', () => {
-      const a = array([[1, 2], [3, 4]]);
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
       const b = array([1, 2, 3]);
 
       expect(() =>
@@ -213,7 +216,9 @@ describe('Broadcasting utilities', () => {
       ];
       const message = broadcastErrorMessage(shapes, 'add');
 
-      expect(message).toBe('operands could not be broadcast together for add with shapes (3,4) (5,6)');
+      expect(message).toBe(
+        'operands could not be broadcast together for add with shapes (3,4) (5,6)'
+      );
     });
 
     it('handles single shape', () => {
@@ -227,15 +232,13 @@ describe('Broadcasting utilities', () => {
       const shapes = [[], [3, 4]];
       const message = broadcastErrorMessage(shapes, 'multiply');
 
-      expect(message).toBe('operands could not be broadcast together for multiply with shapes () (3,4)');
+      expect(message).toBe(
+        'operands could not be broadcast together for multiply with shapes () (3,4)'
+      );
     });
 
     it('handles multiple shapes', () => {
-      const shapes = [
-        [3, 4],
-        [4],
-        [5, 1],
-      ];
+      const shapes = [[3, 4], [4], [5, 1]];
       const message = broadcastErrorMessage(shapes, 'subtract');
 
       expect(message).toBe(
