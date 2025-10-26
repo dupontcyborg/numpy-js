@@ -76,12 +76,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nicolasdupont/numpy-ts.git"
+    "url": "https://github.com/dupontcyborg/numpy-ts.git"
   },
   "bugs": {
-    "url": "https://github.com/nicolasdupont/numpy-ts/issues"
+    "url": "https://github.com/dupontcyborg/numpy-ts/issues"
   },
-  "homepage": "https://github.com/nicolasdupont/numpy-ts#readme",
+  "homepage": "https://github.com/dupontcyborg/numpy-ts#readme",
   "devDependencies": {
     "@stdlib/types": "^0.4.3",
     "@types/node": "^24.9.1",

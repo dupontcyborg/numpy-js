@@ -354,7 +354,7 @@ Project is in early development. We welcome contributions!
 ### Setup
 
 ```bash
-git clone https://github.com/nicolasdupont/numpy-ts.git
+git clone https://github.com/dupontcyborg/numpy-ts.git
 cd numpy-ts
 npm install
 npm test
@@ -440,7 +440,7 @@ Focus is correctness and completeness first, then performance.
 - **Documentation**: [`docs/`](./docs)
 - **NumPy**: https://numpy.org/
 - **@stdlib**: https://stdlib.io/
-- **Issues**: https://github.com/nicolasdupont/numpy-ts/issues
+- **Issues**: https://github.com/dupontcyborg/numpy-ts/issues
 
 ---
 
