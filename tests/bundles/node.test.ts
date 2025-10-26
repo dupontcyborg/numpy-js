@@ -18,7 +18,7 @@ describe('Node.js CJS Bundle Smoke Test', () => {
 
   beforeAll(async () => {
     // Import the actual built CJS bundle using require (via createRequire)
-    const bundlePath = resolve(__dirname, '../../dist/numpy.node.cjs');
+    const bundlePath = resolve(__dirname, '../../dist/numpy-ts.node.cjs');
     np = require(bundlePath);
   });
 

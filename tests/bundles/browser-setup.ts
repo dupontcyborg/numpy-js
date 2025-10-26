@@ -7,7 +7,7 @@
 if (typeof window !== 'undefined') {
   // Create a script tag that loads the built bundle
   const script = document.createElement('script');
-  script.src = '/dist/numpy.browser.js';
+  script.src = '/dist/numpy-ts.browser.js';
   script.type = 'text/javascript';
 
   // Wait for it to load

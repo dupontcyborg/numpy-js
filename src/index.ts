@@ -1,7 +1,7 @@
 /**
- * NumPy.js - Complete NumPy implementation for TypeScript and JavaScript
+ * numpy-ts - Complete NumPy implementation for TypeScript and JavaScript
  *
- * @module numpy-js
+ * @module numpy-ts
  */
 
 // Core array functions

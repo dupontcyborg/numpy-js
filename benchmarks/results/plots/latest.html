@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NumPy vs NumPy-JS Benchmark Results</title>
+  <title>NumPy vs numpy-ts Benchmark Results</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     * {
@@ -168,34 +168,34 @@
 </head>
 <body>
   <div class="container">
-    <h1>🚀 NumPy vs NumPy-JS Benchmark Results</h1>
-    <p class="subtitle">Performance comparison of NumPy-JS against Python NumPy</p>
+    <h1>🚀 NumPy vs numpy-ts Benchmark Results</h1>
+    <p class="subtitle">Performance comparison of numpy-ts against Python NumPy</p>
 
     <div class="meta">
-      <div><strong>Timestamp:</strong> 10/25/2025, 12:20:59 PM</div>
+      <div><strong>Timestamp:</strong> 10/25/2025, 7:54:37 PM</div>
       <div><strong>Node:</strong> v22.11.0</div>
       <div><strong>Python:</strong> 3.13.0</div>
       <div><strong>NumPy:</strong> 2.3.3</div>
-      <div><strong>NumPy-JS:</strong> 0.0.1</div>
+      <div><strong>numpy-ts:</strong> 0.1.0</div>
       <div><strong>Total Benchmarks:</strong> 35</div>
     </div>
 
     <div class="summary-grid">
       <div class="summary-card">
         <h3>Average Slowdown</h3>
-        <div class="value">34.69x</div>
+        <div class="value">36.13x</div>
       </div>
       <div class="summary-card">
         <h3>Median Slowdown</h3>
-        <div class="value">7.48x</div>
+        <div class="value">7.08x</div>
       </div>
       <div class="summary-card best">
         <h3>Best Case</h3>
-        <div class="value">0.89x</div>
+        <div class="value">1.29x</div>
       </div>
       <div class="summary-card worst">
         <h3>Worst Case</h3>
-        <div class="value">301.71x</div>
+        <div class="value">291.98x</div>
       </div>
     </div>
 
@@ -217,88 +217,88 @@
           <tr>
             <th>Benchmark</th>
             <th>NumPy (ms)</th>
-            <th>NumPy-JS (ms)</th>
+            <th>numpy-ts (ms)</th>
             <th>Ratio</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>zeros [1000]</td>
-            <td>0.31μs</td>
-            <td>3.29μs</td>
-            <td><span class="ratio bad">10.52x</span></td>
+            <td>0.28μs</td>
+            <td>2.98μs</td>
+            <td><span class="ratio bad">10.60x</span></td>
           </tr>
           <tr>
             <td>zeros [100x100]</td>
-            <td>0.69μs</td>
-            <td>1.93μs</td>
-            <td><span class="ratio ok">2.80x</span></td>
+            <td>0.88μs</td>
+            <td>1.82μs</td>
+            <td><span class="ratio ok">2.08x</span></td>
           </tr>
           <tr>
             <td>ones [100x100]</td>
-            <td>1.28μs</td>
-            <td>6.17μs</td>
-            <td><span class="ratio ok">4.83x</span></td>
+            <td>1.30μs</td>
+            <td>6.36μs</td>
+            <td><span class="ratio ok">4.88x</span></td>
           </tr>
           <tr>
             <td>arange(1000)</td>
-            <td>0.45μs</td>
-            <td>13.69μs</td>
-            <td><span class="ratio bad">30.37x</span></td>
+            <td>0.38μs</td>
+            <td>12.68μs</td>
+            <td><span class="ratio bad">33.36x</span></td>
           </tr>
           <tr>
             <td>linspace(0, 100, 1000)</td>
-            <td>2.79μs</td>
-            <td>19.76μs</td>
-            <td><span class="ratio bad">7.08x</span></td>
+            <td>2.85μs</td>
+            <td>19.82μs</td>
+            <td><span class="ratio bad">6.95x</span></td>
           </tr>
           <tr>
             <td>logspace(0, 3, 1000)</td>
-            <td>7.62μs</td>
+            <td>8.10μs</td>
             <td>57.07μs</td>
-            <td><span class="ratio bad">7.48x</span></td>
+            <td><span class="ratio bad">7.05x</span></td>
           </tr>
           <tr>
             <td>geomspace(1, 1000, 1000)</td>
-            <td>14.01μs</td>
-            <td>21.90μs</td>
-            <td><span class="ratio good">1.56x</span></td>
+            <td>14.41μs</td>
+            <td>23.96μs</td>
+            <td><span class="ratio good">1.66x</span></td>
           </tr>
           <tr>
             <td>eye(100)</td>
-            <td>2.05μs</td>
-            <td>7.44μs</td>
-            <td><span class="ratio ok">3.63x</span></td>
+            <td>2.11μs</td>
+            <td>10.50μs</td>
+            <td><span class="ratio ok">4.97x</span></td>
           </tr>
           <tr>
             <td>identity(100)</td>
-            <td>2.51μs</td>
-            <td>5.35μs</td>
-            <td><span class="ratio ok">2.14x</span></td>
+            <td>2.14μs</td>
+            <td>6.60μs</td>
+            <td><span class="ratio ok">3.08x</span></td>
           </tr>
           <tr>
             <td>empty [100x100]</td>
-            <td>0.16μs</td>
-            <td>2.58μs</td>
-            <td><span class="ratio bad">16.11x</span></td>
+            <td>0.17μs</td>
+            <td>3.04μs</td>
+            <td><span class="ratio bad">17.64x</span></td>
           </tr>
           <tr>
             <td>full [100x100]</td>
-            <td>1.52μs</td>
-            <td>5.05μs</td>
-            <td><span class="ratio ok">3.31x</span></td>
+            <td>1.35μs</td>
+            <td>5.17μs</td>
+            <td><span class="ratio ok">3.83x</span></td>
           </tr>
           <tr>
             <td>copy [100x100]</td>
-            <td>1.19μs</td>
-            <td>9.55μs</td>
-            <td><span class="ratio bad">8.05x</span></td>
+            <td>1.37μs</td>
+            <td>10.47μs</td>
+            <td><span class="ratio bad">7.65x</span></td>
           </tr>
           <tr>
             <td>zeros_like [100x100]</td>
-            <td>1.61μs</td>
-            <td>1.43μs</td>
-            <td><span class="ratio good">0.89x</span></td>
+            <td>1.70μs</td>
+            <td>2.48μs</td>
+            <td><span class="ratio good">1.46x</span></td>
           </tr>
         </tbody>
       </table>
@@ -310,34 +310,34 @@
           <tr>
             <th>Benchmark</th>
             <th>NumPy (ms)</th>
-            <th>NumPy-JS (ms)</th>
+            <th>numpy-ts (ms)</th>
             <th>Ratio</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>add [100x100] + scalar</td>
-            <td>1.48μs</td>
-            <td>141.56μs</td>
-            <td><span class="ratio bad">95.44x</span></td>
+            <td>1.47μs</td>
+            <td>147.44μs</td>
+            <td><span class="ratio bad">100.14x</span></td>
           </tr>
           <tr>
             <td>add [100x100] + [100x100]</td>
-            <td>2.52μs</td>
-            <td>103.63μs</td>
-            <td><span class="ratio bad">41.11x</span></td>
+            <td>2.74μs</td>
+            <td>106.44μs</td>
+            <td><span class="ratio bad">38.84x</span></td>
           </tr>
           <tr>
             <td>multiply [100x100] * scalar</td>
-            <td>1.53μs</td>
-            <td>172.87μs</td>
-            <td><span class="ratio bad">113.05x</span></td>
+            <td>1.51μs</td>
+            <td>178.36μs</td>
+            <td><span class="ratio bad">118.32x</span></td>
           </tr>
           <tr>
             <td>multiply [100x100] * [100x100]</td>
-            <td>2.34μs</td>
-            <td>147.30μs</td>
-            <td><span class="ratio bad">63.06x</span></td>
+            <td>2.62μs</td>
+            <td>155.31μs</td>
+            <td><span class="ratio bad">59.21x</span></td>
           </tr>
         </tbody>
       </table>
@@ -349,28 +349,28 @@
           <tr>
             <th>Benchmark</th>
             <th>NumPy (ms)</th>
-            <th>NumPy-JS (ms)</th>
+            <th>numpy-ts (ms)</th>
             <th>Ratio</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>matmul [100x100] @ [100x100]</td>
-            <td>7.93μs</td>
-            <td>934.24μs</td>
-            <td><span class="ratio bad">117.74x</span></td>
+            <td>8.11μs</td>
+            <td>982.04μs</td>
+            <td><span class="ratio bad">121.05x</span></td>
           </tr>
           <tr>
             <td>transpose [100x100]</td>
-            <td>0.24μs</td>
-            <td>1.54μs</td>
-            <td><span class="ratio bad">6.38x</span></td>
+            <td>0.23μs</td>
+            <td>1.59μs</td>
+            <td><span class="ratio bad">6.98x</span></td>
           </tr>
           <tr>
             <td>matmul [500x500] @ [500x500]</td>
-            <td>396.73μs</td>
-            <td>119.696ms</td>
-            <td><span class="ratio bad">301.71x</span></td>
+            <td>421.95μs</td>
+            <td>123.204ms</td>
+            <td><span class="ratio bad">291.98x</span></td>
           </tr>
         </tbody>
       </table>
@@ -382,82 +382,82 @@
           <tr>
             <th>Benchmark</th>
             <th>NumPy (ms)</th>
-            <th>NumPy-JS (ms)</th>
+            <th>numpy-ts (ms)</th>
             <th>Ratio</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>sum [100x100]</td>
-            <td>2.01μs</td>
-            <td>40.14μs</td>
-            <td><span class="ratio bad">19.96x</span></td>
+            <td>1.66μs</td>
+            <td>43.40μs</td>
+            <td><span class="ratio bad">26.07x</span></td>
           </tr>
           <tr>
             <td>sum [100x100] axis=0</td>
-            <td>2.45μs</td>
-            <td>286.06μs</td>
-            <td><span class="ratio bad">116.72x</span></td>
+            <td>2.26μs</td>
+            <td>279.20μs</td>
+            <td><span class="ratio bad">123.50x</span></td>
           </tr>
           <tr>
             <td>mean [100x100]</td>
-            <td>2.60μs</td>
-            <td>7.38μs</td>
-            <td><span class="ratio ok">2.84x</span></td>
+            <td>2.33μs</td>
+            <td>7.30μs</td>
+            <td><span class="ratio ok">3.13x</span></td>
           </tr>
           <tr>
             <td>max [100x100]</td>
-            <td>1.30μs</td>
-            <td>41.24μs</td>
-            <td><span class="ratio bad">31.62x</span></td>
+            <td>1.11μs</td>
+            <td>38.31μs</td>
+            <td><span class="ratio bad">34.51x</span></td>
           </tr>
           <tr>
             <td>min [100x100]</td>
-            <td>1.38μs</td>
-            <td>41.03μs</td>
-            <td><span class="ratio bad">29.77x</span></td>
+            <td>1.11μs</td>
+            <td>37.10μs</td>
+            <td><span class="ratio bad">33.52x</span></td>
           </tr>
           <tr>
             <td>prod [100x100]</td>
-            <td>8.29μs</td>
-            <td>41.82μs</td>
-            <td><span class="ratio bad">5.05x</span></td>
+            <td>8.34μs</td>
+            <td>43.80μs</td>
+            <td><span class="ratio bad">5.25x</span></td>
           </tr>
           <tr>
             <td>argmin [100x100]</td>
-            <td>5.32μs</td>
-            <td>37.82μs</td>
-            <td><span class="ratio bad">7.11x</span></td>
+            <td>5.33μs</td>
+            <td>37.75μs</td>
+            <td><span class="ratio bad">7.08x</span></td>
           </tr>
           <tr>
             <td>argmax [100x100]</td>
-            <td>5.48μs</td>
-            <td>39.40μs</td>
-            <td><span class="ratio bad">7.18x</span></td>
+            <td>5.51μs</td>
+            <td>35.89μs</td>
+            <td><span class="ratio bad">6.51x</span></td>
           </tr>
           <tr>
             <td>var [100x100]</td>
-            <td>9.14μs</td>
-            <td>25.86μs</td>
-            <td><span class="ratio ok">2.83x</span></td>
+            <td>8.71μs</td>
+            <td>27.19μs</td>
+            <td><span class="ratio ok">3.12x</span></td>
           </tr>
           <tr>
             <td>std [100x100]</td>
-            <td>9.92μs</td>
-            <td>13.36μs</td>
-            <td><span class="ratio good">1.35x</span></td>
+            <td>9.56μs</td>
+            <td>12.33μs</td>
+            <td><span class="ratio good">1.29x</span></td>
           </tr>
           <tr>
             <td>all [100x100]</td>
-            <td>3.31μs</td>
-            <td>34.36μs</td>
-            <td><span class="ratio bad">10.38x</span></td>
+            <td>3.15μs</td>
+            <td>39.50μs</td>
+            <td><span class="ratio bad">12.54x</span></td>
           </tr>
           <tr>
             <td>any [100x100]</td>
-            <td>3.92μs</td>
-            <td>37.75μs</td>
-            <td><span class="ratio bad">9.63x</span></td>
+            <td>3.41μs</td>
+            <td>41.22μs</td>
+            <td><span class="ratio bad">12.08x</span></td>
           </tr>
         </tbody>
       </table>
@@ -469,35 +469,35 @@
           <tr>
             <th>Benchmark</th>
             <th>NumPy (ms)</th>
-            <th>NumPy-JS (ms)</th>
+            <th>numpy-ts (ms)</th>
             <th>Ratio</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>reshape [100x100] -> [100x100] (contiguous)</td>
-            <td>0.33μs</td>
-            <td>1.20μs</td>
-            <td><span class="ratio ok">3.58x</span></td>
+            <td>0.27μs</td>
+            <td>1.69μs</td>
+            <td><span class="ratio bad">6.19x</span></td>
           </tr>
           <tr>
             <td>flatten [100x100]</td>
-            <td>1.39μs</td>
-            <td>173.66μs</td>
-            <td><span class="ratio bad">125.25x</span></td>
+            <td>1.25μs</td>
+            <td>178.12μs</td>
+            <td><span class="ratio bad">142.22x</span></td>
           </tr>
           <tr>
             <td>ravel [100x100]</td>
-            <td>0.31μs</td>
-            <td>1.11μs</td>
-            <td><span class="ratio ok">3.56x</span></td>
+            <td>0.23μs</td>
+            <td>1.29μs</td>
+            <td><span class="ratio bad">5.64x</span></td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <div class="footer">
-      <p>Generated by NumPy-JS Benchmark Suite</p>
+      <p>Generated by numpy-ts Benchmark Suite</p>
       <p>Lower ratios are better (closer to NumPy performance)</p>
     </div>
   </div>
@@ -510,7 +510,7 @@
         labels: ["creation","arithmetic","linalg","reductions","reshape"],
         datasets: [{
           label: 'Average Slowdown (x times slower than NumPy)',
-          data: [7.597210807452907,78.16512936639853,141.9432501810366,20.36974622468469,44.13046755655432],
+          data: [8.093208386462086,79.12823773852026,140.00468008062666,22.38323062428044,51.35210279473952],
           backgroundColor: 'rgba(102, 126, 234, 0.8)',
           borderColor: 'rgba(102, 126, 234, 1)',
           borderWidth: 2
@@ -542,8 +542,8 @@
         labels: ["zeros [1000]","zeros [100x100]","ones [100x100]","arange(1000)","linspace(0, 100, 1000)","logspace(0, 3, 1000)","geomspace(1, 1000, 1000)","eye(100)","identity(100)","empty [100x100]","full [100x100]","copy [100x100]","zeros_like [100x100]","add [100x100] + scalar","add [100x100] + [100x100]","multiply [100x100] * scalar","multiply [100x100] * [100x100]","matmul [100x100] @ [100x100]","transpose [100x100]","matmul [500x500] @ [500x500]","sum [100x100]","sum [100x100] axis=0","mean [100x100]","max [100x100]","min [100x100]","prod [100x100]","argmin [100x100]","argmax [100x100]","var [100x100]","std [100x100]","all [100x100]","any [100x100]","reshape [100x100] -> [100x100] (contiguous)","flatten [100x100]","ravel [100x100]"],
         datasets: [{
           label: 'Slowdown Ratio (x times slower)',
-          data: [10.51975692224674,2.7991916578156464,4.83380657042245,30.367082611172986,7.075411337244341,7.484948094830378,1.5628783265049668,3.6313143247932533,2.135723119664294,16.108168233426657,3.3088432035479074,8.047184164608469,0.8894319306097057,95.4445941729238,41.110676474899655,113.04620853720256,63.0590382805681,117.7375500096841,6.383698029215006,301.7085025042107,19.955192119083517,116.72082880735096,2.8376722151077733,31.622392525116542,29.771037555926423,5.046480524003106,7.11132284840171,7.184864065790992,2.830438135944853,1.3462497676096887,10.380686232439576,9.629789899441127,3.5812847119881805,125.24651558090797,3.5636023767668097],
-          backgroundColor: ["rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(255, 195, 18, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)"],
+          data: [10.603719676777368,2.0798916783881496,4.878539939696734,33.364428764790496,6.949908991664164,7.048831325811248,1.6628706930674244,4.965395610706811,3.081764995433274,17.64292326850875,3.8306188632820963,7.64500095654879,1.4578142593318222,100.14454347760382,38.836522739012906,118.32484221114164,59.207042526322674,121.05176848799424,6.978421580148393,291.9838501737373,26.070936596798454,123.4980215786704,3.125655017378799,34.514524220643274,33.519476473364186,5.254525375540855,7.077394170075194,6.5073521328873944,3.12288183430688,1.2894727451103594,12.536726487995143,12.081800858594326,6.1919719567815,142.22095973592633,5.643376691510764],
+          backgroundColor: ["rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(255, 195, 18, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)"],
           borderWidth: 1
         }]
       },

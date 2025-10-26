@@ -18,7 +18,7 @@ describe('Browser IIFE Bundle Smoke Test', () => {
   beforeAll(async () => {
     // Load the IIFE bundle via script tag
     const script = document.createElement('script');
-    script.src = '/dist/numpy.browser.js';
+    script.src = '/dist/numpy-ts.browser.js';
     document.head.appendChild(script);
 
     // Wait for script to load

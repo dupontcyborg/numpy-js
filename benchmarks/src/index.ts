@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Main benchmark orchestrator
- * Runs benchmarks for both Python NumPy and NumPy-JS, compares results
+ * Runs benchmarks for both Python NumPy and numpy-ts, compares results
  */
 
 import * as fs from 'fs';
@@ -45,7 +45,7 @@ async function main() {
     }
   }
 
-  console.log('🚀 NumPy vs NumPy-JS Benchmark Suite\n');
+  console.log('🚀 NumPy vs numpy-ts Benchmark Suite\n');
   console.log(`Mode: ${options.mode}`);
 
   // Get benchmark specifications
@@ -64,8 +64,8 @@ async function main() {
   console.log(`Total benchmarks: ${specs.length}\n`);
 
   try {
-    // Run NumPy-JS benchmarks
-    console.log('Running NumPy-JS benchmarks...');
+    // Run numpy-ts benchmarks
+    console.log('Running numpy-ts benchmarks...');
     const numpyjsResults = await runBenchmarks(specs);
 
     // Run Python NumPy benchmarks
@@ -139,7 +139,7 @@ async function main() {
 
 function printHelp() {
   console.log(`
-NumPy vs NumPy-JS Benchmark Suite
+NumPy vs numpy-ts Benchmark Suite
 
 Usage:
   npm run bench [options]

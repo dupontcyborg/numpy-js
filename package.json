@@ -1,17 +1,15 @@
 {
-  "name": "numpy-js",
+  "name": "numpy-ts",
   "version": "0.1.0",
   "description": "Complete NumPy implementation for TypeScript and JavaScript (under construction)",
-  "main": "dist/numpy.node.cjs",
-  "browser": "dist/numpy.browser.js",
-  "module": "dist/numpy.esm.js",
+  "main": "dist/numpy-ts.node.cjs",
+  "browser": "dist/numpy-ts.browser.js",
+  "module": "dist/numpy-ts.esm.js",
   "types": "dist/types/index.d.ts",
   "type": "module",
   "files": [
     "dist/**/*.js",
     "dist/**/*.cjs",
-    "dist/**/*.js.map",
-    "dist/**/*.cjs.map",
     "dist/types/**/*.d.ts",
     "README.md",
     "LICENSE"
@@ -19,21 +17,21 @@
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "node": "./dist/numpy.node.cjs",
-      "browser": "./dist/numpy.browser.js",
-      "default": "./dist/numpy.esm.js"
+      "node": "./dist/numpy-ts.node.cjs",
+      "browser": "./dist/numpy-ts.browser.js",
+      "default": "./dist/numpy-ts.esm.js"
     },
     "./node": {
       "types": "./dist/types/node.d.ts",
-      "default": "./dist/numpy.node.cjs"
+      "default": "./dist/numpy-ts.node.cjs"
     },
     "./browser": {
       "types": "./dist/types/browser.d.ts",
-      "default": "./dist/numpy.browser.js"
+      "default": "./dist/numpy-ts.browser.js"
     }
   },
   "scripts": {
-    "dev": "esbuild src/index.ts --bundle --sourcemap --watch --outfile=dist/numpy.dev.js",
+    "dev": "esbuild src/index.ts --bundle --sourcemap --watch --outfile=dist/numpy-ts.dev.js",
     "build": "npm run build:clean && tsx build.ts && npm run build:types",
     "build:clean": "rm -rf dist",
     "build:types": "tsc --emitDeclarationOnly --outDir dist/types",
@@ -59,8 +57,7 @@
     "bench:standard": "npm run bench:build && node benchmarks/dist/bench.cjs --standard",
     "bench:full": "npm run bench:build && node benchmarks/dist/bench.cjs --full",
     "bench:category": "npm run bench:build && node benchmarks/dist/bench.cjs --category",
-    "bench:view": "open benchmarks/results/plots/latest.html || xdg-open benchmarks/results/plots/latest.html",
-    "prepare": "husky install"
+    "bench:view": "open benchmarks/results/plots/latest.html || xdg-open benchmarks/results/plots/latest.html"
   },
   "keywords": [
     "numpy",
@@ -79,12 +76,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nicolasdupont/numpy-js.git"
+    "url": "https://github.com/dupontcyborg/numpy-ts.git"
   },
   "bugs": {
-    "url": "https://github.com/nicolasdupont/numpy-js/issues"
+    "url": "https://github.com/dupontcyborg/numpy-ts/issues"
   },
-  "homepage": "https://github.com/nicolasdupont/numpy-js#readme",
+  "homepage": "https://github.com/dupontcyborg/numpy-ts#readme",
   "devDependencies": {
     "@stdlib/types": "^0.4.3",
     "@types/node": "^24.9.1",
