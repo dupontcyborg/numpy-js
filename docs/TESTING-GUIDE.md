@@ -1,6 +1,6 @@
 # Testing Guide
 
-Comprehensive guide for adding tests when implementing new functionality in NumPy-JS.
+Comprehensive guide for adding tests when implementing new functionality in numpy-ts.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ Comprehensive guide for adding tests when implementing new functionality in NumP
 
 ## Overview
 
-NumPy-JS uses a **three-tier testing strategy**:
+numpy-ts uses a **three-tier testing strategy**:
 
 ```
 ┌─────────────────────────────────────────────────────────┐

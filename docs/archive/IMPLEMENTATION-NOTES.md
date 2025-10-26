@@ -430,7 +430,7 @@ String-based slice syntax was chosen because TypeScript doesn't support Python's
 // NumPy/Python:
 arr[0:5, ::2]
 
-// NumPy.js equivalent:
+// numpy-ts equivalent:
 arr.slice('0:5', '::2')
 ```
 
@@ -1015,15 +1015,15 @@ complex_to_float.astype('float64')  // Extracts real part only
 
 1. **Default dtype**:
    - NumPy: `int64` for integers, `float64` for floats
-   - NumPy.js: `float64` for all numbers (following @stdlib/JavaScript number compatibility)
+   - numpy-ts: `float64` for all numbers (following @stdlib/JavaScript number compatibility)
 
 2. **BigInt representation**:
    - NumPy: Transparent int64/uint64
-   - NumPy.js: JavaScript BigInt type (explicit type difference)
+   - numpy-ts: JavaScript BigInt type (explicit type difference)
 
 3. **Complex input**:
    - NumPy: Native complex literals `1+2j`
-   - NumPy.js: Array pairs `[1, 2]` (real, imag)
+   - numpy-ts: Array pairs `[1, 2]` (real, imag)
 
 **What's Not Supported (Yet):**
 

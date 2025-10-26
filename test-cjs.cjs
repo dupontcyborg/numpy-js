@@ -1,5 +1,5 @@
 // Test CJS bundle
-const np = require('./dist/numpy.node.cjs');
+const np = require('./dist/numpy-ts.node.cjs');
 
 console.log('CJS Bundle Test:');
 console.log('typeof np:', typeof np);

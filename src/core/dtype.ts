@@ -1,5 +1,5 @@
 /**
- * DType (Data Type) system for NumPy.js
+ * DType (Data Type) system for numpy-ts
  *
  * Supports NumPy numeric types:
  * - Floating point: float32, float64

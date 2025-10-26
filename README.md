@@ -1,4 +1,4 @@
-# NumPy.js
+# numpy-ts
 
 Complete NumPy implementation for TypeScript and JavaScript
 
@@ -10,7 +10,7 @@ Complete NumPy implementation for TypeScript and JavaScript
 
 ---
 
-## What is NumPy.js?
+## What is numpy-ts?
 
 A complete, functionally-equivalent implementation of NumPy 2.0+ for the JavaScript ecosystem. (At least that's the goal!)
 
@@ -33,7 +33,7 @@ A complete, functionally-equivalent implementation of NumPy 2.0+ for the JavaScr
 ## Quick Example
 
 ```typescript
-import * as np from 'numpy-js';
+import * as np from 'numpy-ts';
 
 // Create arrays (default float64 dtype)
 const A = np.array([[1, 2], [3, 4]]);
@@ -191,17 +191,17 @@ const c = a.add(b);  // (3, 4) + (4,) → (3, 4)
 ## Installation (Future)
 
 ```bash
-npm install numpy-js
+npm install numpy-ts
 ```
 
 ### Node.js
 ```typescript
-import * as np from 'numpy-js/node';
+import * as np from 'numpy-ts/node';
 ```
 
 ### Browser
 ```typescript
-import * as np from 'numpy-js/browser';
+import * as np from 'numpy-ts/browser';
 ```
 
 ---
@@ -354,8 +354,8 @@ Project is in early development. We welcome contributions!
 ### Setup
 
 ```bash
-git clone https://github.com/nicolasdupont/numpy-js.git
-cd numpy-js
+git clone https://github.com/nicolasdupont/numpy-ts.git
+cd numpy-ts
 npm install
 npm test
 ```
@@ -378,7 +378,7 @@ See [TESTING-GUIDE.md](./docs/TESTING-GUIDE.md) for detailed instructions on add
 
 ## Comparison with Alternatives
 
-| Feature | NumPy.js | numjs | ndarray | TensorFlow.js |
+| Feature | numpy-ts | numjs | ndarray | TensorFlow.js |
 |---------|----------|-------|---------|---------------|
 | API Coverage | 100% NumPy | ~20% | Different | ML-focused |
 | TypeScript | Native | Partial | No | Yes |
@@ -390,7 +390,7 @@ See [TESTING-GUIDE.md](./docs/TESTING-GUIDE.md) for detailed instructions on add
 
 ## Benchmarking
 
-Compare NumPy-JS performance against Python NumPy:
+Compare numpy-ts performance against Python NumPy:
 
 ```bash
 # Run quick benchmarks (~1-2 min)
@@ -440,7 +440,7 @@ Focus is correctness and completeness first, then performance.
 - **Documentation**: [`docs/`](./docs)
 - **NumPy**: https://numpy.org/
 - **@stdlib**: https://stdlib.io/
-- **Issues**: https://github.com/nicolasdupont/numpy-js/issues
+- **Issues**: https://github.com/nicolasdupont/numpy-ts/issues
 
 ---
 

@@ -122,7 +122,7 @@ export function printResults(comparisons: BenchmarkComparison[], summary: Benchm
       console.log(
         `  ${name.padEnd(45)} ` +
           `NumPy: ${formatDuration(numpy.mean_ms).padStart(10)} | ` +
-          `NumPy-JS: ${formatDuration(numpyjs.mean_ms).padStart(10)} | ` +
+          `numpy-ts: ${formatDuration(numpyjs.mean_ms).padStart(10)} | ` +
           `${color}${formatRatio(ratio).padStart(8)}${reset}`
       );
     }

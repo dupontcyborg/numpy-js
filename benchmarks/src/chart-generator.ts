@@ -59,7 +59,7 @@ export async function generatePNGChart(report: BenchmarkReport, outputPath: stri
         title: {
           display: true,
           text: [
-            'NumPy-JS vs Python NumPy Performance',
+            'numpy-ts vs Python NumPy Performance',
             `Overall: ${summary.avg_slowdown.toFixed(1)}x slower (avg) | Best: ${summary.best_case.toFixed(1)}x | Worst: ${summary.worst_case.toFixed(1)}x`,
           ],
           font: {
@@ -181,7 +181,7 @@ export async function generateComparisonPNG(
           borderWidth: 2,
         },
         {
-          label: 'NumPy-JS (ms)',
+          label: 'numpy-ts (ms)',
           data: sorted.map((r) => r.numpyjs.mean_ms),
           backgroundColor: 'rgba(255, 99, 132, 0.8)',
           borderColor: 'rgba(255, 99, 132, 1)',

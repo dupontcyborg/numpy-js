@@ -1,5 +1,5 @@
 /**
- * TypeScript/NumPy-JS benchmark runner
+ * TypeScript/numpy-ts benchmark runner
  */
 
 import { performance } from 'perf_hooks';
