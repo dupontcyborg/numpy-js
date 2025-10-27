@@ -134,7 +134,10 @@ jobs:
 
       # Switch to main and run benchmarks
       - name: Checkout main branch
-        run: git checkout main
+        run: |
+          # Discard changes to benchmark results (already saved to benchmark-results/)
+          git restore benchmarks/results/
+          git checkout main
 
       - name: Install dependencies (main)
         run: npm ci
