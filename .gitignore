@@ -32,3 +32,6 @@ coverage/
 
 # macOS
 .DS_Store
+
+# Archived docs
+docs/archive/
