@@ -54,8 +54,6 @@
     "bench:build": "esbuild benchmarks/src/index.ts --bundle --platform=node --format=cjs --outfile=benchmarks/dist/bench.cjs",
     "bench": "npm run bench:build && node benchmarks/dist/bench.cjs",
     "bench:quick": "npm run bench:build && node benchmarks/dist/bench.cjs --quick",
-    "bench:standard": "npm run bench:build && node benchmarks/dist/bench.cjs --standard",
-    "bench:full": "npm run bench:build && node benchmarks/dist/bench.cjs --full",
     "bench:category": "npm run bench:build && node benchmarks/dist/bench.cjs --category",
     "bench:view": "open benchmarks/results/plots/latest.html || xdg-open benchmarks/results/plots/latest.html"
   },

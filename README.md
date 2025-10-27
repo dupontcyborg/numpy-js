@@ -240,8 +240,12 @@ import * as np from 'numpy-ts';
   - [X] PR workflow
   - [X] Publish workflow
 - [ ] Implement benchmarks
-  - [ ] Regression (vs. previous runs)
+  - [X] Auto-calibrated benchmark runner (100ms samples, ops/sec metrics)
   - [X] Comparison against Python NumPy
+  - [X] Matching Python/TypeScript output format
+  - [X] Ops/sec visualization (HTML/PNG)
+  - [ ] **Result validation** - Verify numpy-ts and NumPy produce same results before benchmarking
+  - [ ] Regression tracking (vs. previous runs)
   - [ ] Automated in CI/CD
 
 ### Phase 3: Essential Operations
@@ -384,21 +388,20 @@ See [TESTING-GUIDE.md](./docs/TESTING-GUIDE.md) for detailed instructions on add
 
 ## Benchmarking
 
-Compare numpy-ts performance against Python NumPy:
+Compare numpy-ts performance against Python NumPy with auto-calibrated benchmarks:
 
 ```bash
-# Run quick benchmarks (~1-2 min)
-npm run bench:quick
+# Quick benchmarks (~2-3 min) - 1 sample, 50ms/sample
+source ~/.zshrc && conda activate py313 && npm run bench:quick
 
-# Run standard benchmarks (~5-10 min)
-npm run bench
+# Standard benchmarks (~5-10 min) - 5 samples, 100ms/sample (default)
+source ~/.zshrc && conda activate py313 && npm run bench
 
-# Run comprehensive benchmarks (~30-60 min)
-npm run bench:full
-
-# View interactive HTML report
+# View interactive HTML report with ops/sec comparison
 npm run bench:view
 ```
+
+**Both modes use the same array sizes** - only sampling strategy differs (quick for speed, standard for accuracy).
 
 ### Performance Overview
 

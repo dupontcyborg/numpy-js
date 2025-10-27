@@ -1,15 +1,25 @@
 #!/usr/bin/env python3
 """
-NumPy benchmark script
-Receives benchmark specifications via stdin as JSON
-Returns timing results as JSON
+NumPy benchmark script with auto-calibration
+
+Improved benchmarking approach:
+- Auto-calibrates to run enough ops to hit minimum measurement time (100ms)
+- Runs operations in batches to reduce measurement overhead
+- Provides ops/sec for easier interpretation
+- Uses multiple samples for statistical robustness
 """
 
-import numpy as np
 import json
 import sys
 import time
-from typing import Dict, Any, List
+import traceback
+from typing import Any, Dict
+
+import numpy as np
+
+# Benchmark configuration (can be overridden from stdin)
+MIN_SAMPLE_TIME_MS = 100  # Minimum time per sample (reduces noise)
+TARGET_SAMPLES = 5  # Number of samples to collect for statistics
 
 
 def setup_arrays(setup: Dict[str, Any]) -> Dict[str, np.ndarray]:
@@ -29,7 +39,10 @@ def setup_arrays(setup: Dict[str, Any]) -> Dict[str, np.ndarray]:
                 arrays[key] = tuple(shape)
             continue
 
-        if fill_type == 'zeros':
+        # Check 'value' first to avoid default fill creating zeros
+        if 'value' in spec:
+            arrays[key] = np.full(shape, spec['value'], dtype=dtype)
+        elif fill_type == 'zeros':
             arrays[key] = np.zeros(shape, dtype=dtype)
         elif fill_type == 'ones':
             arrays[key] = np.ones(shape, dtype=dtype)
@@ -37,8 +50,6 @@ def setup_arrays(setup: Dict[str, Any]) -> Dict[str, np.ndarray]:
             arrays[key] = np.random.randn(*shape).astype(dtype)
         elif fill_type == 'arange':
             arrays[key] = np.arange(np.prod(shape), dtype=dtype).reshape(shape)
-        elif 'value' in spec:
-            arrays[key] = np.full(shape, spec['value'], dtype=dtype)
 
     return arrays
 
@@ -166,69 +177,155 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         raise ValueError(f"Unknown operation: {operation}")
 
 
+def calibrate_ops_per_sample(
+    operation: str,
+    arrays: Dict[str, np.ndarray],
+    target_time_ms: float = MIN_SAMPLE_TIME_MS
+) -> int:
+    """
+    Auto-calibrate: Determine how many operations to run per sample
+    to achieve the target minimum sample time
+    """
+    ops_per_sample = 1
+    calibration_runs = 0
+    max_calibration_runs = 10
+
+    while calibration_runs < max_calibration_runs:
+        start = time.perf_counter()
+
+        # Run operations in batch
+        for _ in range(ops_per_sample):
+            result = execute_operation(operation, arrays)
+            _ = result  # Prevent optimization
+
+        elapsed_ms = (time.perf_counter() - start) * 1000
+
+        # If we hit the target time, we're done
+        if elapsed_ms >= target_time_ms:
+            break
+
+        # If operation is very fast, increase ops exponentially
+        if elapsed_ms < target_time_ms / 10:
+            ops_per_sample *= 10
+        elif elapsed_ms < target_time_ms / 2:
+            ops_per_sample *= 2
+        else:
+            # Close enough, calculate exact number needed
+            target_ops = int(np.ceil((ops_per_sample * target_time_ms) / elapsed_ms))
+            ops_per_sample = max(target_ops, ops_per_sample + 1)
+            break
+
+        calibration_runs += 1
+
+    # Cap at reasonable maximum to prevent too-long samples
+    max_ops_per_sample = 100000
+    return min(ops_per_sample, max_ops_per_sample)
+
+
 def run_benchmark(spec: Dict[str, Any]) -> Dict[str, Any]:
-    """Run a single benchmark and return timing results"""
+    """Run a single benchmark with auto-calibration and return timing results"""
     name = spec['name']
     operation = spec['operation']
     setup = spec['setup']
-    iterations = spec['iterations']
     warmup = spec['warmup']
 
     # Setup arrays
     arrays = setup_arrays(setup)
 
-    # Warmup
+    # Warmup phase - run several times to stabilize JIT/caching
     for _ in range(warmup):
         execute_operation(operation, arrays)
 
-    # Benchmark
-    times = []
-    for _ in range(iterations):
+    # Calibration phase - determine ops per sample
+    ops_per_sample = calibrate_ops_per_sample(operation, arrays)
+
+    # Benchmark phase - collect samples
+    sample_times = []
+    total_ops = 0
+
+    for _ in range(TARGET_SAMPLES):
         start = time.perf_counter()
-        result = execute_operation(operation, arrays)
-        end = time.perf_counter()
-        times.append((end - start) * 1000)  # Convert to ms
 
-        # Keep reference to prevent optimization
-        _ = result
+        # Run batch of operations
+        for _ in range(ops_per_sample):
+            result = execute_operation(operation, arrays)
+            _ = result  # Prevent optimization
 
-    times_array = np.array(times)
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        time_per_op = elapsed_ms / ops_per_sample
+        sample_times.append(time_per_op)
+        total_ops += ops_per_sample
+
+    # Calculate statistics
+    times_array = np.array(sample_times)
+    mean_ms = float(np.mean(times_array))
+    median_ms = float(np.median(times_array))
+    min_ms = float(np.min(times_array))
+    max_ms = float(np.max(times_array))
+    std_ms = float(np.std(times_array))
+    ops_per_sec = 1000.0 / mean_ms
 
     return {
         'name': name,
-        'mean_ms': float(np.mean(times_array)),
-        'median_ms': float(np.median(times_array)),
-        'min_ms': float(np.min(times_array)),
-        'max_ms': float(np.max(times_array)),
-        'std_ms': float(np.std(times_array))
+        'mean_ms': mean_ms,
+        'median_ms': median_ms,
+        'min_ms': min_ms,
+        'max_ms': max_ms,
+        'std_ms': std_ms,
+        'ops_per_sec': ops_per_sec,
+        'total_ops': total_ops,
+        'total_samples': TARGET_SAMPLES,
     }
 
 
 def main():
-    """Main entry point - read specs from stdin, output results to stdout"""
+    """Main entry point - read specs and config from stdin, output results to stdout"""
+    global MIN_SAMPLE_TIME_MS, TARGET_SAMPLES
+
     try:
-        # Read benchmark specifications from stdin
-        specs = json.loads(sys.stdin.read())
+        # Read benchmark specifications and config from stdin
+        input_data = json.loads(sys.stdin.read())
+
+        # Support both old format (just specs) and new format (specs + config)
+        if isinstance(input_data, dict) and 'specs' in input_data:
+            specs = input_data['specs']
+            config = input_data.get('config', {})
+            MIN_SAMPLE_TIME_MS = config.get('minSampleTimeMs', MIN_SAMPLE_TIME_MS)
+            TARGET_SAMPLES = config.get('targetSamples', TARGET_SAMPLES)
+        else:
+            # Old format - just specs array
+            specs = input_data
 
         results = []
 
         # Print environment info to stderr
         print(f"Python {sys.version.split()[0]}", file=sys.stderr)
         print(f"NumPy {np.__version__}", file=sys.stderr)
-        print(f"Running {len(specs)} benchmarks...", file=sys.stderr)
+        print(f"Running {len(specs)} benchmarks with auto-calibration...", file=sys.stderr)
+        print(
+            f"Target: {MIN_SAMPLE_TIME_MS}ms per sample, {TARGET_SAMPLES} samples per benchmark\n",
+            file=sys.stderr
+        )
 
         for i, spec in enumerate(specs, 1):
             result = run_benchmark(spec)
             results.append(result)
 
-            # Print progress to stderr
-            print(f"  [{i}/{len(specs)}] {spec['name']}: {result['mean_ms']:.3f}ms", file=sys.stderr)
+            # Print progress to stderr (matching TypeScript format)
+            name_padded = spec['name'].ljust(40)
+            mean_padded = f"{result['mean_ms']:.3f}".rjust(8)
+            ops_formatted = f"{int(result['ops_per_sec']):,}".rjust(12)
+            print(
+                f"  [{i}/{len(specs)}] {name_padded} {mean_padded}ms  {ops_formatted} ops/sec",
+                file=sys.stderr
+            )
 
         # Output results as JSON to stdout
         print(json.dumps(results, indent=2))
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
         sys.exit(1)
 
 

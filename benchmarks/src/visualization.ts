@@ -5,7 +5,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { BenchmarkReport, BenchmarkComparison } from './types';
-import { groupByCategory, getCategorySummaries, formatDuration, formatRatio } from './analysis';
+import {
+  groupByCategory,
+  getCategorySummaries,
+  formatDuration,
+  formatRatio,
+  formatOpsPerSec,
+} from './analysis';
 
 export function generateHTMLReport(report: BenchmarkReport, outputPath: string): void {
   const html = createHTML(report);
@@ -328,8 +334,9 @@ function generateCategoryTables(groups: Map<string, BenchmarkComparison[]>): str
         <thead>
           <tr>
             <th>Benchmark</th>
-            <th>NumPy (ms)</th>
-            <th>numpy-ts (ms)</th>
+            <th>NumPy (ops/sec)</th>
+            <th>numpy-ts (ops/sec)</th>
+            <th>Time (ms)</th>
             <th>Ratio</th>
           </tr>
         </thead>
@@ -340,7 +347,8 @@ function generateCategoryTables(groups: Map<string, BenchmarkComparison[]>): str
       html += `
           <tr>
             <td>${item.name}</td>
-            <td>${formatDuration(item.numpy.mean_ms)}</td>
+            <td>${formatOpsPerSec(item.numpy.ops_per_sec)}</td>
+            <td>${formatOpsPerSec(item.numpyjs.ops_per_sec)}</td>
             <td>${formatDuration(item.numpyjs.mean_ms)}</td>
             <td><span class="ratio ${ratioClass}">${formatRatio(item.ratio)}</span></td>
           </tr>`;

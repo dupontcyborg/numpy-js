@@ -29,6 +29,9 @@ export interface BenchmarkTiming {
   min_ms: number;
   max_ms: number;
   std_ms: number;
+  ops_per_sec: number; // Operations per second
+  total_ops: number; // Total operations executed
+  total_samples: number; // Number of timing samples taken
 }
 
 export interface BenchmarkComparison {
@@ -59,7 +62,7 @@ export interface BenchmarkReport {
   summary: BenchmarkSummary;
 }
 
-export type BenchmarkMode = 'quick' | 'standard' | 'full';
+export type BenchmarkMode = 'quick' | 'standard';
 
 export interface BenchmarkOptions {
   mode?: BenchmarkMode;

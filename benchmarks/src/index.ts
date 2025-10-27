@@ -7,12 +7,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { getBenchmarkSpecs, filterByCategory } from './specs';
-import { runBenchmarks } from './runner';
+import { runBenchmarks, setBenchmarkConfig } from './runner';
 import { runPythonBenchmarks } from './python-runner';
 import { compareResults, calculateSummary, printResults } from './analysis';
 import { generateHTMLReport } from './visualization';
 import { generatePNGChart } from './chart-generator';
-import type { BenchmarkMode, BenchmarkOptions, BenchmarkReport } from './types';
+import type { BenchmarkOptions, BenchmarkReport } from './types';
 
 // Read version from root package.json
 const packageJson = JSON.parse(
@@ -33,8 +33,6 @@ async function main() {
       options.mode = 'quick';
     } else if (arg === '--standard') {
       options.mode = 'standard';
-    } else if (arg === '--full') {
-      options.mode = 'full';
     } else if (arg === '--category' && i + 1 < args.length) {
       options.category = args[++i];
     } else if (arg === '--output' && i + 1 < args.length) {
@@ -43,6 +41,22 @@ async function main() {
       printHelp();
       process.exit(0);
     }
+  }
+
+  // Configure benchmark settings based on mode
+  let minSampleTimeMs: number;
+  let targetSamples: number;
+
+  if (options.mode === 'quick') {
+    // Quick mode: single sample, shorter sample time for fast feedback
+    minSampleTimeMs = 50;
+    targetSamples = 1;
+    setBenchmarkConfig(minSampleTimeMs, targetSamples);
+  } else {
+    // Standard mode: multiple samples, full sample time for accurate results
+    minSampleTimeMs = 100;
+    targetSamples = 5;
+    setBenchmarkConfig(minSampleTimeMs, targetSamples);
   }
 
   console.log('🚀 NumPy vs numpy-ts Benchmark Suite\n');
@@ -70,7 +84,11 @@ async function main() {
 
     // Run Python NumPy benchmarks
     console.log('\nRunning Python NumPy benchmarks...');
-    const { results: numpyResults, pythonVersion, numpyVersion } = await runPythonBenchmarks(specs);
+    const { results: numpyResults, pythonVersion, numpyVersion } = await runPythonBenchmarks(
+      specs,
+      minSampleTimeMs,
+      targetSamples
+    );
 
     // Compare results
     const comparisons = compareResults(specs, numpyResults, numpyjsResults);
@@ -145,9 +163,8 @@ Usage:
   npm run bench [options]
 
 Options:
-  --quick              Run quick benchmarks (small sizes, few iterations)
-  --standard           Run standard benchmarks (default)
-  --full               Run full benchmarks (large sizes, many iterations)
+  --quick              Quick benchmarks (1 sample, 50ms/sample, ~2-3min)
+  --standard           Standard benchmarks (5 samples, 100ms/sample, ~5-10min, default)
   --category <name>    Run only benchmarks in specified category
   --output <path>      Save JSON results to specified path
   --help, -h           Show this help message
@@ -161,9 +178,9 @@ Categories:
 
 Examples:
   npm run bench                           # Run standard benchmarks
-  npm run bench -- --quick                # Run quick benchmarks
+  npm run bench:quick                     # Run quick benchmarks
   npm run bench -- --category linalg      # Run only linalg benchmarks
-  npm run bench -- --full --output out.json  # Full benchmarks, save to out.json
+  npm run bench -- --output out.json      # Standard benchmarks, save to out.json
 `);
 }
 
