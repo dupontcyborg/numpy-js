@@ -1,11 +1,25 @@
 /**
- * TypeScript/numpy-ts benchmark runner
+ * TypeScript/numpy-ts benchmark runner with auto-calibration
+ *
+ * Improved benchmarking approach:
+ * - Auto-calibrates to run enough ops to hit minimum measurement time (100ms)
+ * - Runs operations in batches to reduce measurement overhead
+ * - Provides ops/sec for easier interpretation
+ * - Uses multiple samples for statistical robustness
  */
 
 import { performance } from 'perf_hooks';
 import * as np from '../../src/index';
 import type { BenchmarkCase, BenchmarkTiming, BenchmarkSetup } from './types';
-import type { NDArray } from '../../src/core/ndarray';
+
+// Benchmark configuration - can be overridden
+let MIN_SAMPLE_TIME_MS = 100; // Minimum time per sample (reduces noise)
+let TARGET_SAMPLES = 5; // Number of samples to collect for statistics
+
+export function setBenchmarkConfig(minSampleTimeMs: number, targetSamples: number): void {
+  MIN_SAMPLE_TIME_MS = minSampleTimeMs;
+  TARGET_SAMPLES = targetSamples;
+}
 
 function mean(arr: number[]): number {
   return arr.reduce((a, b) => a + b, 0) / arr.length;
@@ -14,9 +28,7 @@ function mean(arr: number[]): number {
 function median(arr: number[]): number {
   const sorted = [...arr].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0
-    ? (sorted[mid - 1]! + sorted[mid]!) / 2
-    : sorted[mid]!;
+  return sorted.length % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
 }
 
 function std(arr: number[]): number {
@@ -32,7 +44,13 @@ function setupArrays(setup: BenchmarkSetup): Record<string, any> {
     const { shape, dtype = 'float64', fill = 'zeros', value } = spec;
 
     // Handle scalar values
-    if (key === 'n' || key === 'axis' || key === 'new_shape' || key === 'shape' || key === 'fill_value') {
+    if (
+      key === 'n' ||
+      key === 'axis' ||
+      key === 'new_shape' ||
+      key === 'shape' ||
+      key === 'fill_value'
+    ) {
       arrays[key] = shape[0];
       if (key === 'new_shape' || key === 'shape') {
         arrays[key] = shape;
@@ -40,8 +58,10 @@ function setupArrays(setup: BenchmarkSetup): Record<string, any> {
       continue;
     }
 
-    // Create arrays
-    if (fill === 'zeros') {
+    // Create arrays - check 'value' first to avoid default fill creating zeros
+    if (value !== undefined) {
+      arrays[key] = np.full(shape, value, dtype);
+    } else if (fill === 'zeros') {
       arrays[key] = np.zeros(shape, dtype);
     } else if (fill === 'ones') {
       arrays[key] = np.ones(shape, dtype);
@@ -54,8 +74,6 @@ function setupArrays(setup: BenchmarkSetup): Record<string, any> {
       const size = shape.reduce((a, b) => a * b, 1);
       const flat = np.arange(0, size, 1, dtype);
       arrays[key] = flat.reshape(...shape);
-    } else if (value !== undefined) {
-      arrays[key] = np.ones(shape, dtype).multiply(value);
     }
   }
 
@@ -190,36 +208,106 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
   throw new Error(`Unknown operation: ${operation}`);
 }
 
+/**
+ * Auto-calibrate: Determine how many operations to run per sample
+ * to achieve the target minimum sample time
+ */
+function calibrateOpsPerSample(
+  operation: string,
+  arrays: Record<string, any>,
+  targetTimeMs: number = MIN_SAMPLE_TIME_MS
+): number {
+  let opsPerSample = 1;
+  let calibrationRuns = 0;
+  const maxCalibrationRuns = 10;
+
+  while (calibrationRuns < maxCalibrationRuns) {
+    const start = performance.now();
+
+    // Run operations in batch
+    for (let i = 0; i < opsPerSample; i++) {
+      const result = executeOperation(operation, arrays);
+      void result; // Prevent optimization
+    }
+
+    const elapsed = performance.now() - start;
+
+    // If we hit the target time, we're done
+    if (elapsed >= targetTimeMs) {
+      break;
+    }
+
+    // If operation is very fast, increase ops exponentially
+    if (elapsed < targetTimeMs / 10) {
+      opsPerSample *= 10;
+    } else if (elapsed < targetTimeMs / 2) {
+      opsPerSample *= 2;
+    } else {
+      // Close enough, calculate exact number needed
+      const targetOps = Math.ceil((opsPerSample * targetTimeMs) / elapsed);
+      opsPerSample = Math.max(targetOps, opsPerSample + 1);
+      break;
+    }
+
+    calibrationRuns++;
+  }
+
+  // Cap at reasonable maximum to prevent too-long samples
+  const maxOpsPerSample = 100000;
+  return Math.min(opsPerSample, maxOpsPerSample);
+}
+
 export async function runBenchmark(spec: BenchmarkCase): Promise<BenchmarkTiming> {
-  const { name, operation, setup, iterations, warmup } = spec;
+  const { name, operation, setup, warmup } = spec;
 
   // Setup arrays
   const arrays = setupArrays(setup);
 
-  // Warmup
+  // Warmup phase - run several times to stabilize JIT
   for (let i = 0; i < warmup; i++) {
     executeOperation(operation, arrays);
   }
 
-  // Benchmark
-  const times: number[] = [];
-  for (let i = 0; i < iterations; i++) {
-    const start = performance.now();
-    const result = executeOperation(operation, arrays);
-    const end = performance.now();
-    times.push(end - start);
+  // Calibration phase - determine ops per sample
+  const opsPerSample = calibrateOpsPerSample(operation, arrays);
 
-    // Keep reference to prevent optimization
-    void result;
+  // Benchmark phase - collect samples
+  const sampleTimes: number[] = [];
+  let totalOps = 0;
+
+  for (let sample = 0; sample < TARGET_SAMPLES; sample++) {
+    const start = performance.now();
+
+    // Run batch of operations
+    for (let i = 0; i < opsPerSample; i++) {
+      const result = executeOperation(operation, arrays);
+      void result; // Prevent optimization
+    }
+
+    const elapsed = performance.now() - start;
+    const timePerOp = elapsed / opsPerSample;
+    sampleTimes.push(timePerOp);
+    totalOps += opsPerSample;
   }
+
+  // Calculate statistics
+  const meanMs = mean(sampleTimes);
+  const medianMs = median(sampleTimes);
+  const minMs = Math.min(...sampleTimes);
+  const maxMs = Math.max(...sampleTimes);
+  const stdMs = std(sampleTimes);
+  const opsPerSec = 1000 / meanMs;
 
   return {
     name,
-    mean_ms: mean(times),
-    median_ms: median(times),
-    min_ms: Math.min(...times),
-    max_ms: Math.max(...times),
-    std_ms: std(times)
+    mean_ms: meanMs,
+    median_ms: medianMs,
+    min_ms: minMs,
+    max_ms: maxMs,
+    std_ms: stdMs,
+    ops_per_sec: opsPerSec,
+    total_ops: totalOps,
+    total_samples: TARGET_SAMPLES,
   };
 }
 
@@ -227,14 +315,19 @@ export async function runBenchmarks(specs: BenchmarkCase[]): Promise<BenchmarkTi
   const results: BenchmarkTiming[] = [];
 
   console.error(`Node ${process.version}`);
-  console.error(`Running ${specs.length} benchmarks...`);
+  console.error(`Running ${specs.length} benchmarks with auto-calibration...`);
+  console.error(
+    `Target: ${MIN_SAMPLE_TIME_MS}ms per sample, ${TARGET_SAMPLES} samples per benchmark\n`
+  );
 
   for (let i = 0; i < specs.length; i++) {
     const spec = specs[i]!;
     const result = await runBenchmark(spec);
     results.push(result);
 
-    console.error(`  [${i + 1}/${specs.length}] ${spec.name}: ${result.mean_ms.toFixed(3)}ms`);
+    console.error(
+      `  [${i + 1}/${specs.length}] ${spec.name.padEnd(40)} ${result.mean_ms.toFixed(3).padStart(8)}ms  ${Math.round(result.ops_per_sec).toLocaleString().padStart(12)} ops/sec`
+    );
   }
 
   return results;

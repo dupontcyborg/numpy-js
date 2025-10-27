@@ -103,6 +103,16 @@ export function formatRatio(ratio: number): string {
   return `${ratio.toFixed(2)}x`;
 }
 
+export function formatOpsPerSec(ops: number): string {
+  if (ops >= 1_000_000) {
+    return `${(ops / 1_000_000).toFixed(2)}M`;
+  } else if (ops >= 1_000) {
+    return `${(ops / 1_000).toFixed(1)}K`;
+  } else {
+    return `${ops.toFixed(0)}`;
+  }
+}
+
 export function printResults(comparisons: BenchmarkComparison[], summary: BenchmarkSummary): void {
   const groups = groupByCategory(comparisons);
 

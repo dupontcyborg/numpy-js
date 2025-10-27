@@ -6,26 +6,23 @@
 import type { BenchmarkCase, BenchmarkMode } from './types';
 
 export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCase[] {
-  // Determine sizes and iterations based on mode
+  // Both modes use the same array sizes
+  // Auto-calibration handles the iteration count
+  // Only warmup differs (quick mode skips some warmup for speed)
+  const sizes = { small: 1000, medium: [100, 100] as [number, number], large: [500, 500] as [number, number] };
+
   const config = {
     quick: {
-      sizes: { small: 100, medium: [50, 50] },
-      iterations: 10,
-      warmup: 3
+      iterations: 1,  // Not used with auto-calibration, kept for compatibility
+      warmup: 3       // Less warmup for faster feedback
     },
     standard: {
-      sizes: { small: 1000, medium: [100, 100], large: [500, 500] },
-      iterations: 50,
-      warmup: 10
-    },
-    full: {
-      sizes: { small: 10000, medium: [1000, 1000], large: [2000, 2000] },
-      iterations: 100,
-      warmup: 20
+      iterations: 1,  // Not used with auto-calibration, kept for compatibility
+      warmup: 10      // More warmup for stable results
     }
   }[mode];
 
-  const { sizes, iterations, warmup } = config;
+  const { iterations, warmup } = config;
   const specs: BenchmarkCase[] = [];
 
   // ========================================
@@ -239,8 +236,8 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'arithmetic',
       operation: 'mod',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange', value: 1 },
-        b: { shape: [1], value: 7 }
+        a: { shape: sizes.medium, fill: 'arange' }, // arange data
+        b: { shape: [1], value: 7 } // Scalar 7
       },
       iterations,
       warmup
@@ -251,8 +248,8 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'arithmetic',
       operation: 'floor_divide',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange', value: 1 },
-        b: { shape: [1], value: 3 }
+        a: { shape: sizes.medium, fill: 'arange' }, // arange data
+        b: { shape: [1], value: 3 } // Scalar 3 (avoid zeros)
       },
       iterations,
       warmup
@@ -263,7 +260,7 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'arithmetic',
       operation: 'reciprocal',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange', value: 1 }
+        a: { shape: sizes.medium, fill: 'ones' } // Use ones to avoid 1/0
       },
       iterations,
       warmup

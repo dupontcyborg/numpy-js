@@ -174,15 +174,15 @@ export async function generateComparisonPNG(
       labels: sorted.map((r) => r.name),
       datasets: [
         {
-          label: 'NumPy (ms)',
-          data: sorted.map((r) => r.numpy.mean_ms),
+          label: 'NumPy (ops/sec)',
+          data: sorted.map((r) => r.numpy.ops_per_sec),
           backgroundColor: 'rgba(75, 192, 192, 0.8)',
           borderColor: 'rgba(75, 192, 192, 1)',
           borderWidth: 2,
         },
         {
-          label: 'numpy-ts (ms)',
-          data: sorted.map((r) => r.numpyjs.mean_ms),
+          label: 'numpy-ts (ops/sec)',
+          data: sorted.map((r) => r.numpyjs.ops_per_sec),
           backgroundColor: 'rgba(255, 99, 132, 0.8)',
           borderColor: 'rgba(255, 99, 132, 1)',
           borderWidth: 2,
@@ -195,7 +195,7 @@ export async function generateComparisonPNG(
       plugins: {
         title: {
           display: true,
-          text: 'Top 10 Slowest Operations - Absolute Times',
+          text: 'Top 10 Slowest Operations - Throughput Comparison',
           font: {
             size: 18,
             weight: 'bold',
@@ -220,7 +220,7 @@ export async function generateComparisonPNG(
           beginAtZero: true,
           title: {
             display: true,
-            text: 'Time (milliseconds)',
+            text: 'Operations per Second (higher is better)',
             font: {
               size: 14,
               weight: 'bold',
@@ -229,6 +229,12 @@ export async function generateComparisonPNG(
           ticks: {
             font: {
               size: 12,
+            },
+            callback: function (value: any) {
+              // Format large numbers with K/M suffix
+              if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+              if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
+              return value.toString();
             },
           },
         },

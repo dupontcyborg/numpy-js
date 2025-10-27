@@ -8,7 +8,9 @@ import { resolve } from 'path';
 import type { BenchmarkCase, BenchmarkTiming } from './types';
 
 export async function runPythonBenchmarks(
-  specs: BenchmarkCase[]
+  specs: BenchmarkCase[],
+  minSampleTimeMs: number = 100,
+  targetSamples: number = 5
 ): Promise<{ results: BenchmarkTiming[]; pythonVersion?: string; numpyVersion?: string }> {
   const scriptPath = resolve(__dirname, '../scripts/numpy_benchmark.py');
 
@@ -61,8 +63,16 @@ export async function runPythonBenchmarks(
       reject(new Error(`Failed to spawn Python: ${err.message}`));
     });
 
-    // Send specs to Python via stdin
-    python.stdin.write(JSON.stringify(specs));
+    // Send specs and config to Python via stdin
+    python.stdin.write(
+      JSON.stringify({
+        specs,
+        config: {
+          minSampleTimeMs,
+          targetSamples,
+        },
+      })
+    );
     python.stdin.end();
   });
 }
