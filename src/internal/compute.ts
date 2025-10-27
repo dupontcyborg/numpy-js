@@ -154,3 +154,54 @@ export function elementwiseComparisonOp(
 
   return ArrayStorage.fromData(resultData, outputShape, 'bool');
 }
+
+/**
+ * Perform element-wise unary operation
+ *
+ * @param a - Input array storage
+ * @param op - Operation to perform (x) => result
+ * @param preserveDtype - If true, preserve input dtype; if false, promote to float64 (default: true)
+ * @returns Result storage
+ */
+export function elementwiseUnaryOp(
+  a: ArrayStorage,
+  op: (x: number) => number,
+  preserveDtype = true
+): ArrayStorage {
+  const dtype = a.dtype;
+  const shape = Array.from(a.shape);
+  const size = a.size;
+
+  // Determine output dtype
+  // Math operations like sqrt may need float output even for integer input
+  const isIntegerType = dtype !== 'float32' && dtype !== 'float64';
+  const resultDtype = preserveDtype ? dtype : isIntegerType ? 'float64' : dtype;
+
+  // Create result storage
+  const result = ArrayStorage.zeros(shape, resultDtype);
+  const resultData = result.data;
+  const inputData = a.data;
+
+  if (isBigIntDType(dtype)) {
+    // BigInt input - convert to Number for operation, then convert back if preserving dtype
+    if (isBigIntDType(resultDtype)) {
+      const resultTyped = resultData as BigInt64Array | BigUint64Array;
+      for (let i = 0; i < size; i++) {
+        const val = Number(inputData[i]!);
+        resultTyped[i] = BigInt(Math.round(op(val)));
+      }
+    } else {
+      // BigInt input, float output
+      for (let i = 0; i < size; i++) {
+        resultData[i] = op(Number(inputData[i]!));
+      }
+    }
+  } else {
+    // Regular numeric types
+    for (let i = 0; i < size; i++) {
+      resultData[i] = op(Number(inputData[i]!));
+    }
+  }
+
+  return result;
+}

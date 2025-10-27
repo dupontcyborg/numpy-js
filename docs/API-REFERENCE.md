@@ -112,19 +112,25 @@ All operations preserve dtype or follow NumPy promotion rules:
 
 ## Mathematical Operations
 
+**File organization:**
+- Arithmetic operations → `src/ops/arithmetic.ts`
+- Exponential/logarithmic/power → `src/ops/exponential.ts`
+- Trigonometric → `src/ops/trig.ts` (future)
+- Hyperbolic → `src/ops/hyperbolic.ts` (future)
+- Rounding → `src/ops/rounding.ts` (future)
+
 ### Arithmetic
-- [x] `add(x1, x2)` - Addition _(implemented as NDArray.add() method)_
-- [x] `subtract(x1, x2)` - Subtraction _(implemented as NDArray.subtract() method)_
-- [x] `multiply(x1, x2)` - Multiplication _(implemented as NDArray.multiply() method)_
-- [x] `divide(x1, x2)` - Division _(implemented as NDArray.divide() method)_
-- [ ] `power(x1, x2)` - Power
-- [ ] `mod(x1, x2)` - Modulo
-- [ ] `floor_divide(x1, x2)` - Floor division
-- [ ] `negative(x)` - Negate
-- [ ] `positive(x)` - Positive
-- [ ] `absolute(x)` - Absolute value
-- [ ] `sign(x)` - Sign
-- [ ] `reciprocal(x)` - Reciprocal
+- [x] `add(x1, x2)` - Addition
+- [x] `subtract(x1, x2)` - Subtraction
+- [x] `multiply(x1, x2)` - Multiplication
+- [x] `divide(x1, x2)` - Division
+- [x] `mod(x1, x2)` - Modulo
+- [x] `floor_divide(x1, x2)` - Floor division
+- [x] `negative(x)` - Negate
+- [x] `positive(x)` - Positive
+- [x] `absolute(x)` - Absolute value
+- [x] `sign(x)` - Sign
+- [x] `reciprocal(x)` - Reciprocal
 
 ### Trigonometric
 - [ ] `sin(x)` - Sine
@@ -147,6 +153,10 @@ All operations preserve dtype or follow NumPy promotion rules:
 - [ ] `arctanh(x)` - Inverse hyperbolic tangent
 
 ### Exponential and Logarithmic
+- [x] `sqrt(x)` - Square root
+- [x] `power(x1, x2)` - Powe
+- [ ] `square(x)` - Square
+- [ ] `cbrt(x)` - Cube root
 - [ ] `exp(x)` - Exponential
 - [ ] `expm1(x)` - exp(x) - 1
 - [ ] `exp2(x)` - 2^x
@@ -165,9 +175,6 @@ All operations preserve dtype or follow NumPy promotion rules:
 - [ ] `rint(x)` - Round to nearest integer
 
 ### Other Math
-- [ ] `sqrt(x)` - Square root
-- [ ] `cbrt(x)` - Cube root
-- [ ] `square(x)` - Square
 - [ ] `clip(a, min, max)` - Clip values
 
 ---

@@ -5,14 +5,13 @@ Complete NumPy implementation for TypeScript and JavaScript
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 ![Under Construction](https://img.shields.io/badge/Under%20Construction-red)
 
-> [!WARNING]
-> This project is under construction and is currently unstable. Expect breaking changes.
+**⚠️ WARNING: This project is under construction and is currently unstable. Expect breaking changes.**
 
 ---
 
 ## What is numpy-ts?
 
-A complete, functionally-equivalent implementation of NumPy 2.0+ for the JavaScript ecosystem. (At least that's the goal!)
+A complete, functionally-equivalent implementation of NumPy 2.0+ for the TypeScript/JavaScript ecosystem. (At least that's the goal!)
 
 ### Goals
 
@@ -188,27 +187,21 @@ const c = a.add(b);  // (3, 4) + (4,) → (3, 4)
 
 ---
 
-## Installation (Future)
+## Installation
 
 ```bash
 npm install numpy-ts
 ```
 
-### Node.js
 ```typescript
-import * as np from 'numpy-ts/node';
-```
-
-### Browser
-```typescript
-import * as np from 'numpy-ts/browser';
+import * as np from 'numpy-ts';
 ```
 
 ---
 
 ## Development Status
 
-### Phase 0: Project Setup ✅ COMPLETE
+### Phase 0: Project Setup
 - [x] Package configuration
 - [x] TypeScript setup
 - [x] Build system (esbuild)
@@ -219,24 +212,25 @@ import * as np from 'numpy-ts/browser';
 - [x] First working implementation
 
 
-### Phase 1: Core Foundation ✅ **COMPLETE**
+### Phase 1: Core Foundation
 - [x] NDArray wrapper class (using @stdlib/ndarray)
 - [x] Array creation: `zeros()`, `ones()`, `array()`, `arange()`, `linspace()`, `eye()`
 - [x] Matrix operations: `matmul()` using optimized BLAS
 - [x] Properties: `shape`, `ndim`, `size`, `dtype`, `data`, `strides`
 - [x] View tracking: `base` attribute, `flags` property
 - [x] Memory flags: `C_CONTIGUOUS`, `F_CONTIGUOUS`, `OWNDATA`
-- [x] Basic arithmetic: `add()`, `subtract()`, `multiply()`, `divide()` with dtype preservation
-- [x] Broadcasting ✅ **COMPLETE** (fully integrated into all operations)
-- [x] String-based slicing ✅ **COMPLETE** (`arr.slice('0:5', ':')`, `row()`, `col()`, etc.)
-- [x] Reductions with axis support ✅ **COMPLETE** (`sum(axis, keepdims)`, `mean()`, `max()`, `min()`)
-- [x] Comparison operations ✅ **COMPLETE** (`greater()`, `less()`, `equal()`, `isclose()`, `allclose()`)
-- [x] Reshape operations ✅ **COMPLETE** (`reshape()`, `flatten()`, `ravel()`, `transpose()`, `squeeze()`, `expand_dims()`)
-- [x] DType system ✅ **COMPLETE** (11 types: float32/64, int8/16/32/64, uint8/16/32/64, bool)
+- [x] Arithmetic operations: `add()`, `subtract()`, `multiply()`, `divide()`, `mod()`, `floor_divide()`, `negative()`, `positive()`, `absolute()`, `sign()`, `reciprocal()`
+- [x] Broadcasting - fully integrated into all operations
+- [x] String-based slicing - `arr.slice('0:5', ':')`, `row()`, `col()`, etc.
+- [x] Reductions with axis support - `sum(axis, keepdims)`, `mean()`, `max()`, `min()`
+- [x] Comparison operations - `greater()`, `less()`, `equal()`, `isclose()`, `allclose()`
+- [x] Reshape operations - `reshape()`, `flatten()`, `ravel()`, `transpose()`, `squeeze()`, `expand_dims()`
+- [x] DType system - 11 types: float32/64, int8/16/32/64, uint8/16/32/64, bool
   - Full dtype preservation
   - NumPy-compatible promotion rules
   - BigInt support for int64/uint64
-- [x] Testing ✅ **748/750 tests passing (99.7%)**
+- [x] Exponential operations - `sqrt()`, `power()`
+- [x] Testing
   - Unit tests for all operations
   - NumPy validation tests (cross-checked against Python NumPy 2.3.3)
   - Edge case validation (overflow, underflow, special values)
@@ -251,12 +245,13 @@ import * as np from 'numpy-ts/browser';
   - [ ] Automated in CI/CD
 
 ### Phase 3: Essential Operations
-- [ ] Matrix operations (using @stdlib BLAS)
-- [ ] Linear algebra (using @stdlib LAPACK)
-- [ ] Reductions with axis support
-- [ ] Mathematical functions
-- [ ] Comparison operations
-- [ ] dtype consistency testing
+- [x] Matrix operations (using @stdlib BLAS)
+- [ ] Linear algebra (using @stdlib LAPACK) - eig, svd, qr, etc.
+- [x] Reductions with axis support
+- [x] Arithmetic functions - 11/11 complete
+- [ ] Mathematical functions - 2/40+ (sqrt, power) - trigonometric, exponential, rounding, etc.
+- [x] Comparison operations
+- [x] dtype consistency testing
 
 ### Phase 4: Extended Features
 - [ ] Random number generation
@@ -278,7 +273,6 @@ See [API-REFERENCE.md](./docs/API-REFERENCE.md) for complete function checklist.
 ### Developer Documentation
 - [ARCHITECTURE.md](./docs/ARCHITECTURE.md) - Design and implementation details
 - [TESTING-GUIDE.md](./docs/TESTING-GUIDE.md) - How to add tests (unit, validation, benchmarks)
-- [IMPLEMENTATION-NOTES.md](./docs/IMPLEMENTATION-NOTES.md) - Development notes and decisions
 - [benchmarks/README.md](./benchmarks/README.md) - Performance benchmarking guide
 
 ---
@@ -444,4 +438,4 @@ Focus is correctness and completeness first, then performance.
 
 ---
 
-**Ready to bring NumPy to JavaScript!** ⭐
+**Ready to bring NumPy to TypeScript + JavaScript!** ⭐

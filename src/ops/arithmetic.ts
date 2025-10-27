@@ -249,3 +249,269 @@ function divideScalar(storage: ArrayStorage, scalar: number): ArrayStorage {
 
   return result;
 }
+
+/**
+ * Absolute value of each element
+ * Preserves dtype
+ *
+ * @param a - Input array storage
+ * @returns Result storage with absolute values
+ */
+export function absolute(a: ArrayStorage): ArrayStorage {
+  const dtype = a.dtype;
+  const shape = Array.from(a.shape);
+  const data = a.data;
+  const size = a.size;
+
+  // Create result with same dtype
+  const result = ArrayStorage.zeros(shape, dtype);
+  const resultData = result.data;
+
+  if (isBigIntDType(dtype)) {
+    // BigInt arithmetic
+    const thisTyped = data as BigInt64Array | BigUint64Array;
+    const resultTyped = resultData as BigInt64Array | BigUint64Array;
+    for (let i = 0; i < size; i++) {
+      const val = thisTyped[i]!;
+      resultTyped[i] = val < 0n ? -val : val;
+    }
+  } else {
+    // Regular numeric types
+    for (let i = 0; i < size; i++) {
+      resultData[i] = Math.abs(Number(data[i]!));
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Numerical negative (element-wise negation)
+ * Preserves dtype
+ *
+ * @param a - Input array storage
+ * @returns Result storage with negated values
+ */
+export function negative(a: ArrayStorage): ArrayStorage {
+  const dtype = a.dtype;
+  const shape = Array.from(a.shape);
+  const data = a.data;
+  const size = a.size;
+
+  // Create result with same dtype
+  const result = ArrayStorage.zeros(shape, dtype);
+  const resultData = result.data;
+
+  if (isBigIntDType(dtype)) {
+    // BigInt arithmetic
+    const thisTyped = data as BigInt64Array | BigUint64Array;
+    const resultTyped = resultData as BigInt64Array | BigUint64Array;
+    for (let i = 0; i < size; i++) {
+      resultTyped[i] = -thisTyped[i]!;
+    }
+  } else {
+    // Regular numeric types
+    for (let i = 0; i < size; i++) {
+      resultData[i] = -Number(data[i]!);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Sign of each element (-1, 0, or 1)
+ * Preserves dtype
+ *
+ * @param a - Input array storage
+ * @returns Result storage with signs
+ */
+export function sign(a: ArrayStorage): ArrayStorage {
+  const dtype = a.dtype;
+  const shape = Array.from(a.shape);
+  const data = a.data;
+  const size = a.size;
+
+  // Create result with same dtype
+  const result = ArrayStorage.zeros(shape, dtype);
+  const resultData = result.data;
+
+  if (isBigIntDType(dtype)) {
+    // BigInt arithmetic
+    const thisTyped = data as BigInt64Array | BigUint64Array;
+    const resultTyped = resultData as BigInt64Array | BigUint64Array;
+    for (let i = 0; i < size; i++) {
+      const val = thisTyped[i]!;
+      resultTyped[i] = val > 0n ? 1n : val < 0n ? -1n : 0n;
+    }
+  } else {
+    // Regular numeric types
+    for (let i = 0; i < size; i++) {
+      const val = Number(data[i]!);
+      resultData[i] = val > 0 ? 1 : val < 0 ? -1 : 0;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Modulo operation (remainder after division)
+ * NumPy behavior: Uses floor modulo (sign follows divisor), not JavaScript's truncate modulo
+ * Preserves dtype for integer types
+ *
+ * @param a - Dividend array storage
+ * @param b - Divisor (array storage or scalar)
+ * @returns Result storage with modulo values
+ */
+export function mod(a: ArrayStorage, b: ArrayStorage | number): ArrayStorage {
+  if (typeof b === 'number') {
+    return modScalar(a, b);
+  }
+  // NumPy uses floor modulo: ((x % y) + y) % y for proper sign handling
+  return elementwiseBinaryOp(a, b, (x, y) => ((x % y) + y) % y, 'mod');
+}
+
+/**
+ * Modulo with scalar divisor (optimized path)
+ * NumPy uses floor modulo: result has same sign as divisor
+ * @private
+ */
+function modScalar(storage: ArrayStorage, divisor: number): ArrayStorage {
+  const dtype = storage.dtype;
+  const shape = Array.from(storage.shape);
+  const data = storage.data;
+  const size = storage.size;
+
+  // Create result with same dtype
+  const result = ArrayStorage.zeros(shape, dtype);
+  const resultData = result.data;
+
+  if (isBigIntDType(dtype)) {
+    // BigInt arithmetic - use floor modulo
+    const thisTyped = data as BigInt64Array | BigUint64Array;
+    const resultTyped = resultData as BigInt64Array | BigUint64Array;
+    const divisorBig = BigInt(Math.round(divisor));
+    for (let i = 0; i < size; i++) {
+      const val = thisTyped[i]!;
+      // Floor modulo for BigInt
+      resultTyped[i] = ((val % divisorBig) + divisorBig) % divisorBig;
+    }
+  } else {
+    // Regular numeric types - use floor modulo
+    for (let i = 0; i < size; i++) {
+      const val = Number(data[i]!);
+      // Floor modulo: ((x % y) + y) % y
+      resultData[i] = ((val % divisor) + divisor) % divisor;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Floor division (division with result rounded down)
+ * NumPy behavior: Preserves integer types
+ *
+ * @param a - Dividend array storage
+ * @param b - Divisor (array storage or scalar)
+ * @returns Result storage with floor division values
+ */
+export function floorDivide(a: ArrayStorage, b: ArrayStorage | number): ArrayStorage {
+  if (typeof b === 'number') {
+    return floorDivideScalar(a, b);
+  }
+  return elementwiseBinaryOp(a, b, (x, y) => Math.floor(x / y), 'floor_divide');
+}
+
+/**
+ * Floor division with scalar divisor (optimized path)
+ * @private
+ */
+function floorDivideScalar(storage: ArrayStorage, divisor: number): ArrayStorage {
+  const dtype = storage.dtype;
+  const shape = Array.from(storage.shape);
+  const data = storage.data;
+  const size = storage.size;
+
+  // NumPy behavior: floor_divide preserves integer types
+  const result = ArrayStorage.zeros(shape, dtype);
+  const resultData = result.data;
+
+  if (isBigIntDType(dtype)) {
+    // BigInt floor division
+    const thisTyped = data as BigInt64Array | BigUint64Array;
+    const resultTyped = resultData as BigInt64Array | BigUint64Array;
+    const divisorBig = BigInt(Math.round(divisor));
+    for (let i = 0; i < size; i++) {
+      resultTyped[i] = thisTyped[i]! / divisorBig;
+    }
+  } else {
+    // Regular numeric types
+    for (let i = 0; i < size; i++) {
+      resultData[i] = Math.floor(Number(data[i]!) / divisor);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Unary positive (returns a copy of the array)
+ * Preserves dtype
+ *
+ * @param a - Input array storage
+ * @returns Result storage (copy of input)
+ */
+export function positive(a: ArrayStorage): ArrayStorage {
+  // Positive is essentially a no-op that returns a copy
+  const dtype = a.dtype;
+  const shape = Array.from(a.shape);
+  const data = a.data;
+  const size = a.size;
+
+  const result = ArrayStorage.zeros(shape, dtype);
+  const resultData = result.data;
+
+  // Copy data
+  for (let i = 0; i < size; i++) {
+    resultData[i] = data[i]!;
+  }
+
+  return result;
+}
+
+/**
+ * Reciprocal (1/x) of each element
+ * NumPy behavior: Always promotes to float64 for integer types
+ *
+ * @param a - Input array storage
+ * @returns Result storage with reciprocal values
+ */
+export function reciprocal(a: ArrayStorage): ArrayStorage {
+  const dtype = a.dtype;
+  const shape = Array.from(a.shape);
+  const data = a.data;
+  const size = a.size;
+
+  // NumPy behavior: reciprocal always promotes integers to float64
+  const isIntegerType = dtype !== 'float32' && dtype !== 'float64';
+  const resultDtype = isIntegerType ? 'float64' : dtype;
+
+  const result = ArrayStorage.zeros(shape, resultDtype);
+  const resultData = result.data;
+
+  if (isBigIntDType(dtype)) {
+    // BigInt input promotes to float64
+    for (let i = 0; i < size; i++) {
+      resultData[i] = 1.0 / Number(data[i]!);
+    }
+  } else {
+    // Regular numeric types
+    for (let i = 0; i < size; i++) {
+      resultData[i] = 1.0 / Number(data[i]!);
+    }
+  }
+
+  return result;
+}

@@ -233,6 +233,103 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       iterations,
       warmup
     });
+
+    specs.push({
+      name: `mod [${sizes.medium.join('x')}] % scalar`,
+      category: 'arithmetic',
+      operation: 'mod',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: 1 },
+        b: { shape: [1], value: 7 }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `floor_divide [${sizes.medium.join('x')}] // scalar`,
+      category: 'arithmetic',
+      operation: 'floor_divide',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: 1 },
+        b: { shape: [1], value: 3 }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `reciprocal [${sizes.medium.join('x')}]`,
+      category: 'arithmetic',
+      operation: 'reciprocal',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: 1 }
+      },
+      iterations,
+      warmup
+    });
+  }
+
+  // ========================================
+  // Mathematical Operations Benchmarks
+  // ========================================
+
+  if (Array.isArray(sizes.medium)) {
+    specs.push({
+      name: `sqrt [${sizes.medium.join('x')}]`,
+      category: 'math',
+      operation: 'sqrt',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: 1 }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `power [${sizes.medium.join('x')}] ** 2`,
+      category: 'math',
+      operation: 'power',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: 1 },
+        b: { shape: [1], value: 2 }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `absolute [${sizes.medium.join('x')}]`,
+      category: 'math',
+      operation: 'absolute',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: -100 }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `negative [${sizes.medium.join('x')}]`,
+      category: 'math',
+      operation: 'negative',
+      setup: {
+        a: { shape: sizes.medium, fill: 'ones' }
+      },
+      iterations,
+      warmup
+    });
+
+    specs.push({
+      name: `sign [${sizes.medium.join('x')}]`,
+      category: 'math',
+      operation: 'sign',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: -100 }
+      },
+      iterations,
+      warmup
+    });
   }
 
   // ========================================

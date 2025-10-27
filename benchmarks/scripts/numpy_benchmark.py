@@ -86,6 +86,26 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         return arrays['a'] * arrays['b']
     elif operation == 'divide':
         return arrays['a'] / arrays['b']
+    elif operation == 'mod':
+        return np.mod(arrays['a'], arrays['b'])
+    elif operation == 'floor_divide':
+        return np.floor_divide(arrays['a'], arrays['b'])
+    elif operation == 'reciprocal':
+        return np.reciprocal(arrays['a'])
+    elif operation == 'positive':
+        return np.positive(arrays['a'])
+
+    # Mathematical operations
+    elif operation == 'sqrt':
+        return np.sqrt(arrays['a'])
+    elif operation == 'power':
+        return np.power(arrays['a'], arrays['b'])
+    elif operation == 'absolute':
+        return np.absolute(arrays['a'])
+    elif operation == 'negative':
+        return np.negative(arrays['a'])
+    elif operation == 'sign':
+        return np.sign(arrays['a'])
 
     # Linear algebra
     elif operation == 'matmul':

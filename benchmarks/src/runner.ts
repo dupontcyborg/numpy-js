@@ -105,6 +105,27 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
     return arrays['a'].multiply(arrays['b']);
   } else if (operation === 'divide') {
     return arrays['a'].divide(arrays['b']);
+  } else if (operation === 'mod') {
+    return arrays['a'].mod(arrays['b']);
+  } else if (operation === 'floor_divide') {
+    return arrays['a'].floor_divide(arrays['b']);
+  } else if (operation === 'reciprocal') {
+    return arrays['a'].reciprocal();
+  } else if (operation === 'positive') {
+    return arrays['a'].positive();
+  }
+
+  // Mathematical operations
+  else if (operation === 'sqrt') {
+    return arrays['a'].sqrt();
+  } else if (operation === 'power') {
+    return arrays['a'].power(arrays['b']);
+  } else if (operation === 'absolute') {
+    return arrays['a'].absolute();
+  } else if (operation === 'negative') {
+    return arrays['a'].negative();
+  } else if (operation === 'sign') {
+    return arrays['a'].sign();
   }
 
   // Linear algebra

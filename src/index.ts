@@ -24,6 +24,15 @@ export {
   ones_like,
   empty_like,
   full_like,
+  sqrt,
+  power,
+  absolute,
+  negative,
+  sign,
+  mod,
+  floor_divide,
+  positive,
+  reciprocal,
 } from './core/ndarray';
 
 // Version (replaced at build time from package.json)
