@@ -22,6 +22,7 @@ import * as comparisonOps from '../ops/comparison';
 import * as reductionOps from '../ops/reduction';
 import * as shapeOps from '../ops/shape';
 import * as linalgOps from '../ops/linalg';
+import * as exponentialOps from '../ops/exponential';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type StdlibNDArray = any; // @stdlib types not available yet
@@ -395,6 +396,77 @@ export class NDArray {
   divide(other: NDArray | number): NDArray {
     const otherStorage = typeof other === 'number' ? other : other._storage;
     const resultStorage = arithmeticOps.divide(this._storage, otherStorage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  mod(other: NDArray | number): NDArray {
+    const otherStorage = typeof other === 'number' ? other : other._storage;
+    const resultStorage = arithmeticOps.mod(this._storage, otherStorage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  floor_divide(other: NDArray | number): NDArray {
+    const otherStorage = typeof other === 'number' ? other : other._storage;
+    const resultStorage = arithmeticOps.floorDivide(this._storage, otherStorage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  positive(): NDArray {
+    const resultStorage = arithmeticOps.positive(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  reciprocal(): NDArray {
+    const resultStorage = arithmeticOps.reciprocal(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  // Mathematical operations
+  /**
+   * Square root of each element
+   * Promotes integer types to float64
+   * @returns New array with square roots
+   */
+  sqrt(): NDArray {
+    const resultStorage = exponentialOps.sqrt(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Raise elements to power
+   * @param exponent - Power to raise to (array or scalar)
+   * @returns New array with powered values
+   */
+  power(exponent: NDArray | number): NDArray {
+    const exponentStorage = typeof exponent === 'number' ? exponent : exponent._storage;
+    const resultStorage = exponentialOps.power(this._storage, exponentStorage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Absolute value of each element
+   * @returns New array with absolute values
+   */
+  absolute(): NDArray {
+    const resultStorage = arithmeticOps.absolute(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Numerical negative (element-wise negation)
+   * @returns New array with negated values
+   */
+  negative(): NDArray {
+    const resultStorage = arithmeticOps.negative(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Sign of each element (-1, 0, or 1)
+   * @returns New array with signs
+   */
+  sign(): NDArray {
+    const resultStorage = arithmeticOps.sign(this._storage);
     return NDArray._fromStorage(resultStorage);
   }
 
@@ -917,15 +989,97 @@ export function ones(shape: number[], dtype: DType = DEFAULT_DTYPE): NDArray {
 /**
  * Create array from nested JavaScript arrays
  */
+/**
+ * Helper to infer shape from nested arrays
+ */
+function inferShape(data: unknown): number[] {
+  const shape: number[] = [];
+  let current = data;
+  while (Array.isArray(current)) {
+    shape.push(current.length);
+    current = current[0];
+  }
+  return shape;
+}
+
+/**
+ * Helper to check if data contains BigInt values
+ */
+function containsBigInt(data: unknown): boolean {
+  if (typeof data === 'bigint') return true;
+  if (Array.isArray(data)) {
+    return data.some((item) => containsBigInt(item));
+  }
+  return false;
+}
+
+/**
+ * Helper to flatten nested arrays keeping BigInt values
+ */
+function flattenKeepBigInt(data: unknown): unknown[] {
+  const result: unknown[] = [];
+  function flatten(arr: unknown): void {
+    if (Array.isArray(arr)) {
+      arr.forEach((item) => flatten(item));
+    } else {
+      result.push(arr);
+    }
+  }
+  flatten(data);
+  return result;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function array(data: any, dtype?: DType): NDArray {
-  // If no dtype specified, use stdlib's default inference
+  const hasBigInt = containsBigInt(data);
+
+  // If data contains BigInt and we have an explicit BigInt dtype, handle it specially
+  if (hasBigInt && dtype && isBigIntDType(dtype)) {
+    // Infer shape from nested arrays
+    const shape = inferShape(data);
+    const size = shape.reduce((a: number, b: number) => a * b, 1);
+
+    // Create TypedArray and fill with BigInt values
+    const Constructor = getTypedArrayConstructor(dtype);
+    if (!Constructor) {
+      throw new Error(`Cannot create array with dtype ${dtype}`);
+    }
+    const typedData = new Constructor(size) as BigInt64Array | BigUint64Array;
+    const flatData = flattenKeepBigInt(data);
+
+    for (let i = 0; i < size; i++) {
+      const val = flatData[i];
+      typedData[i] = typeof val === 'bigint' ? val : BigInt(Math.round(Number(val)));
+    }
+
+    const stdlibArray = stdlib_ndarray.ndarray(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      toStdlibDType(dtype) as any,
+      typedData,
+      shape,
+      computeStrides(shape),
+      0,
+      'row-major'
+    );
+    return new NDArray(stdlibArray, dtype);
+  }
+
+  // If data contains BigInt but no dtype specified, convert to Number for stdlib
+  if (hasBigInt && dtype === undefined) {
+    const convertedData = JSON.parse(
+      JSON.stringify(data, (_, value) => (typeof value === 'bigint' ? Number(value) : value))
+    );
+    const stdlibArray = stdlib_ndarray.array(convertedData);
+    return new NDArray(stdlibArray);
+  }
+
+  // If no dtype specified and no BigInt, use stdlib's default inference
   if (dtype === undefined) {
     const stdlibArray = stdlib_ndarray.array(data);
     return new NDArray(stdlibArray);
   }
 
-  // With explicit dtype, create via stdlib then convert if needed
+  // With explicit dtype (non-BigInt), create via stdlib then convert if needed
   const stdlibArray = stdlib_ndarray.array(data);
   const currentDtype = stdlib_ndarray.dtype(stdlibArray) as DType;
 
@@ -1481,4 +1635,42 @@ export function full_like(
   dtype?: DType
 ): NDArray {
   return full(Array.from(a.shape), fill_value, dtype ?? (a.dtype as DType));
+}
+
+// Mathematical functions (standalone)
+
+export function sqrt(x: NDArray): NDArray {
+  return x.sqrt();
+}
+
+export function power(x: NDArray, exponent: NDArray | number): NDArray {
+  return x.power(exponent);
+}
+
+export function absolute(x: NDArray): NDArray {
+  return x.absolute();
+}
+
+export function negative(x: NDArray): NDArray {
+  return x.negative();
+}
+
+export function sign(x: NDArray): NDArray {
+  return x.sign();
+}
+
+export function mod(x: NDArray, divisor: NDArray | number): NDArray {
+  return x.mod(divisor);
+}
+
+export function floor_divide(x: NDArray, divisor: NDArray | number): NDArray {
+  return x.floor_divide(divisor);
+}
+
+export function positive(x: NDArray): NDArray {
+  return x.positive();
+}
+
+export function reciprocal(x: NDArray): NDArray {
+  return x.reciprocal();
 }
