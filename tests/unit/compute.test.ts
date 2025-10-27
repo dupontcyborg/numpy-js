@@ -214,7 +214,13 @@ describe('Compute engine - element-wise operations', () => {
 
   describe('Broadcasting with BigInt dtypes', () => {
     it('broadcasts scalar to int64 array', () => {
-      const a = array([[1, 2], [3, 4]], 'int64');
+      const a = array(
+        [
+          [1, 2],
+          [3, 4],
+        ],
+        'int64'
+      );
       const b = array([10], 'int64');
       const result = a.add(b);
 
@@ -226,7 +232,13 @@ describe('Compute engine - element-wise operations', () => {
     });
 
     it('broadcasts with mixed dtypes involving BigInt', () => {
-      const a = array([[1, 2], [3, 4]], 'int64');
+      const a = array(
+        [
+          [1, 2],
+          [3, 4],
+        ],
+        'int64'
+      );
       const b = array([10, 20], 'int32');
       const result = a.add(b);
 
