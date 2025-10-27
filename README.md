@@ -219,7 +219,7 @@ import * as np from 'numpy-ts';
 - [x] Properties: `shape`, `ndim`, `size`, `dtype`, `data`, `strides`
 - [x] View tracking: `base` attribute, `flags` property
 - [x] Memory flags: `C_CONTIGUOUS`, `F_CONTIGUOUS`, `OWNDATA`
-- [x] Basic arithmetic: `add()`, `subtract()`, `multiply()`, `divide()` with dtype preservation
+- [x] Arithmetic operations: `add()`, `subtract()`, `multiply()`, `divide()`, `mod()`, `floor_divide()`, `negative()`, `positive()`, `absolute()`, `sign()`, `reciprocal()`
 - [x] Broadcasting - fully integrated into all operations
 - [x] String-based slicing - `arr.slice('0:5', ':')`, `row()`, `col()`, etc.
 - [x] Reductions with axis support - `sum(axis, keepdims)`, `mean()`, `max()`, `min()`
@@ -229,7 +229,8 @@ import * as np from 'numpy-ts';
   - Full dtype preservation
   - NumPy-compatible promotion rules
   - BigInt support for int64/uint64
-- [x] Testing - 748/750 tests passing (99.7%)
+- [x] Exponential operations - `sqrt()`, `power()`
+- [x] Testing
   - Unit tests for all operations
   - NumPy validation tests (cross-checked against Python NumPy 2.3.3)
   - Edge case validation (overflow, underflow, special values)
@@ -244,12 +245,13 @@ import * as np from 'numpy-ts';
   - [ ] Automated in CI/CD
 
 ### Phase 3: Essential Operations
-- [ ] Matrix operations (using @stdlib BLAS)
-- [ ] Linear algebra (using @stdlib LAPACK)
-- [ ] Reductions with axis support
-- [ ] Mathematical functions
-- [ ] Comparison operations
-- [ ] dtype consistency testing
+- [x] Matrix operations (using @stdlib BLAS)
+- [ ] Linear algebra (using @stdlib LAPACK) - eig, svd, qr, etc.
+- [x] Reductions with axis support
+- [x] Arithmetic functions - 11/11 complete
+- [ ] Mathematical functions - 2/40+ (sqrt, power) - trigonometric, exponential, rounding, etc.
+- [x] Comparison operations
+- [x] dtype consistency testing
 
 ### Phase 4: Extended Features
 - [ ] Random number generation
@@ -271,7 +273,6 @@ See [API-REFERENCE.md](./docs/API-REFERENCE.md) for complete function checklist.
 ### Developer Documentation
 - [ARCHITECTURE.md](./docs/ARCHITECTURE.md) - Design and implementation details
 - [TESTING-GUIDE.md](./docs/TESTING-GUIDE.md) - How to add tests (unit, validation, benchmarks)
-- [IMPLEMENTATION-NOTES.md](./docs/IMPLEMENTATION-NOTES.md) - Development notes and decisions
 - [benchmarks/README.md](./benchmarks/README.md) - Performance benchmarking guide
 
 ---
