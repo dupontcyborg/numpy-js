@@ -73,7 +73,13 @@ describe('Extended reduction tests', () => {
     });
 
     it('computes mean along axis for int64', () => {
-      const arr = array([[1, 2], [3, 4]], 'int64');
+      const arr = array(
+        [
+          [1, 2],
+          [3, 4],
+        ],
+        'int64'
+      );
       const result = arr.mean(0);
       expect((result as any).shape).toEqual([2]);
       // Mean promotes to float64 for accurate computation
@@ -214,7 +220,13 @@ describe('Extended reduction tests', () => {
     });
 
     it('computes product along axis for int64', () => {
-      const arr = array([[2, 3], [4, 5]], 'int64');
+      const arr = array(
+        [
+          [2, 3],
+          [4, 5],
+        ],
+        'int64'
+      );
       const result = arr.prod(0);
       expect((result as any).dtype).toBe('int64');
       expect((result as any).data[0]).toBe(BigInt(8));
@@ -396,7 +408,10 @@ describe('Extended reduction tests', () => {
 
   describe('Error handling', () => {
     it('throws error for invalid axis', () => {
-      const arr = array([[1, 2], [3, 4]]);
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
       expect(() => arr.sum(5)).toThrow(/out of bounds/);
       expect(() => arr.sum(-5)).toThrow(/out of bounds/);
     });
