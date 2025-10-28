@@ -17,6 +17,7 @@ jobs:
     environment: benchmark
     permissions:
       contents: write
+      issues: write
     steps:
       - uses: actions/checkout@v4
         with:

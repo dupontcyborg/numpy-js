@@ -10,6 +10,8 @@ jobs:
   test:
     name: Test Suite (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -69,6 +71,8 @@ jobs:
   coverage:
     name: Coverage Report
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -117,6 +121,8 @@ jobs:
   build:
     name: Build Distribution
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
