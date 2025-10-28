@@ -262,7 +262,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.validate.outputs.tag }}
-          name: Release ${{ needs.validate.outputs.version }}
+          body_path: release-notes.md
           draft: false
           prerelease: ${{ contains(needs.validate.outputs.version, '-') }}
           files: |
