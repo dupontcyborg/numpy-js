@@ -16,6 +16,8 @@ jobs:
   validate:
     name: Validate Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.get_version.outputs.version }}
       tag: ${{ steps.get_version.outputs.tag }}
@@ -75,6 +77,8 @@ jobs:
     name: Full Test Suite
     needs: validate
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         node: [18, 20, 22]
@@ -109,6 +113,8 @@ jobs:
     name: Build Production Bundles
     needs: [validate, test]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
