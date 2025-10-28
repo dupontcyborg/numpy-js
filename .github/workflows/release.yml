@@ -258,37 +258,11 @@ jobs:
           name: benchmarks-${{ needs.validate.outputs.version }}
           path: benchmarks/
 
-      - name: Generate release notes
-        id: release_notes
-        run: |
-          # Extract changelog for this version
-          VERSION="${{ needs.validate.outputs.version }}"
-
-          if [ -f CHANGELOG.md ]; then
-            # Try to extract section for this version
-            sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d' > release-notes.md
-          fi
-
-          # Add benchmark info
-          echo "" >> release-notes.md
-          echo "## 📊 Performance" >> release-notes.md
-          echo "" >> release-notes.md
-          echo "Benchmark results are attached to this release." >> release-notes.md
-          echo "" >> release-notes.md
-          echo "## 📦 Installation" >> release-notes.md
-          echo "" >> release-notes.md
-          echo '```bash' >> release-notes.md
-          echo "npm install numpy-ts@$VERSION" >> release-notes.md
-          echo '```' >> release-notes.md
-
-          cat release-notes.md
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.validate.outputs.tag }}
           name: Release ${{ needs.validate.outputs.version }}
-          body_path: release-notes.md
           draft: false
           prerelease: ${{ contains(needs.validate.outputs.version, '-') }}
           files: |
