@@ -39,4 +39,4 @@ export {
 // In development/tests, use package.json directly; in production, use the replaced value
 declare const __VERSION_PLACEHOLDER__: string;
 export const __version__ =
-  typeof __VERSION_PLACEHOLDER__ !== 'undefined' ? __VERSION_PLACEHOLDER__ : '0.1.0'; // Fallback for development/tests
+  typeof __VERSION_PLACEHOLDER__ !== 'undefined' ? __VERSION_PLACEHOLDER__ : '0.2.0'; // Fallback for development/tests
