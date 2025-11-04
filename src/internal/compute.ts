@@ -22,6 +22,9 @@ interface StdlibNDArrayInternal extends StdlibNDArray {
 /**
  * Perform element-wise operation with broadcasting
  *
+ * NOTE: This is the slow path for broadcasting/non-contiguous arrays.
+ * Fast paths for contiguous arrays are implemented directly in ops/arithmetic.ts
+ *
  * @param a - First array storage
  * @param b - Second array storage
  * @param op - Operation to perform (a, b) => result

@@ -9,8 +9,21 @@
  */
 
 import { ArrayStorage } from '../core/storage';
-import { isBigIntDType } from '../core/dtype';
+import { isBigIntDType, promoteDTypes } from '../core/dtype';
 import { elementwiseBinaryOp } from '../internal/compute';
+
+/**
+ * Helper: Check if two arrays can use the fast path
+ * (both C-contiguous with same shape, no broadcasting needed)
+ */
+function canUseFastPath(a: ArrayStorage, b: ArrayStorage): boolean {
+  return (
+    a.isCContiguous &&
+    b.isCContiguous &&
+    a.shape.length === b.shape.length &&
+    a.shape.every((dim, i) => dim === b.shape[i])
+  );
+}
 
 /**
  * Add two arrays or array and scalar
@@ -23,7 +36,63 @@ export function add(a: ArrayStorage, b: ArrayStorage | number): ArrayStorage {
   if (typeof b === 'number') {
     return addScalar(a, b);
   }
+
+  // Fast path: both contiguous, same shape
+  if (canUseFastPath(a, b)) {
+    return addArraysFast(a, b);
+  }
+
+  // Slow path: broadcasting or non-contiguous
   return elementwiseBinaryOp(a, b, (x, y) => x + y, 'add');
+}
+
+/**
+ * Fast path for adding two contiguous arrays
+ * @private
+ */
+function addArraysFast(a: ArrayStorage, b: ArrayStorage): ArrayStorage {
+  const dtype = promoteDTypes(a.dtype, b.dtype);
+  const result = ArrayStorage.zeros(Array.from(a.shape), dtype);
+  const size = a.size;
+  const aData = a.data;
+  const bData = b.data;
+  const resultData = result.data;
+
+  if (isBigIntDType(dtype)) {
+    const resultTyped = resultData as BigInt64Array | BigUint64Array;
+    const needsConversion = !isBigIntDType(a.dtype) || !isBigIntDType(b.dtype);
+
+    if (needsConversion) {
+      for (let i = 0; i < size; i++) {
+        const aVal = typeof aData[i] === 'bigint' ? aData[i] : BigInt(Math.round(Number(aData[i])));
+        const bVal = typeof bData[i] === 'bigint' ? bData[i] : BigInt(Math.round(Number(bData[i])));
+        resultTyped[i] = (aVal as bigint) + (bVal as bigint);
+      }
+    } else {
+      const aTyped = aData as BigInt64Array | BigUint64Array;
+      const bTyped = bData as BigInt64Array | BigUint64Array;
+      for (let i = 0; i < size; i++) {
+        resultTyped[i] = aTyped[i]! + bTyped[i]!;
+      }
+    }
+  } else {
+    const needsConversion = isBigIntDType(a.dtype) || isBigIntDType(b.dtype);
+
+    if (needsConversion) {
+      for (let i = 0; i < size; i++) {
+        const aVal = typeof aData[i] === 'bigint' ? Number(aData[i]) : (aData[i] as number);
+        const bVal = typeof bData[i] === 'bigint' ? Number(bData[i]) : (bData[i] as number);
+        resultData[i] = aVal + bVal;
+      }
+    } else {
+      // Pure numeric operations - fully optimizable
+      for (let i = 0; i < size; i++) {
+        resultData[i] = (aData[i] as number) + (bData[i] as number);
+      }
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -37,7 +106,62 @@ export function subtract(a: ArrayStorage, b: ArrayStorage | number): ArrayStorag
   if (typeof b === 'number') {
     return subtractScalar(a, b);
   }
+
+  // Fast path: both contiguous, same shape
+  if (canUseFastPath(a, b)) {
+    return subtractArraysFast(a, b);
+  }
+
+  // Slow path: broadcasting or non-contiguous
   return elementwiseBinaryOp(a, b, (x, y) => x - y, 'subtract');
+}
+
+/**
+ * Fast path for subtracting two contiguous arrays
+ * @private
+ */
+function subtractArraysFast(a: ArrayStorage, b: ArrayStorage): ArrayStorage {
+  const dtype = promoteDTypes(a.dtype, b.dtype);
+  const result = ArrayStorage.zeros(Array.from(a.shape), dtype);
+  const size = a.size;
+  const aData = a.data;
+  const bData = b.data;
+  const resultData = result.data;
+
+  if (isBigIntDType(dtype)) {
+    const resultTyped = resultData as BigInt64Array | BigUint64Array;
+    const needsConversion = !isBigIntDType(a.dtype) || !isBigIntDType(b.dtype);
+
+    if (needsConversion) {
+      for (let i = 0; i < size; i++) {
+        const aVal = typeof aData[i] === 'bigint' ? aData[i] : BigInt(Math.round(Number(aData[i])));
+        const bVal = typeof bData[i] === 'bigint' ? bData[i] : BigInt(Math.round(Number(bData[i])));
+        resultTyped[i] = (aVal as bigint) - (bVal as bigint);
+      }
+    } else {
+      const aTyped = aData as BigInt64Array | BigUint64Array;
+      const bTyped = bData as BigInt64Array | BigUint64Array;
+      for (let i = 0; i < size; i++) {
+        resultTyped[i] = aTyped[i]! - bTyped[i]!;
+      }
+    }
+  } else {
+    const needsConversion = isBigIntDType(a.dtype) || isBigIntDType(b.dtype);
+
+    if (needsConversion) {
+      for (let i = 0; i < size; i++) {
+        const aVal = typeof aData[i] === 'bigint' ? Number(aData[i]) : (aData[i] as number);
+        const bVal = typeof bData[i] === 'bigint' ? Number(bData[i]) : (bData[i] as number);
+        resultData[i] = aVal - bVal;
+      }
+    } else {
+      for (let i = 0; i < size; i++) {
+        resultData[i] = (aData[i] as number) - (bData[i] as number);
+      }
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -51,7 +175,62 @@ export function multiply(a: ArrayStorage, b: ArrayStorage | number): ArrayStorag
   if (typeof b === 'number') {
     return multiplyScalar(a, b);
   }
+
+  // Fast path: both contiguous, same shape
+  if (canUseFastPath(a, b)) {
+    return multiplyArraysFast(a, b);
+  }
+
+  // Slow path: broadcasting or non-contiguous
   return elementwiseBinaryOp(a, b, (x, y) => x * y, 'multiply');
+}
+
+/**
+ * Fast path for multiplying two contiguous arrays
+ * @private
+ */
+function multiplyArraysFast(a: ArrayStorage, b: ArrayStorage): ArrayStorage {
+  const dtype = promoteDTypes(a.dtype, b.dtype);
+  const result = ArrayStorage.zeros(Array.from(a.shape), dtype);
+  const size = a.size;
+  const aData = a.data;
+  const bData = b.data;
+  const resultData = result.data;
+
+  if (isBigIntDType(dtype)) {
+    const resultTyped = resultData as BigInt64Array | BigUint64Array;
+    const needsConversion = !isBigIntDType(a.dtype) || !isBigIntDType(b.dtype);
+
+    if (needsConversion) {
+      for (let i = 0; i < size; i++) {
+        const aVal = typeof aData[i] === 'bigint' ? aData[i] : BigInt(Math.round(Number(aData[i])));
+        const bVal = typeof bData[i] === 'bigint' ? bData[i] : BigInt(Math.round(Number(bData[i])));
+        resultTyped[i] = (aVal as bigint) * (bVal as bigint);
+      }
+    } else {
+      const aTyped = aData as BigInt64Array | BigUint64Array;
+      const bTyped = bData as BigInt64Array | BigUint64Array;
+      for (let i = 0; i < size; i++) {
+        resultTyped[i] = aTyped[i]! * bTyped[i]!;
+      }
+    }
+  } else {
+    const needsConversion = isBigIntDType(a.dtype) || isBigIntDType(b.dtype);
+
+    if (needsConversion) {
+      for (let i = 0; i < size; i++) {
+        const aVal = typeof aData[i] === 'bigint' ? Number(aData[i]) : (aData[i] as number);
+        const bVal = typeof bData[i] === 'bigint' ? Number(bData[i]) : (bData[i] as number);
+        resultData[i] = aVal * bVal;
+      }
+    } else {
+      for (let i = 0; i < size; i++) {
+        resultData[i] = (aData[i] as number) * (bData[i] as number);
+      }
+    }
+  }
+
+  return result;
 }
 
 /**
