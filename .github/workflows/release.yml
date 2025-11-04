@@ -180,12 +180,16 @@ jobs:
       - name: Run benchmarks
         run: npm run bench:quick
 
+      - name: Rename benchmark results
+        run: |
+          mv benchmarks/results/latest.json benchmarks/results/benchmarks-v${{ needs.validate.outputs.version }}.json
+
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
           name: benchmarks-${{ needs.validate.outputs.version }}
           path: |
-            benchmarks/results/latest.json
+            benchmarks/results/benchmarks-v${{ needs.validate.outputs.version }}.json
             benchmarks/results/plots/
           retention-days: 90
 
@@ -262,14 +266,13 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.validate.outputs.tag }}
-          body_path: release-notes.md
           draft: false
           prerelease: ${{ contains(needs.validate.outputs.version, '-') }}
           files: |
             dist/*.js
             dist/*.cjs
             dist/*.map
-            benchmarks/results/latest.json
+            benchmarks/results/benchmarks-v${{ needs.validate.outputs.version }}.json
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Post release summary
