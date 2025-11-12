@@ -6,12 +6,29 @@
 import type { BenchmarkCase, BenchmarkMode } from './types';
 
 export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCase[] {
-  // Both modes use the same array sizes
+  // Array sizes vary by mode
   // Auto-calibration handles the iteration count
-  // Only warmup differs (quick mode skips some warmup for speed)
-  const sizes = { small: 1000, medium: [100, 100] as [number, number], large: [500, 500] as [number, number] };
+  const sizeConfig = {
+    quick: {
+      small: 1000,
+      medium: [100, 100] as [number, number],
+      large: [500, 500] as [number, number]
+    },
+    standard: {
+      small: 1000,
+      medium: [100, 100] as [number, number],
+      large: [500, 500] as [number, number]
+    },
+    large: {
+      small: 10000,
+      medium: [316, 316] as [number, number],  // ~100K elements
+      large: [1000, 1000] as [number, number]  // 1M elements
+    }
+  };
 
-  const config = {
+  const sizes = sizeConfig[mode] || sizeConfig.standard;
+
+  const warmupConfig = {
     quick: {
       iterations: 1,  // Not used with auto-calibration, kept for compatibility
       warmup: 3       // Less warmup for faster feedback
@@ -19,8 +36,14 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
     standard: {
       iterations: 1,  // Not used with auto-calibration, kept for compatibility
       warmup: 10      // More warmup for stable results
+    },
+    large: {
+      iterations: 1,  // Not used with auto-calibration, kept for compatibility
+      warmup: 5       // Moderate warmup for large arrays
     }
-  }[mode];
+  };
+
+  const config = warmupConfig[mode] || warmupConfig.standard;
 
   const { iterations, warmup } = config;
   const specs: BenchmarkCase[] = [];
