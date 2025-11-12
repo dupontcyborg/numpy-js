@@ -27,12 +27,12 @@ def setup_arrays(setup: Dict[str, Any]) -> Dict[str, np.ndarray]:
     arrays = {}
 
     for key, spec in setup.items():
-        shape = spec['shape']
-        dtype = spec.get('dtype', 'float64')
-        fill_type = spec.get('fill', 'zeros')
+        shape = spec["shape"]
+        dtype = spec.get("dtype", "float64")
+        fill_type = spec.get("fill", "zeros")
 
         # Handle scalar values (n, axis, new_shape, shape, fill_value)
-        if key in ['n', 'axis', 'new_shape', 'shape', 'fill_value']:
+        if key in ["n", "axis", "new_shape", "shape", "fill_value"]:
             if len(shape) == 1:
                 arrays[key] = shape[0]
             else:
@@ -40,15 +40,15 @@ def setup_arrays(setup: Dict[str, Any]) -> Dict[str, np.ndarray]:
             continue
 
         # Check 'value' first to avoid default fill creating zeros
-        if 'value' in spec:
-            arrays[key] = np.full(shape, spec['value'], dtype=dtype)
-        elif fill_type == 'zeros':
+        if "value" in spec:
+            arrays[key] = np.full(shape, spec["value"], dtype=dtype)
+        elif fill_type == "zeros":
             arrays[key] = np.zeros(shape, dtype=dtype)
-        elif fill_type == 'ones':
+        elif fill_type == "ones":
             arrays[key] = np.ones(shape, dtype=dtype)
-        elif fill_type == 'random':
+        elif fill_type == "random":
             arrays[key] = np.random.randn(*shape).astype(dtype)
-        elif fill_type == 'arange':
+        elif fill_type == "arange":
             arrays[key] = np.arange(np.prod(shape), dtype=dtype).reshape(shape)
 
     return arrays
@@ -57,121 +57,121 @@ def setup_arrays(setup: Dict[str, Any]) -> Dict[str, np.ndarray]:
 def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
     """Execute the benchmark operation"""
     # Array creation
-    if operation == 'zeros':
-        return np.zeros(arrays['shape'])
-    elif operation == 'ones':
-        return np.ones(arrays['shape'])
-    elif operation == 'empty':
-        return np.empty(arrays['shape'])
-    elif operation == 'full':
-        return np.full(arrays['shape'], arrays['fill_value'])
-    elif operation == 'arange':
-        return np.arange(arrays['n'])
-    elif operation == 'linspace':
-        return np.linspace(0, 100, arrays['n'])
-    elif operation == 'logspace':
-        return np.logspace(0, 3, arrays['n'])
-    elif operation == 'geomspace':
-        return np.geomspace(1, 1000, arrays['n'])
-    elif operation == 'eye':
-        return np.eye(arrays['n'])
-    elif operation == 'identity':
-        return np.identity(arrays['n'])
-    elif operation == 'copy':
-        return np.copy(arrays['a'])
-    elif operation == 'zeros_like':
-        return np.zeros_like(arrays['a'])
-    elif operation == 'ones_like':
-        return np.ones_like(arrays['a'])
-    elif operation == 'empty_like':
-        return np.empty_like(arrays['a'])
-    elif operation == 'full_like':
-        return np.full_like(arrays['a'], 7)
+    if operation == "zeros":
+        return np.zeros(arrays["shape"])
+    elif operation == "ones":
+        return np.ones(arrays["shape"])
+    elif operation == "empty":
+        return np.empty(arrays["shape"])
+    elif operation == "full":
+        return np.full(arrays["shape"], arrays["fill_value"])
+    elif operation == "arange":
+        return np.arange(arrays["n"])
+    elif operation == "linspace":
+        return np.linspace(0, 100, arrays["n"])
+    elif operation == "logspace":
+        return np.logspace(0, 3, arrays["n"])
+    elif operation == "geomspace":
+        return np.geomspace(1, 1000, arrays["n"])
+    elif operation == "eye":
+        return np.eye(arrays["n"])
+    elif operation == "identity":
+        return np.identity(arrays["n"])
+    elif operation == "copy":
+        return np.copy(arrays["a"])
+    elif operation == "zeros_like":
+        return np.zeros_like(arrays["a"])
+    elif operation == "ones_like":
+        return np.ones_like(arrays["a"])
+    elif operation == "empty_like":
+        return np.empty_like(arrays["a"])
+    elif operation == "full_like":
+        return np.full_like(arrays["a"], 7)
 
     # Arithmetic
-    elif operation == 'add':
-        return arrays['a'] + arrays['b']
-    elif operation == 'subtract':
-        return arrays['a'] - arrays['b']
-    elif operation == 'multiply':
-        return arrays['a'] * arrays['b']
-    elif operation == 'divide':
-        return arrays['a'] / arrays['b']
-    elif operation == 'mod':
-        return np.mod(arrays['a'], arrays['b'])
-    elif operation == 'floor_divide':
-        return np.floor_divide(arrays['a'], arrays['b'])
-    elif operation == 'reciprocal':
-        return np.reciprocal(arrays['a'])
-    elif operation == 'positive':
-        return np.positive(arrays['a'])
+    elif operation == "add":
+        return arrays["a"] + arrays["b"]
+    elif operation == "subtract":
+        return arrays["a"] - arrays["b"]
+    elif operation == "multiply":
+        return arrays["a"] * arrays["b"]
+    elif operation == "divide":
+        return arrays["a"] / arrays["b"]
+    elif operation == "mod":
+        return np.mod(arrays["a"], arrays["b"])
+    elif operation == "floor_divide":
+        return np.floor_divide(arrays["a"], arrays["b"])
+    elif operation == "reciprocal":
+        return np.reciprocal(arrays["a"])
+    elif operation == "positive":
+        return np.positive(arrays["a"])
 
     # Mathematical operations
-    elif operation == 'sqrt':
-        return np.sqrt(arrays['a'])
-    elif operation == 'power':
-        return np.power(arrays['a'], arrays['b'])
-    elif operation == 'absolute':
-        return np.absolute(arrays['a'])
-    elif operation == 'negative':
-        return np.negative(arrays['a'])
-    elif operation == 'sign':
-        return np.sign(arrays['a'])
+    elif operation == "sqrt":
+        return np.sqrt(arrays["a"])
+    elif operation == "power":
+        return np.power(arrays["a"], arrays["b"])
+    elif operation == "absolute":
+        return np.absolute(arrays["a"])
+    elif operation == "negative":
+        return np.negative(arrays["a"])
+    elif operation == "sign":
+        return np.sign(arrays["a"])
 
     # Linear algebra
-    elif operation == 'matmul':
-        return arrays['a'] @ arrays['b']
-    elif operation == 'transpose':
-        return arrays['a'].T
+    elif operation == "matmul":
+        return arrays["a"] @ arrays["b"]
+    elif operation == "transpose":
+        return arrays["a"].T
 
     # Reductions
-    elif operation == 'sum':
-        axis = arrays.get('axis')
-        return arrays['a'].sum(axis=axis)
-    elif operation == 'mean':
-        axis = arrays.get('axis')
-        return arrays['a'].mean(axis=axis)
-    elif operation == 'max':
-        axis = arrays.get('axis')
-        return arrays['a'].max(axis=axis)
-    elif operation == 'min':
-        axis = arrays.get('axis')
-        return arrays['a'].min(axis=axis)
-    elif operation == 'prod':
-        axis = arrays.get('axis')
-        return arrays['a'].prod(axis=axis)
-    elif operation == 'argmin':
-        axis = arrays.get('axis')
-        return arrays['a'].argmin(axis=axis)
-    elif operation == 'argmax':
-        axis = arrays.get('axis')
-        return arrays['a'].argmax(axis=axis)
-    elif operation == 'var':
-        axis = arrays.get('axis')
-        return arrays['a'].var(axis=axis)
-    elif operation == 'std':
-        axis = arrays.get('axis')
-        return arrays['a'].std(axis=axis)
-    elif operation == 'all':
-        axis = arrays.get('axis')
-        return arrays['a'].all(axis=axis)
-    elif operation == 'any':
-        axis = arrays.get('axis')
-        return arrays['a'].any(axis=axis)
+    elif operation == "sum":
+        axis = arrays.get("axis")
+        return arrays["a"].sum(axis=axis)
+    elif operation == "mean":
+        axis = arrays.get("axis")
+        return arrays["a"].mean(axis=axis)
+    elif operation == "max":
+        axis = arrays.get("axis")
+        return arrays["a"].max(axis=axis)
+    elif operation == "min":
+        axis = arrays.get("axis")
+        return arrays["a"].min(axis=axis)
+    elif operation == "prod":
+        axis = arrays.get("axis")
+        return arrays["a"].prod(axis=axis)
+    elif operation == "argmin":
+        axis = arrays.get("axis")
+        return arrays["a"].argmin(axis=axis)
+    elif operation == "argmax":
+        axis = arrays.get("axis")
+        return arrays["a"].argmax(axis=axis)
+    elif operation == "var":
+        axis = arrays.get("axis")
+        return arrays["a"].var(axis=axis)
+    elif operation == "std":
+        axis = arrays.get("axis")
+        return arrays["a"].std(axis=axis)
+    elif operation == "all":
+        axis = arrays.get("axis")
+        return arrays["a"].all(axis=axis)
+    elif operation == "any":
+        axis = arrays.get("axis")
+        return arrays["a"].any(axis=axis)
 
     # Reshape
-    elif operation == 'reshape':
-        return arrays['a'].reshape(arrays['new_shape'])
-    elif operation == 'flatten':
-        return arrays['a'].flatten()
-    elif operation == 'ravel':
-        return arrays['a'].ravel()
-    elif operation == 'squeeze':
-        return arrays['a'].squeeze()
+    elif operation == "reshape":
+        return arrays["a"].reshape(arrays["new_shape"])
+    elif operation == "flatten":
+        return arrays["a"].flatten()
+    elif operation == "ravel":
+        return arrays["a"].ravel()
+    elif operation == "squeeze":
+        return arrays["a"].squeeze()
 
     # Slicing
-    elif operation == 'slice':
-        return arrays['a'][:100, :100]
+    elif operation == "slice":
+        return arrays["a"][:100, :100]
 
     else:
         raise ValueError(f"Unknown operation: {operation}")
@@ -180,7 +180,7 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
 def calibrate_ops_per_sample(
     operation: str,
     arrays: Dict[str, np.ndarray],
-    target_time_ms: float = MIN_SAMPLE_TIME_MS
+    target_time_ms: float = MIN_SAMPLE_TIME_MS,
 ) -> int:
     """
     Auto-calibrate: Determine how many operations to run per sample
@@ -224,10 +224,10 @@ def calibrate_ops_per_sample(
 
 def run_benchmark(spec: Dict[str, Any]) -> Dict[str, Any]:
     """Run a single benchmark with auto-calibration and return timing results"""
-    name = spec['name']
-    operation = spec['operation']
-    setup = spec['setup']
-    warmup = spec['warmup']
+    name = spec["name"]
+    operation = spec["operation"]
+    setup = spec["setup"]
+    warmup = spec["warmup"]
 
     # Setup arrays
     arrays = setup_arrays(setup)
@@ -266,15 +266,15 @@ def run_benchmark(spec: Dict[str, Any]) -> Dict[str, Any]:
     ops_per_sec = 1000.0 / mean_ms
 
     return {
-        'name': name,
-        'mean_ms': mean_ms,
-        'median_ms': median_ms,
-        'min_ms': min_ms,
-        'max_ms': max_ms,
-        'std_ms': std_ms,
-        'ops_per_sec': ops_per_sec,
-        'total_ops': total_ops,
-        'total_samples': TARGET_SAMPLES,
+        "name": name,
+        "mean_ms": mean_ms,
+        "median_ms": median_ms,
+        "min_ms": min_ms,
+        "max_ms": max_ms,
+        "std_ms": std_ms,
+        "ops_per_sec": ops_per_sec,
+        "total_ops": total_ops,
+        "total_samples": TARGET_SAMPLES,
     }
 
 
@@ -287,11 +287,11 @@ def main():
         input_data = json.loads(sys.stdin.read())
 
         # Support both old format (just specs) and new format (specs + config)
-        if isinstance(input_data, dict) and 'specs' in input_data:
-            specs = input_data['specs']
-            config = input_data.get('config', {})
-            MIN_SAMPLE_TIME_MS = config.get('minSampleTimeMs', MIN_SAMPLE_TIME_MS)
-            TARGET_SAMPLES = config.get('targetSamples', TARGET_SAMPLES)
+        if isinstance(input_data, dict) and "specs" in input_data:
+            specs = input_data["specs"]
+            config = input_data.get("config", {})
+            MIN_SAMPLE_TIME_MS = config.get("minSampleTimeMs", MIN_SAMPLE_TIME_MS)
+            TARGET_SAMPLES = config.get("targetSamples", TARGET_SAMPLES)
         else:
             # Old format - just specs array
             specs = input_data
@@ -301,10 +301,12 @@ def main():
         # Print environment info to stderr
         print(f"Python {sys.version.split()[0]}", file=sys.stderr)
         print(f"NumPy {np.__version__}", file=sys.stderr)
-        print(f"Running {len(specs)} benchmarks with auto-calibration...", file=sys.stderr)
+        print(
+            f"Running {len(specs)} benchmarks with auto-calibration...", file=sys.stderr
+        )
         print(
             f"Target: {MIN_SAMPLE_TIME_MS}ms per sample, {TARGET_SAMPLES} samples per benchmark\n",
-            file=sys.stderr
+            file=sys.stderr,
         )
 
         for i, spec in enumerate(specs, 1):
@@ -312,12 +314,12 @@ def main():
             results.append(result)
 
             # Print progress to stderr (matching TypeScript format)
-            name_padded = spec['name'].ljust(40)
+            name_padded = spec["name"].ljust(40)
             mean_padded = f"{result['mean_ms']:.3f}".rjust(8)
             ops_formatted = f"{int(result['ops_per_sec']):,}".rjust(12)
             print(
                 f"  [{i}/{len(specs)}] {name_padded} {mean_padded}ms  {ops_formatted} ops/sec",
-                file=sys.stderr
+                file=sys.stderr,
             )
 
         # Output results as JSON to stdout
@@ -329,5 +331,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

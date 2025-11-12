@@ -12,6 +12,7 @@ import { runPythonBenchmarks } from './python-runner';
 import { compareResults, calculateSummary, printResults } from './analysis';
 import { generateHTMLReport } from './visualization';
 import { generatePNGChart } from './chart-generator';
+import { validateBenchmarks } from './validation';
 import type { BenchmarkOptions, BenchmarkReport } from './types';
 
 // Read version from root package.json
@@ -85,6 +86,11 @@ async function main() {
   console.log(`Total benchmarks: ${specs.length}\n`);
 
   try {
+    // Validate correctness before benchmarking
+    console.log('Validating correctness against NumPy...');
+    await validateBenchmarks(specs);
+    console.log('');
+
     // Run numpy-ts benchmarks
     console.log('Running numpy-ts benchmarks...');
     const numpyjsResults = await runBenchmarks(specs);
