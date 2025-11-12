@@ -62,7 +62,7 @@ export interface BenchmarkReport {
   summary: BenchmarkSummary;
 }
 
-export type BenchmarkMode = 'quick' | 'standard';
+export type BenchmarkMode = 'quick' | 'standard' | 'large';
 
 export interface BenchmarkOptions {
   mode?: BenchmarkMode;

@@ -33,6 +33,8 @@ async function main() {
       options.mode = 'quick';
     } else if (arg === '--standard') {
       options.mode = 'standard';
+    } else if (arg === '--large') {
+      options.mode = 'large';
     } else if (arg === '--category' && i + 1 < args.length) {
       options.category = args[++i];
     } else if (arg === '--output' && i + 1 < args.length) {
@@ -51,6 +53,11 @@ async function main() {
     // Quick mode: single sample, shorter sample time for fast feedback
     minSampleTimeMs = 50;
     targetSamples = 1;
+    setBenchmarkConfig(minSampleTimeMs, targetSamples);
+  } else if (options.mode === 'large') {
+    // Large mode: fewer samples, longer sample time for large arrays
+    minSampleTimeMs = 200;
+    targetSamples = 3;
     setBenchmarkConfig(minSampleTimeMs, targetSamples);
   } else {
     // Standard mode: multiple samples, full sample time for accurate results
@@ -122,10 +129,13 @@ async function main() {
       fs.mkdirSync(plotsDir, { recursive: true });
     }
 
+    // Determine file suffix based on mode
+    const modeSuffix = options.mode === 'large' ? '-large' : '';
+
     // Save JSON results
     const jsonPath = options.output
       ? path.resolve(options.output)
-      : path.join(resultsDir, 'latest.json');
+      : path.join(resultsDir, `latest${modeSuffix}.json`);
     fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2));
     console.log(`Results saved to: ${jsonPath}`);
 
@@ -135,16 +145,16 @@ async function main() {
       fs.mkdirSync(historyDir, { recursive: true });
     }
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const historyPath = path.join(historyDir, `benchmark-${timestamp}.json`);
+    const historyPath = path.join(historyDir, `benchmark${modeSuffix}-${timestamp}.json`);
     fs.writeFileSync(historyPath, JSON.stringify(report, null, 2));
 
     // Generate HTML report
-    const htmlPath = path.join(plotsDir, 'latest.html');
+    const htmlPath = path.join(plotsDir, `latest${modeSuffix}.html`);
     generateHTMLReport(report, htmlPath);
     console.log(`HTML report saved to: ${htmlPath}`);
 
     // Generate PNG chart
-    const pngPath = path.join(plotsDir, 'latest.png');
+    const pngPath = path.join(plotsDir, `latest${modeSuffix}.png`);
     await generatePNGChart(report, pngPath);
     console.log(`PNG chart saved to: ${pngPath}`);
 
@@ -164,7 +174,11 @@ Usage:
 
 Options:
   --quick              Quick benchmarks (1 sample, 50ms/sample, ~2-3min)
+                       Arrays: 1K, 100x100, 500x500
   --standard           Standard benchmarks (5 samples, 100ms/sample, ~5-10min, default)
+                       Arrays: 1K, 100x100, 500x500
+  --large              Large array benchmarks (3 samples, 200ms/sample, ~10-20min)
+                       Arrays: 10K, 316x316 (~100K), 1000x1000 (1M)
   --category <name>    Run only benchmarks in specified category
   --output <path>      Save JSON results to specified path
   --help, -h           Show this help message
@@ -179,6 +193,7 @@ Categories:
 Examples:
   npm run bench                           # Run standard benchmarks
   npm run bench:quick                     # Run quick benchmarks
+  npm run bench:large                     # Run large array benchmarks
   npm run bench -- --category linalg      # Run only linalg benchmarks
   npm run bench -- --output out.json      # Standard benchmarks, save to out.json
 `);

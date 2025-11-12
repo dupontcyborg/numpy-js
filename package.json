@@ -54,8 +54,10 @@
     "bench:build": "esbuild benchmarks/src/index.ts --bundle --platform=node --format=cjs --outfile=benchmarks/dist/bench.cjs",
     "bench": "npm run bench:build && node benchmarks/dist/bench.cjs",
     "bench:quick": "npm run bench:build && node benchmarks/dist/bench.cjs --quick",
+    "bench:large": "npm run bench:build && node benchmarks/dist/bench.cjs --large",
     "bench:category": "npm run bench:build && node benchmarks/dist/bench.cjs --category",
-    "bench:view": "open benchmarks/results/plots/latest.html || xdg-open benchmarks/results/plots/latest.html"
+    "bench:view": "open benchmarks/results/plots/latest.html || xdg-open benchmarks/results/plots/latest.html",
+    "bench:large:view": "open benchmarks/results/plots/latest-large.html || xdg-open benchmarks/results/plots/latest-large.html"
   },
   "keywords": [
     "numpy",
