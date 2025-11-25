@@ -1,29 +1,17 @@
 /**
  * ArrayStorage - Internal storage abstraction
  *
- * Wraps @stdlib/ndarray to provide a clean internal interface
- * while keeping stdlib as an implementation detail.
+ * Stores array data directly using TypedArrays without external dependencies.
  *
  * @internal - This is not part of the public API
  */
 
-/// <reference types="@stdlib/types"/>
-
-import ndarray from '@stdlib/ndarray/ctor';
-import dtype from '@stdlib/ndarray/dtype';
-import shape from '@stdlib/ndarray/shape';
-import strides from '@stdlib/ndarray/strides';
-import ndims from '@stdlib/ndarray/ndims';
-import numel from '@stdlib/ndarray/numel';
-import data from '@stdlib/ndarray/data-buffer';
-import type { ndarray as StdlibNDArray } from '@stdlib/types/ndarray';
 import {
   type DType,
   type TypedArray,
   DEFAULT_DTYPE,
   getTypedArrayConstructor,
   isBigIntDType,
-  toStdlibDType,
 } from './dtype';
 
 /**
@@ -31,35 +19,50 @@ import {
  * Manages the underlying TypedArray and metadata
  */
 export class ArrayStorage {
-  // Internal @stdlib ndarray
-  private _stdlib: StdlibNDArray;
-  // Store our actual dtype (since @stdlib may store a mapped dtype)
+  // Underlying TypedArray data buffer
+  private _data: TypedArray;
+  // Array shape
+  private _shape: readonly number[];
+  // Strides for each dimension
+  private _strides: readonly number[];
+  // Offset into the data buffer
+  private _offset: number;
+  // Data type
   private _dtype: DType;
 
-  constructor(stdlibArray: StdlibNDArray, dt?: DType) {
-    this._stdlib = stdlibArray;
-    this._dtype = dt || (dtype(stdlibArray) as DType);
+  constructor(
+    data: TypedArray,
+    shape: readonly number[],
+    strides: readonly number[],
+    offset: number,
+    dtype: DType
+  ) {
+    this._data = data;
+    this._shape = shape;
+    this._strides = strides;
+    this._offset = offset;
+    this._dtype = dtype;
   }
 
   /**
    * Shape of the array
    */
   get shape(): readonly number[] {
-    return Array.from(shape(this._stdlib));
+    return this._shape;
   }
 
   /**
    * Number of dimensions
    */
   get ndim(): number {
-    return ndims(this._stdlib);
+    return this._shape.length;
   }
 
   /**
    * Total number of elements
    */
   get size(): number {
-    return numel(this._stdlib);
+    return this._shape.reduce((a, b) => a * b, 1);
   }
 
   /**
@@ -73,30 +76,29 @@ export class ArrayStorage {
    * Underlying data buffer
    */
   get data(): TypedArray {
-    return data(this._stdlib) as TypedArray;
+    return this._data;
   }
 
   /**
    * Strides (steps in each dimension)
    */
   get strides(): readonly number[] {
-    return Array.from(strides(this._stdlib));
+    return this._strides;
   }
 
   /**
-   * Direct access to stdlib ndarray (for internal use)
-   * @internal
+   * Offset into the data buffer
    */
-  get stdlib(): StdlibNDArray {
-    return this._stdlib;
+  get offset(): number {
+    return this._offset;
   }
 
   /**
    * Check if array is C-contiguous (row-major, no gaps)
    */
   get isCContiguous(): boolean {
-    const shape = this.shape;
-    const strides = this.strides;
+    const shape = this._shape;
+    const strides = this._strides;
     const ndim = shape.length;
 
     if (ndim === 0) return true;
@@ -115,8 +117,8 @@ export class ArrayStorage {
    * Check if array is F-contiguous (column-major, no gaps)
    */
   get isFContiguous(): boolean {
-    const shape = this.shape;
-    const strides = this.strides;
+    const shape = this._shape;
+    const strides = this._strides;
     const ndim = shape.length;
 
     if (ndim === 0) return true;
@@ -132,12 +134,100 @@ export class ArrayStorage {
   }
 
   /**
+   * Get element at linear index (respects strides and offset)
+   */
+  iget(linearIndex: number): number | bigint {
+    // Convert linear index to multi-index, then to actual buffer position
+    const shape = this._shape;
+    const strides = this._strides;
+    const ndim = shape.length;
+
+    if (ndim === 0) {
+      return this._data[this._offset]!;
+    }
+
+    // Convert linear index to multi-index in row-major order
+    let remaining = linearIndex;
+    let bufferIndex = this._offset;
+
+    for (let i = 0; i < ndim; i++) {
+      // Compute size of remaining dimensions
+      let dimSize = 1;
+      for (let j = i + 1; j < ndim; j++) {
+        dimSize *= shape[j]!;
+      }
+      const idx = Math.floor(remaining / dimSize);
+      remaining = remaining % dimSize;
+      bufferIndex += idx * strides[i]!;
+    }
+
+    return this._data[bufferIndex]!;
+  }
+
+  /**
+   * Set element at linear index (respects strides and offset)
+   */
+  iset(linearIndex: number, value: number | bigint): void {
+    const shape = this._shape;
+    const strides = this._strides;
+    const ndim = shape.length;
+
+    if (ndim === 0) {
+      (this._data as unknown as (number | bigint)[])[this._offset] = value;
+      return;
+    }
+
+    let remaining = linearIndex;
+    let bufferIndex = this._offset;
+
+    for (let i = 0; i < ndim; i++) {
+      let dimSize = 1;
+      for (let j = i + 1; j < ndim; j++) {
+        dimSize *= shape[j]!;
+      }
+      const idx = Math.floor(remaining / dimSize);
+      remaining = remaining % dimSize;
+      bufferIndex += idx * strides[i]!;
+    }
+
+    (this._data as unknown as (number | bigint)[])[bufferIndex] = value;
+  }
+
+  /**
+   * Get element at multi-index position
+   */
+  get(...indices: number[]): number | bigint {
+    const strides = this._strides;
+    let bufferIndex = this._offset;
+
+    for (let i = 0; i < indices.length; i++) {
+      bufferIndex += indices[i]! * strides[i]!;
+    }
+
+    return this._data[bufferIndex]!;
+  }
+
+  /**
+   * Set element at multi-index position
+   */
+  set(indices: number[], value: number | bigint): void {
+    const strides = this._strides;
+    let bufferIndex = this._offset;
+
+    for (let i = 0; i < indices.length; i++) {
+      bufferIndex += indices[i]! * strides[i]!;
+    }
+
+    (this._data as unknown as (number | bigint)[])[bufferIndex] = value;
+  }
+
+  /**
    * Create a deep copy of this storage
    */
   copy(): ArrayStorage {
-    const shape = Array.from(this.shape);
-    const data = this.data;
+    const shape = Array.from(this._shape);
     const dtype = this._dtype;
+    const size = this.size;
 
     // Get TypedArray constructor
     const Constructor = getTypedArrayConstructor(dtype);
@@ -146,64 +236,51 @@ export class ArrayStorage {
     }
 
     // Create new data buffer and copy
-    if (isBigIntDType(dtype)) {
-      const newData = new Constructor(this.size) as BigInt64Array | BigUint64Array;
-      const typedData = data as BigInt64Array | BigUint64Array;
-      for (let i = 0; i < this.size; i++) {
-        newData[i] = typedData[i]!;
+    const newData = new Constructor(size);
+
+    if (this.isCContiguous && this._offset === 0) {
+      // Fast path: direct copy
+      if (isBigIntDType(dtype)) {
+        const src = this._data as BigInt64Array | BigUint64Array;
+        const dst = newData as BigInt64Array | BigUint64Array;
+        for (let i = 0; i < size; i++) {
+          dst[i] = src[i]!;
+        }
+      } else {
+        (newData as Exclude<TypedArray, BigInt64Array | BigUint64Array>).set(
+          this._data as Exclude<TypedArray, BigInt64Array | BigUint64Array>
+        );
       }
-
-      const stdlibArray = ndarray(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        toStdlibDType(dtype) as any,
-        newData,
-        shape,
-        this._computeStrides(shape),
-        0,
-        'row-major'
-      );
-      return new ArrayStorage(stdlibArray, dtype);
     } else {
-      // For all other types, use TypedArray.slice() or set()
-      const newData = new Constructor(this.size);
-      const typedData = data as Exclude<TypedArray, BigInt64Array | BigUint64Array>;
-      (newData as Exclude<TypedArray, BigInt64Array | BigUint64Array>).set(typedData);
-
-      const stdlibArray = ndarray(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        toStdlibDType(dtype) as any,
-        newData,
-        shape,
-        this._computeStrides(shape),
-        0,
-        'row-major'
-      );
-      return new ArrayStorage(stdlibArray, dtype);
+      // Slow path: respect strides
+      if (isBigIntDType(dtype)) {
+        const dst = newData as BigInt64Array | BigUint64Array;
+        for (let i = 0; i < size; i++) {
+          dst[i] = this.iget(i) as bigint;
+        }
+      } else {
+        for (let i = 0; i < size; i++) {
+          newData[i] = this.iget(i) as number;
+        }
+      }
     }
-  }
 
-  /**
-   * Create storage from stdlib ndarray
-   */
-  static fromStdlib(stdlibArray: StdlibNDArray, dtype?: DType): ArrayStorage {
-    return new ArrayStorage(stdlibArray, dtype);
+    return new ArrayStorage(newData, shape, ArrayStorage._computeStrides(shape), 0, dtype);
   }
 
   /**
    * Create storage from TypedArray data
    */
-  static fromData(data: TypedArray, shape: number[], dtype: DType): ArrayStorage {
-    const strides = ArrayStorage._computeStrides(shape);
-    const stdlibArray = ndarray(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      toStdlibDType(dtype) as any,
-      data,
-      shape,
-      strides,
-      0,
-      'row-major'
-    );
-    return new ArrayStorage(stdlibArray, dtype);
+  static fromData(
+    data: TypedArray,
+    shape: number[],
+    dtype: DType,
+    strides?: number[],
+    offset?: number
+  ): ArrayStorage {
+    const finalStrides = strides ?? ArrayStorage._computeStrides(shape);
+    const finalOffset = offset ?? 0;
+    return new ArrayStorage(data, shape, finalStrides, finalOffset, dtype);
   }
 
   /**
@@ -219,48 +296,32 @@ export class ArrayStorage {
     }
 
     const data = new Constructor(size);
-    const stdlibArray = ndarray(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      toStdlibDType(dtype) as any,
-      data,
-      shape,
-      ArrayStorage._computeStrides(shape),
-      0,
-      'row-major'
-    );
 
-    return new ArrayStorage(stdlibArray, dtype);
+    return new ArrayStorage(data, shape, ArrayStorage._computeStrides(shape), 0, dtype);
   }
 
   /**
    * Create storage with ones
    */
   static ones(shape: number[], dtype: DType = DEFAULT_DTYPE): ArrayStorage {
-    const storage = ArrayStorage.zeros(shape, dtype);
-    const data = storage.data;
+    const size = shape.reduce((a, b) => a * b, 1);
 
-    // Fill with ones
-    if (isBigIntDType(dtype)) {
-      const typedData = data as BigInt64Array | BigUint64Array;
-      for (let i = 0; i < storage.size; i++) {
-        typedData[i] = BigInt(1);
-      }
-    } else {
-      const typedData = data as Exclude<TypedArray, BigInt64Array | BigUint64Array>;
-      for (let i = 0; i < storage.size; i++) {
-        typedData[i] = 1;
-      }
+    // Get TypedArray constructor
+    const Constructor = getTypedArrayConstructor(dtype);
+    if (!Constructor) {
+      throw new Error(`Cannot create array with dtype ${dtype}`);
     }
 
-    return storage;
-  }
+    const data = new Constructor(size);
 
-  /**
-   * Compute strides for row-major (C-order) layout
-   * @private
-   */
-  private _computeStrides(shape: readonly number[]): number[] {
-    return ArrayStorage._computeStrides(shape);
+    // Fill with ones using native fill (much faster than loop)
+    if (isBigIntDType(dtype)) {
+      (data as BigInt64Array | BigUint64Array).fill(BigInt(1));
+    } else {
+      (data as Exclude<TypedArray, BigInt64Array | BigUint64Array>).fill(1);
+    }
+
+    return new ArrayStorage(data, shape, ArrayStorage._computeStrides(shape), 0, dtype);
   }
 
   /**

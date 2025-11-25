@@ -106,8 +106,7 @@
     "vitest": "^4.0.3"
   },
   "dependencies": {
-    "@stdlib/blas": "^0.3.3",
-    "@stdlib/ndarray": "^0.3.3"
+    "@stdlib/blas": "^0.3.3"
   },
   "engines": {
     "node": ">=18.0.0"
