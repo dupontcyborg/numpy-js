@@ -5,13 +5,8 @@
  * @module ops/shape
  */
 
-import stdlib_ndarray from '@stdlib/ndarray';
-import { ArrayStorage } from '../core/storage';
-import { computeStrides } from '../internal/indexing';
-import { toStdlibDType, getTypedArrayConstructor, type TypedArray } from '../core/dtype';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type StdlibNDArray = any;
+import { ArrayStorage, computeStrides } from '../core/storage';
+import { getTypedArrayConstructor, type TypedArray } from '../core/dtype';
 
 /**
  * Reshape array to a new shape
@@ -52,30 +47,14 @@ export function reshape(storage: ArrayStorage, newShape: number[]): ArrayStorage
   // Fast path: if array is C-contiguous, create a view (no copy)
   if (storage.isCContiguous) {
     const data = storage.data;
-    const stdlibArray = stdlib_ndarray.ndarray(
-      toStdlibDType(dtype) as StdlibNDArray,
-      data,
-      finalShape,
-      computeStrides(finalShape),
-      0,
-      'row-major'
-    );
-    return ArrayStorage.fromStdlib(stdlibArray, dtype);
+    return ArrayStorage.fromData(data, finalShape, dtype, computeStrides(finalShape), 0);
   }
 
   // Slow path: array is not contiguous, must copy data first
   // Create contiguous copy, then reshape
   const contiguousCopy = storage.copy(); // copy() creates C-contiguous array
   const data = contiguousCopy.data;
-  const stdlibArray = stdlib_ndarray.ndarray(
-    toStdlibDType(dtype) as StdlibNDArray,
-    data,
-    finalShape,
-    computeStrides(finalShape),
-    0,
-    'row-major'
-  );
-  return ArrayStorage.fromStdlib(stdlibArray, dtype);
+  return ArrayStorage.fromData(data, finalShape, dtype, computeStrides(finalShape), 0);
 }
 
 /**
@@ -84,7 +63,6 @@ export function reshape(storage: ArrayStorage, newShape: number[]): ArrayStorage
  * Always returns a copy (matching NumPy behavior)
  */
 export function flatten(storage: ArrayStorage): ArrayStorage {
-  const stdlib = storage.stdlib;
   const shape = storage.shape;
   const ndim = shape.length;
   const size = storage.size;
@@ -104,8 +82,8 @@ export function flatten(storage: ArrayStorage): ArrayStorage {
   // Helper function to recursively iterate through all indices in row-major order
   const flattenRecursive = (indices: number[], dim: number) => {
     if (dim === ndim) {
-      // At leaf, copy the value using stdlib's get method which respects strides
-      const value = stdlib.get(...indices);
+      // At leaf, copy the value using get method which respects strides
+      const value = storage.get(...indices);
       if (typeof value === 'bigint') {
         (newData as BigInt64Array | BigUint64Array)[idx++] = value;
       } else {
@@ -123,15 +101,7 @@ export function flatten(storage: ArrayStorage): ArrayStorage {
 
   flattenRecursive(new Array(ndim), 0);
 
-  const stdlibArray = stdlib_ndarray.ndarray(
-    toStdlibDType(dtype) as StdlibNDArray,
-    newData,
-    [size],
-    [1],
-    0,
-    'row-major'
-  );
-  return ArrayStorage.fromStdlib(stdlibArray, dtype);
+  return ArrayStorage.fromData(newData, [size], dtype, [1], 0);
 }
 
 /**
@@ -145,15 +115,7 @@ export function ravel(storage: ArrayStorage): ArrayStorage {
   // Fast path: if array is C-contiguous, create a view (no copy needed)
   if (storage.isCContiguous) {
     const data = storage.data;
-    const stdlibArray = stdlib_ndarray.ndarray(
-      toStdlibDType(dtype) as StdlibNDArray,
-      data,
-      [size],
-      [1],
-      0,
-      'row-major'
-    );
-    return ArrayStorage.fromStdlib(stdlibArray, dtype);
+    return ArrayStorage.fromData(data, [size], dtype, [1], 0);
   }
 
   // Slow path: array is not contiguous, must copy like flatten()
@@ -170,7 +132,6 @@ export function transpose(storage: ArrayStorage, axes?: number[]): ArrayStorage 
   const strides = storage.strides;
   const data = storage.data;
   const dtype = storage.dtype;
-  const stdlib = storage.stdlib;
 
   let permutation: number[];
 
@@ -205,16 +166,7 @@ export function transpose(storage: ArrayStorage, axes?: number[]): ArrayStorage 
   const newStrides = permutation.map((i) => oldStrides[i]!);
 
   // Create transposed view
-  const stdlibArray = stdlib_ndarray.ndarray(
-    toStdlibDType(dtype) as StdlibNDArray,
-    data,
-    newShape,
-    newStrides,
-    stdlib_ndarray.offset(stdlib),
-    'row-major'
-  );
-
-  return ArrayStorage.fromStdlib(stdlibArray, dtype);
+  return ArrayStorage.fromData(data, newShape, dtype, newStrides, storage.offset);
 }
 
 /**
@@ -224,30 +176,30 @@ export function transpose(storage: ArrayStorage, axes?: number[]): ArrayStorage 
 export function squeeze(storage: ArrayStorage, axis?: number): ArrayStorage {
   const shape = storage.shape;
   const ndim = shape.length;
+  const strides = storage.strides;
   const data = storage.data;
   const dtype = storage.dtype;
 
   if (axis === undefined) {
     // Remove all axes with size 1
-    const newShape = Array.from(shape).filter((dim) => dim !== 1);
+    const newShape: number[] = [];
+    const newStrides: number[] = [];
 
-    // If all dimensions were 1, result would be a scalar (0-d array)
-    // For now, keep at least one dimension since stdlib may not fully support 0-d arrays
-    if (newShape.length === 0) {
-      newShape.push(1);
+    for (let i = 0; i < ndim; i++) {
+      if (shape[i] !== 1) {
+        newShape.push(shape[i]!);
+        newStrides.push(strides[i]!);
+      }
     }
 
-    const newStrides = computeStrides(newShape);
-    const stdlibArray = stdlib_ndarray.ndarray(
-      toStdlibDType(dtype) as StdlibNDArray,
-      data,
-      newShape,
-      newStrides,
-      0,
-      'row-major'
-    );
+    // If all dimensions were 1, result would be a scalar (0-d array)
+    // For now, keep at least one dimension
+    if (newShape.length === 0) {
+      newShape.push(1);
+      newStrides.push(1);
+    }
 
-    return ArrayStorage.fromStdlib(stdlibArray, dtype);
+    return ArrayStorage.fromData(data, newShape, dtype, newStrides, storage.offset);
   } else {
     // Normalize axis
     const normalizedAxis = axis < 0 ? ndim + axis : axis;
@@ -264,19 +216,17 @@ export function squeeze(storage: ArrayStorage, axis?: number): ArrayStorage {
     }
 
     // Remove the specified axis
-    const newShape = Array.from(shape).filter((_, i) => i !== normalizedAxis);
+    const newShape: number[] = [];
+    const newStrides: number[] = [];
 
-    const newStrides = computeStrides(newShape);
-    const stdlibArray = stdlib_ndarray.ndarray(
-      toStdlibDType(dtype) as StdlibNDArray,
-      data,
-      newShape,
-      newStrides,
-      0,
-      'row-major'
-    );
+    for (let i = 0; i < ndim; i++) {
+      if (i !== normalizedAxis) {
+        newShape.push(shape[i]!);
+        newStrides.push(strides[i]!);
+      }
+    }
 
-    return ArrayStorage.fromStdlib(stdlibArray, dtype);
+    return ArrayStorage.fromData(data, newShape, dtype, newStrides, storage.offset);
   }
 }
 
@@ -287,6 +237,7 @@ export function squeeze(storage: ArrayStorage, axis?: number): ArrayStorage {
 export function expandDims(storage: ArrayStorage, axis: number): ArrayStorage {
   const shape = storage.shape;
   const ndim = shape.length;
+  const strides = storage.strides;
   const data = storage.data;
   const dtype = storage.dtype;
 
@@ -304,15 +255,13 @@ export function expandDims(storage: ArrayStorage, axis: number): ArrayStorage {
   const newShape = [...Array.from(shape)];
   newShape.splice(normalizedAxis, 0, 1);
 
-  const newStrides = computeStrides(newShape);
-  const stdlibArray = stdlib_ndarray.ndarray(
-    toStdlibDType(dtype) as StdlibNDArray,
-    data,
-    newShape,
-    newStrides,
-    0,
-    'row-major'
-  );
+  // Insert a stride at the new axis position
+  // The stride for a dimension of size 1 doesn't matter, but conventionally
+  // it should be the product of all dimensions to its right
+  const newStrides = [...Array.from(strides)];
+  const insertedStride =
+    normalizedAxis < ndim ? strides[normalizedAxis]! * (shape[normalizedAxis] || 1) : 1;
+  newStrides.splice(normalizedAxis, 0, insertedStride);
 
-  return ArrayStorage.fromStdlib(stdlibArray, dtype);
+  return ArrayStorage.fromData(data, newShape, dtype, newStrides, storage.offset);
 }

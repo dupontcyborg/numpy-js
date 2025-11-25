@@ -7,16 +7,87 @@
  * @internal
  */
 
-/// <reference types="@stdlib/types"/>
-
-import broadcastArrays from '@stdlib/ndarray/broadcast-arrays';
-import type { ndarray as StdlibNDArray } from '@stdlib/types/ndarray';
 import { ArrayStorage } from '../core/storage';
 import { promoteDTypes, isBigIntDType } from '../core/dtype';
 
-// Internal interface for stdlib ndarray with iget method (not in @stdlib types but exists at runtime)
-interface StdlibNDArrayInternal extends StdlibNDArray {
-  iget(idx: number): number | bigint;
+/**
+ * Compute the broadcast shape of two arrays
+ * Returns the shape that results from broadcasting a and b together
+ * Throws if shapes are not compatible for broadcasting
+ */
+export function broadcastShapes(shapeA: readonly number[], shapeB: readonly number[]): number[] {
+  const ndimA = shapeA.length;
+  const ndimB = shapeB.length;
+  const ndim = Math.max(ndimA, ndimB);
+  const result = new Array(ndim);
+
+  for (let i = 0; i < ndim; i++) {
+    const dimA = i < ndim - ndimA ? 1 : shapeA[i - (ndim - ndimA)]!;
+    const dimB = i < ndim - ndimB ? 1 : shapeB[i - (ndim - ndimB)]!;
+
+    if (dimA === dimB) {
+      result[i] = dimA;
+    } else if (dimA === 1) {
+      result[i] = dimB;
+    } else if (dimB === 1) {
+      result[i] = dimA;
+    } else {
+      throw new Error(
+        `operands could not be broadcast together with shapes ${JSON.stringify(Array.from(shapeA))} ${JSON.stringify(Array.from(shapeB))}`
+      );
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Compute the strides for broadcasting an array to a target shape
+ * Returns strides where dimensions that need broadcasting have stride 0
+ */
+function broadcastStrides(
+  shape: readonly number[],
+  strides: readonly number[],
+  targetShape: readonly number[]
+): number[] {
+  const ndim = shape.length;
+  const targetNdim = targetShape.length;
+  const result = new Array(targetNdim).fill(0);
+
+  // Align dimensions from the right
+  for (let i = 0; i < ndim; i++) {
+    const targetIdx = targetNdim - ndim + i;
+    const dim = shape[i]!;
+    const targetDim = targetShape[targetIdx]!;
+
+    if (dim === targetDim) {
+      // Same size, use original stride
+      result[targetIdx] = strides[i]!;
+    } else if (dim === 1) {
+      // Broadcasting, stride is 0 (repeat along this dimension)
+      result[targetIdx] = 0;
+    } else {
+      // This shouldn't happen if shapes were validated
+      throw new Error('Invalid broadcast');
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Create a broadcast view of an ArrayStorage
+ * The returned storage shares data with the original but has different shape/strides
+ */
+function broadcastTo(storage: ArrayStorage, targetShape: readonly number[]): ArrayStorage {
+  const broadcastedStrides = broadcastStrides(storage.shape, storage.strides, targetShape);
+  return ArrayStorage.fromData(
+    storage.data,
+    Array.from(targetShape),
+    storage.dtype,
+    broadcastedStrides,
+    storage.offset
+  );
 }
 
 /**
@@ -37,27 +108,15 @@ export function elementwiseBinaryOp(
   op: (a: number, b: number) => number,
   opName: string
 ): ArrayStorage {
-  // Get stdlib arrays for broadcasting
-  let aBroadcast: StdlibNDArrayInternal;
-  let bBroadcast: StdlibNDArrayInternal;
+  // Compute broadcast shape
+  const outputShape = broadcastShapes(a.shape, b.shape);
 
-  try {
-    [aBroadcast, bBroadcast] = broadcastArrays([a.stdlib, b.stdlib]) as [
-      StdlibNDArrayInternal,
-      StdlibNDArrayInternal,
-    ];
-  } catch {
-    // Re-throw with NumPy-compatible error message
-    throw new Error(
-      `operands could not be broadcast together with shapes ${JSON.stringify(a.shape)} ${JSON.stringify(b.shape)}`
-    );
-  }
+  // Create broadcast views
+  const aBroadcast = broadcastTo(a, outputShape);
+  const bBroadcast = broadcastTo(b, outputShape);
 
   // Determine output dtype using NumPy promotion rules
   const resultDtype = promoteDTypes(a.dtype, b.dtype);
-
-  // Get output shape from broadcast result
-  const outputShape = Array.from(aBroadcast.shape as ArrayLike<number>);
 
   // Create result storage
   const result = ArrayStorage.zeros(outputShape, resultDtype);
@@ -117,24 +176,14 @@ export function elementwiseComparisonOp(
   b: ArrayStorage,
   op: (a: number, b: number) => boolean
 ): ArrayStorage {
-  // Get stdlib arrays for broadcasting
-  let aBroadcast: StdlibNDArrayInternal;
-  let bBroadcast: StdlibNDArrayInternal;
+  // Compute broadcast shape
+  const outputShape = broadcastShapes(a.shape, b.shape);
 
-  try {
-    [aBroadcast, bBroadcast] = broadcastArrays([a.stdlib, b.stdlib]) as [
-      StdlibNDArrayInternal,
-      StdlibNDArrayInternal,
-    ];
-  } catch {
-    // Re-throw with NumPy-compatible error message
-    throw new Error(
-      `operands could not be broadcast together with shapes ${JSON.stringify(a.shape)} ${JSON.stringify(b.shape)}`
-    );
-  }
+  // Create broadcast views
+  const aBroadcast = broadcastTo(a, outputShape);
+  const bBroadcast = broadcastTo(b, outputShape);
 
   // Get output shape
-  const outputShape = Array.from(aBroadcast.shape as ArrayLike<number>);
   const size = outputShape.reduce((a, b) => a * b, 1);
 
   // Create result array with bool dtype

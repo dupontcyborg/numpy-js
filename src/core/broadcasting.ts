@@ -1,14 +1,10 @@
 /**
  * Broadcasting utilities for NumPy-compatible array operations
  *
- * Wraps @stdlib broadcasting functions with NumPy-compatible API
+ * Implements NumPy broadcasting rules without external dependencies
  */
 
-import broadcastShapes from '@stdlib/ndarray/base/broadcast-shapes';
-import broadcastArrays from '@stdlib/ndarray/broadcast-arrays';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type StdlibNDArray = any;
+import { ArrayStorage } from './storage';
 
 /**
  * Check if two or more shapes are broadcast-compatible
@@ -33,10 +29,31 @@ export function computeBroadcastShape(shapes: readonly number[][]): number[] | n
     return Array.from(shapes[0]!);
   }
 
-  // Use @stdlib's broadcastShapes
-  // It returns null if shapes are incompatible
-  const result = broadcastShapes(shapes.map((s) => Array.from(s)));
-  return result ? Array.from(result as ArrayLike<number>) : null;
+  // Find max number of dimensions
+  const maxNdim = Math.max(...shapes.map((s) => s.length));
+  const result = new Array(maxNdim);
+
+  for (let i = 0; i < maxNdim; i++) {
+    let dim = 1;
+    for (const shape of shapes) {
+      const shapeIdx = shape.length - maxNdim + i;
+      const shapeDim = shapeIdx < 0 ? 1 : shape[shapeIdx]!;
+
+      if (shapeDim === 1) {
+        // Can be broadcast
+        continue;
+      } else if (dim === 1) {
+        // First non-1 dimension
+        dim = shapeDim;
+      } else if (dim !== shapeDim) {
+        // Incompatible
+        return null;
+      }
+    }
+    result[i] = dim;
+  }
+
+  return result;
 }
 
 /**
@@ -58,39 +75,89 @@ export function areBroadcastable(shape1: readonly number[], shape2: readonly num
 }
 
 /**
- * Broadcast multiple stdlib ndarrays to a common shape
+ * Compute the strides for broadcasting an array to a target shape
+ * Returns strides where dimensions that need broadcasting have stride 0
+ */
+function broadcastStrides(
+  shape: readonly number[],
+  strides: readonly number[],
+  targetShape: readonly number[]
+): number[] {
+  const ndim = shape.length;
+  const targetNdim = targetShape.length;
+  const result = new Array(targetNdim).fill(0);
+
+  // Align dimensions from the right
+  for (let i = 0; i < ndim; i++) {
+    const targetIdx = targetNdim - ndim + i;
+    const dim = shape[i]!;
+    const targetDim = targetShape[targetIdx]!;
+
+    if (dim === targetDim) {
+      // Same size, use original stride
+      result[targetIdx] = strides[i]!;
+    } else if (dim === 1) {
+      // Broadcasting, stride is 0 (repeat along this dimension)
+      result[targetIdx] = 0;
+    } else {
+      // This shouldn't happen if shapes were validated
+      throw new Error('Invalid broadcast');
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Broadcast an ArrayStorage to a target shape
+ * Returns a view with modified strides for broadcasting
  *
- * Returns read-only views of the input arrays broadcast to the same shape.
+ * @param storage - The storage to broadcast
+ * @param targetShape - The target shape to broadcast to
+ * @returns A new ArrayStorage view with broadcasting strides
+ */
+export function broadcastTo(storage: ArrayStorage, targetShape: readonly number[]): ArrayStorage {
+  const broadcastedStrides = broadcastStrides(storage.shape, storage.strides, targetShape);
+  return ArrayStorage.fromData(
+    storage.data,
+    Array.from(targetShape),
+    storage.dtype,
+    broadcastedStrides,
+    storage.offset
+  );
+}
+
+/**
+ * Broadcast multiple ArrayStorage objects to a common shape
+ *
+ * Returns views of the input arrays broadcast to the same shape.
  * Views share memory with the original arrays.
  *
- * @param arrays - Stdlib ndarrays to broadcast
- * @returns Array of broadcast stdlib ndarrays
+ * @param storages - ArrayStorage objects to broadcast
+ * @returns Array of broadcast ArrayStorage views
  * @throws Error if arrays have incompatible shapes
- *
- * @example
- * ```typescript
- * const [a, b] = broadcastStdlibArrays([arr1._data, arr2._data]);
- * ```
  */
-export function broadcastStdlibArrays(arrays: StdlibNDArray[]): StdlibNDArray[] {
-  if (arrays.length === 0) {
+export function broadcastArrays(storages: ArrayStorage[]): ArrayStorage[] {
+  if (storages.length === 0) {
     return [];
   }
 
-  if (arrays.length === 1) {
-    return arrays;
+  if (storages.length === 1) {
+    return storages;
   }
 
-  // Use @stdlib's broadcastArrays
-  // This returns read-only views, which is perfect for efficient broadcasting
-  try {
-    const result = broadcastArrays(arrays);
-    return result;
-  } catch (error: unknown) {
-    // @stdlib throws for incompatible shapes
-    const err = error as Error;
-    throw new Error(`operands could not be broadcast together: ${err.message}`);
+  // Compute broadcast shape
+  const shapes = storages.map((s) => Array.from(s.shape));
+  const targetShape = computeBroadcastShape(shapes);
+
+  if (targetShape === null) {
+    throw new Error(
+      `operands could not be broadcast together with shapes ${shapes.map((s) => JSON.stringify(s)).join(' ')}`
+    );
   }
+
+  // Broadcast each storage to the target shape
+  return storages.map((s) => broadcastTo(s, targetShape));
 }
 
 /**

@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 import {
   computeBroadcastShape,
   areBroadcastable,
-  broadcastStdlibArrays,
+  broadcastArrays,
   broadcastErrorMessage,
 } from '../../src/core/broadcasting';
 import { array, zeros, ones } from '../../src/core/ndarray';
@@ -121,42 +121,38 @@ describe('Broadcasting utilities', () => {
     });
   });
 
-  describe('broadcastStdlibArrays', () => {
+  describe('broadcastArrays', () => {
     it('returns empty array for no inputs', () => {
-      const result = broadcastStdlibArrays([]);
+      const result = broadcastArrays([]);
       expect(result).toEqual([]);
     });
 
     it('returns same array for single input', () => {
       const a = array([1, 2, 3]);
-      // @ts-expect-error - accessing private _data for internal testing
-      const result = broadcastStdlibArrays([a._data]);
-      // @ts-expect-error - accessing private _data for internal testing
-      expect(result).toEqual([a._data]);
+      const result = broadcastArrays([a.storage]);
+      expect(result).toEqual([a.storage]);
     });
 
     it('broadcasts two compatible arrays', () => {
       const a = ones([3, 4]);
       const b = array([1, 2, 3, 4]);
 
-      // @ts-expect-error - accessing private _data for internal testing
-      const result = broadcastStdlibArrays([a._data, b._data]);
+      const result = broadcastArrays([a.storage, b.storage]);
 
       expect(result).toHaveLength(2);
-      expect(result[0]?.shape).toEqual([3, 4]);
-      expect(result[1]?.shape).toEqual([3, 4]);
+      expect(Array.from(result[0]!.shape)).toEqual([3, 4]);
+      expect(Array.from(result[1]!.shape)).toEqual([3, 4]);
     });
 
     it('broadcasts arrays with size-1 dimensions', () => {
       const a = array([[1], [2], [3]]); // shape (3, 1)
       const b = array([[10, 20, 30, 40]]); // shape (1, 4)
 
-      // @ts-expect-error - accessing private _data for internal testing
-      const result = broadcastStdlibArrays([a._data, b._data]);
+      const result = broadcastArrays([a.storage, b.storage]);
 
       expect(result).toHaveLength(2);
-      expect(result[0]?.shape).toEqual([3, 4]);
-      expect(result[1]?.shape).toEqual([3, 4]);
+      expect(Array.from(result[0]!.shape)).toEqual([3, 4]);
+      expect(Array.from(result[1]!.shape)).toEqual([3, 4]);
     });
 
     it('broadcasts multiple arrays', () => {
@@ -164,24 +160,22 @@ describe('Broadcasting utilities', () => {
       const b = array([[1, 2]]);
       const c = array([[[1], [2], [3]]]);
 
-      // @ts-expect-error - accessing private _data for internal testing
-      const result = broadcastStdlibArrays([a._data, b._data, c._data]);
+      const result = broadcastArrays([a.storage, b.storage, c.storage]);
 
       expect(result).toHaveLength(3);
       // All should be broadcast to (1, 3, 2)
-      expect(result[0]?.shape).toEqual([1, 3, 2]);
-      expect(result[1]?.shape).toEqual([1, 3, 2]);
-      expect(result[2]?.shape).toEqual([1, 3, 2]);
+      expect(Array.from(result[0]!.shape)).toEqual([1, 3, 2]);
+      expect(Array.from(result[1]!.shape)).toEqual([1, 3, 2]);
+      expect(Array.from(result[2]!.shape)).toEqual([1, 3, 2]);
     });
 
     it('throws error for incompatible shapes', () => {
       const a = array([1, 2, 3]);
       const b = array([1, 2, 3, 4]);
 
-      expect(() =>
-        // @ts-expect-error - accessing private _data for internal testing
-        broadcastStdlibArrays([a._data, b._data])
-      ).toThrow(/operands could not be broadcast together/);
+      expect(() => broadcastArrays([a.storage, b.storage])).toThrow(
+        /operands could not be broadcast together/
+      );
     });
 
     it('throws descriptive error message on broadcast failure', () => {
@@ -191,10 +185,9 @@ describe('Broadcasting utilities', () => {
       ]);
       const b = array([1, 2, 3]);
 
-      expect(() =>
-        // @ts-expect-error - accessing private _data for internal testing
-        broadcastStdlibArrays([a._data, b._data])
-      ).toThrow(/operands could not be broadcast together/);
+      expect(() => broadcastArrays([a.storage, b.storage])).toThrow(
+        /operands could not be broadcast together/
+      );
     });
   });
 
