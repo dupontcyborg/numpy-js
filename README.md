@@ -5,27 +5,23 @@ Complete NumPy implementation for TypeScript and JavaScript
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 ![Under Construction](https://img.shields.io/badge/Under%20Construction-red)
 
-**⚠️ WARNING: This project is under construction and is currently unstable. Expect breaking changes.**
+**⚠️ WARNING: Under active development. API may change.**
 
 ---
 
 ## What is numpy-ts?
 
-A complete, functionally-equivalent implementation of NumPy 2.0+ for the TypeScript/JavaScript ecosystem. (At least that's the goal!)
+A complete NumPy 2.0+ implementation for TypeScript/JavaScript, validated against Python NumPy.
 
-### Goals
+**Goals:**
+- **100% API Coverage** - All NumPy functions and operations
+- **Type Safety** - Full TypeScript support with inference
+- **Correctness** - Cross-validated against Python NumPy
+- **Cross-Platform** - Node.js and browsers
 
-- ✅ **100% NumPy 2.0+ API** - All 800+ functions
-- ✅ **Full Type Safety** - Complete TypeScript definitions
-- ✅ **Cross-Platform** - Node.js and browsers
-- ✅ **File Compatibility** - Read/write .npy and .npz files
-- ✅ **Correctness First** - Validated against Python NumPy
-
-### Not Goals
-
-- ❌ Matching Python NumPy's exact performance (initially)
-- ❌ C API compatibility
-- ❌ Legacy NumPy 1.x deprecated functions
+**Non-Goals:**
+- Matching NumPy's C-optimized performance (initially)
+- C API compatibility
 
 ---
 
@@ -108,6 +104,8 @@ const loaded = np.load('matrix.npy');
 
 ## Architecture
 
+Pure TypeScript implementation with three layers:
+
 ```
 ┌────────────────────────────────┐
 │    NumPy-Compatible API        │
@@ -119,23 +117,21 @@ const loaded = np.load('matrix.npy');
 └────────────┬───────────────────┘
              │
 ┌────────────┴───────────────────┐
-│  Computational Backend         │
-│  @stdlib (BLAS/LAPACK)         │
+│  TypeScript/JavaScript Core    │
+│  Computational Engine          │
 └────────────────────────────────┘
 ```
 
-**We build**: NumPy API, NDArray class, broadcasting, slicing, view tracking
-
-**We use**: @stdlib for proven numerical computations
+Built from scratch for correctness and NumPy compatibility.
 
 ---
 
 ## Key Features
 
 ### Comprehensive NumPy API
-- **Array creation**: `zeros`, `ones`, `arange`, `linspace` (all support dtype parameter)
+- **Array creation**: `zeros`, `ones`, `arange`, `linspace`, `eye` (all support dtype parameter)
 - **Arithmetic operations**: `add`, `subtract`, `multiply`, `divide` with broadcasting
-- **Linear algebra**: `matmul` (using optimized BLAS)
+- **Linear algebra**: `matmul`, `dot`, `transpose`
 - **Reductions**: `sum`, `mean`, `std`, `min`, `max` with axis support
 - **DTypes**: 11 types supported (float32/64, int8/16/32/64, uint8/16/32/64, bool)
   - Full dtype preservation across operations
@@ -199,85 +195,15 @@ import * as np from 'numpy-ts';
 
 ---
 
-## Development Status
-
-### Phase 0: Project Setup
-- [x] Package configuration
-- [x] TypeScript setup
-- [x] Build system (esbuild)
-- [x] Test framework (Vitest)
-- [x] Documentation consolidated
-- [x] Linting (ESLint + Prettier)
-- [x] @stdlib investigation and integration
-- [x] First working implementation
-
-
-### Phase 1: Core Foundation
-- [x] NDArray wrapper class (using @stdlib/ndarray)
-- [x] Array creation: `zeros()`, `ones()`, `array()`, `arange()`, `linspace()`, `eye()`
-- [x] Matrix operations: `matmul()` using optimized BLAS
-- [x] Properties: `shape`, `ndim`, `size`, `dtype`, `data`, `strides`
-- [x] View tracking: `base` attribute, `flags` property
-- [x] Memory flags: `C_CONTIGUOUS`, `F_CONTIGUOUS`, `OWNDATA`
-- [x] Arithmetic operations: `add()`, `subtract()`, `multiply()`, `divide()`, `mod()`, `floor_divide()`, `negative()`, `positive()`, `absolute()`, `sign()`, `reciprocal()`
-- [x] Broadcasting - fully integrated into all operations
-- [x] String-based slicing - `arr.slice('0:5', ':')`, `row()`, `col()`, etc.
-- [x] Reductions with axis support - `sum(axis, keepdims)`, `mean()`, `max()`, `min()`
-- [x] Comparison operations - `greater()`, `less()`, `equal()`, `isclose()`, `allclose()`
-- [x] Reshape operations - `reshape()`, `flatten()`, `ravel()`, `transpose()`, `squeeze()`, `expand_dims()`
-- [x] DType system - 11 types: float32/64, int8/16/32/64, uint8/16/32/64, bool
-  - Full dtype preservation
-  - NumPy-compatible promotion rules
-  - BigInt support for int64/uint64
-- [x] Exponential operations - `sqrt()`, `power()`
-- [x] Testing
-  - Unit tests for all operations
-  - NumPy validation tests (cross-checked against Python NumPy 2.3.3)
-  - Edge case validation (overflow, underflow, special values)
-
-### Phase 2: Benchmarks & CI/CD
-- [X] CI/CD (GitHub Actions)
-  - [X] PR workflow
-  - [X] Publish workflow
-- [ ] Implement benchmarks
-  - [X] Auto-calibrated benchmark runner (100ms samples, ops/sec metrics)
-  - [X] Comparison against Python NumPy
-  - [X] Matching Python/TypeScript output format
-  - [X] Ops/sec visualization (HTML/PNG)
-  - [ ] **Result validation** - Verify numpy-ts and NumPy produce same results before benchmarking
-  - [ ] Regression tracking (vs. previous runs)
-  - [ ] Automated in CI/CD
-
-### Phase 3: Essential Operations
-- [x] Matrix operations (using @stdlib BLAS)
-- [ ] Linear algebra (using @stdlib LAPACK) - eig, svd, qr, etc.
-- [x] Reductions with axis support
-- [x] Arithmetic functions - 11/11 complete
-- [ ] Mathematical functions - 2/40+ (sqrt, power) - trigonometric, exponential, rounding, etc.
-- [x] Comparison operations
-- [x] dtype consistency testing
-
-### Phase 4: Extended Features
-- [ ] Random number generation
-- [ ] FFT operations (using fft.js)
-- [ ] I/O operations (.npy/.npz)
-- [ ] Advanced indexing
-- [ ] Complex numbers, datetime
-- [ ] Optional WASM mode
-
-See [API-REFERENCE.md](./docs/API-REFERENCE.md) for complete function checklist.
-
----
-
 ## Documentation
 
 ### User Documentation
-- [API-REFERENCE.md](./docs/API-REFERENCE.md) - Complete API checklist
+- [API-REFERENCE.md](https://github.com/dupontcyborg/numpy-ts/blob/main/docs/API-REFERENCE.md) - Complete API checklist
 
 ### Developer Documentation
-- [ARCHITECTURE.md](./docs/ARCHITECTURE.md) - Design and implementation details
-- [TESTING-GUIDE.md](./docs/TESTING-GUIDE.md) - How to add tests (unit, validation, benchmarks)
-- [benchmarks/README.md](./benchmarks/README.md) - Performance benchmarking guide
+- [ARCHITECTURE.md](https://github.com/dupontcyborg/numpy-ts/blob/main/docs/ARCHITECTURE.md) - Design and implementation details
+- [TESTING-GUIDE.md](https://github.com/dupontcyborg/numpy-ts/blob/main/docs/TESTING-GUIDE.md) - How to add tests (unit, validation, benchmarks)
+- [benchmarks/README.md](https://github.com/dupontcyborg/numpy-ts/blob/main/benchmarks/README.md) - Performance benchmarking guide
 
 ---
 
@@ -323,25 +249,28 @@ it('int8 overflow wraps like NumPy', () => {
 
 ## Design Decisions
 
-### 1. BigInt for int64/uint64
-Exact representation over convenience. Different type but no precision loss.
+**Pure TypeScript Implementation**
+- Built from scratch without heavy dependencies
+- Focus on correctness and NumPy compatibility
 
-### 2. No Complex Number Support (for now)
-Removed in favor of simplicity and focus on core numeric types. Can be added back if there's demand.
+**BigInt for int64/uint64**
+- Exact representation over convenience
+- No precision loss (different type but fully accurate)
 
-### 3. String-Based Slicing
-`arr.slice('0:5', ':')` instead of `arr[0:5, :]` - TypeScript limitation, Pythonic compromise.
+**String-Based Slicing**
+- `arr.slice('0:5', ':')` instead of `arr[0:5, :]`
+- TypeScript limitation, Pythonic compromise
 
-### 4. View Tracking
-Track base array for views with `base` attribute. Enables zero-copy optimizations and matches NumPy semantics.
+**View Tracking**
+- Track base array with `base` attribute
+- Zero-copy optimizations where possible
+- Matches NumPy semantics
 
-### 5. @stdlib Under the Hood
-Use battle-tested BLAS/LAPACK implementations. Focus on API, not reimplementing algorithms.
+**Correctness First**
+- Validate against Python NumPy before optimizing
+- Performance improvements (WASM/SIMD) come later
 
-### 6. Correctness First
-Validate everything against Python NumPy before optimizing. WASM/SIMD later.
-
-See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for full rationale.
+See [ARCHITECTURE.md](https://github.com/dupontcyborg/numpy-ts/blob/main/docs/ARCHITECTURE.md) for detailed design rationale.
 
 ---
 
@@ -360,8 +289,8 @@ npm test
 
 ### Adding New Features
 
-1. Pick a function from [API-REFERENCE.md](./docs/API-REFERENCE.md)
-2. Follow the [TESTING-GUIDE.md](./docs/TESTING-GUIDE.md) to add:
+1. Pick a function from [API-REFERENCE.md](https://github.com/dupontcyborg/numpy-ts/blob/main/docs/API-REFERENCE.md)
+2. Follow the [TESTING-GUIDE.md](https://github.com/dupontcyborg/numpy-ts/blob/main/docs/TESTING-GUIDE.md) to add:
    - Implementation in `src/`
    - Unit tests in `tests/unit/`
    - NumPy validation tests in `tests/validation/`
@@ -370,7 +299,7 @@ npm test
 4. Run benchmarks: `npm run bench:quick`
 5. Submit a pull request
 
-See [TESTING-GUIDE.md](./docs/TESTING-GUIDE.md) for detailed instructions on adding tests.
+See [TESTING-GUIDE.md](https://github.com/dupontcyborg/numpy-ts/blob/main/docs/TESTING-GUIDE.md) for detailed instructions on adding tests.
 
 ---
 
@@ -405,36 +334,35 @@ npm run bench:view
 
 ### Performance Overview
 
-![Benchmark Results](./benchmarks/results/plots/latest.png)
+![Benchmark Results](https://github.com/dupontcyborg/numpy-ts/blob/main/benchmarks/results/plots/latest.png)
 
-See [benchmarks/README.md](./benchmarks/README.md) for detailed benchmarking guide.
+See [benchmarks/README.md](https://github.com/dupontcyborg/numpy-ts/blob/main/benchmarks/README.md) for detailed benchmarking guide.
 
 ---
 
 ## Performance Expectations
 
-**v1.0** (Pure JS + @stdlib):
-- 10-100x slower than NumPy - acceptable for correctness focus
+**Current (v1.0)** - Pure TypeScript:
+- 10-100x slower than NumPy
+- Focus on correctness and API completeness
 
-**v2.0** (Selective WASM):
-- 2-20x slower - optimized bottlenecks only
+**Future (v2.0+)** - Optimizations:
+- WASM for compute-intensive operations
+- SIMD for vectorized operations
+- Target: 2-20x slower than NumPy
 
-**v3.0** (Advanced):
-- 1-10x slower - SIMD, GPU for specific operations
-
-Focus is correctness and completeness first, then performance.
+Correctness and completeness first, then performance.
 
 ---
 
 ## License
 
-[MIT License](./LICENSE) - Copyright (c) 2025 Nicolas Dupont
+[MIT License](https://github.com/dupontcyborg/numpy-ts/blob/main/LICENSE) - Copyright (c) 2025 Nicolas Dupont
 
 ---
 
 ## Links
 
-- **Documentation**: [`docs/`](./docs)
 - **NumPy**: https://numpy.org/
 - **@stdlib**: https://stdlib.io/
 - **Issues**: https://github.com/dupontcyborg/numpy-ts/issues
