@@ -163,6 +163,9 @@ function dgemm(
  * Matrix multiplication
  * Requires 2D arrays with compatible shapes
  *
+ * Automatically detects transposed/non-contiguous arrays via strides
+ * and uses appropriate DGEMM transpose parameters.
+ *
  * Note: Currently uses float64 precision for all operations.
  * Integer inputs are promoted to float64 (matching NumPy behavior).
  */
@@ -192,34 +195,79 @@ export function matmul(a: ArrayStorage, b: ArrayStorage): ArrayStorage {
   }
 
   // Convert inputs to Float64Array if needed
-  const aData =
+  let aData =
     a.dtype === 'float64'
       ? (a.data as Float64Array)
       : Float64Array.from(Array.from(a.data as ArrayLike<number>).map(Number));
-  const bData =
+  let bData =
     b.dtype === 'float64'
       ? (b.data as Float64Array)
       : Float64Array.from(Array.from(b.data as ArrayLike<number>).map(Number));
 
-  // Create result array
+  // Handle offset for sliced arrays (views)
+  // If the array has an offset, we need to pass the subarray starting from that offset
+  if (a.offset > 0) {
+    aData = aData.subarray(a.offset) as Float64Array;
+  }
+  if (b.offset > 0) {
+    bData = bData.subarray(b.offset) as Float64Array;
+  }
+
+  // Detect array layout from strides
+  // Row-major (C-contiguous): row stride > col stride
+  // Transposed (F-contiguous or transposed view): col stride > row stride
+  const [aStrideRow = 0, aStrideCol = 0] = a.strides;
+  const [bStrideRow = 0, bStrideCol = 0] = b.strides;
+
+  // Determine if arrays are effectively transposed
+  // For a normal MxK array: strides are [K, 1] (row stride = K cols)
+  // For a transposed KxM array (viewed as MxK): strides are [1, M] (col stride > row stride)
+  const aIsTransposed = aStrideCol > aStrideRow;
+  const bIsTransposed = bStrideCol > bStrideRow;
+
+  const transA: Transpose = aIsTransposed ? 'transpose' : 'no-transpose';
+  const transB: Transpose = bIsTransposed ? 'transpose' : 'no-transpose';
+
+  // Determine leading dimensions based on memory layout
+  // Leading dimension is the stride of the major dimension in memory
+  let lda: number;
+  let ldb: number;
+
+  if (aIsTransposed) {
+    // Array is stored with columns contiguous (F-order or transposed)
+    // The leading dimension is how many elements to skip between columns
+    lda = aStrideCol;
+  } else {
+    // Array is row-major (C-order)
+    // The leading dimension is the row stride (number of elements per row)
+    lda = aStrideRow;
+  }
+
+  if (bIsTransposed) {
+    ldb = bStrideCol;
+  } else {
+    ldb = bStrideRow;
+  }
+
+  // Create result array (always row-major)
   const result = ArrayStorage.zeros([m, n], 'float64');
 
-  // Use @stdlib dgemm (double-precision general matrix multiply)
+  // Call dgemm with detected transpose flags and leading dimensions
   dgemm(
     'row-major',
-    'no-transpose',
-    'no-transpose',
+    transA,
+    transB,
     m,
     n,
     k,
     1.0, // alpha
     aData,
-    k, // lda (leading dimension of a)
+    lda, // leading dimension of a (accounts for actual memory layout)
     bData,
-    n, // ldb (leading dimension of b)
+    ldb, // leading dimension of b (accounts for actual memory layout)
     0.0, // beta
     result.data as Float64Array,
-    n // ldc (leading dimension of c/result)
+    n // ldc (result is always row-major with n cols)
   );
 
   return result;
