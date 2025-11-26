@@ -12,35 +12,35 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
     quick: {
       small: 1000,
       medium: [100, 100] as [number, number],
-      large: [500, 500] as [number, number]
+      large: [500, 500] as [number, number],
     },
     standard: {
       small: 1000,
       medium: [100, 100] as [number, number],
-      large: [500, 500] as [number, number]
+      large: [500, 500] as [number, number],
     },
     large: {
       small: 10000,
-      medium: [316, 316] as [number, number],  // ~100K elements
-      large: [1000, 1000] as [number, number]  // 1M elements
-    }
+      medium: [316, 316] as [number, number], // ~100K elements
+      large: [1000, 1000] as [number, number], // 1M elements
+    },
   };
 
   const sizes = sizeConfig[mode] || sizeConfig.standard;
 
   const warmupConfig = {
     quick: {
-      iterations: 1,  // Not used with auto-calibration, kept for compatibility
-      warmup: 3       // Less warmup for faster feedback
+      iterations: 1, // Not used with auto-calibration, kept for compatibility
+      warmup: 3, // Less warmup for faster feedback
     },
     standard: {
-      iterations: 1,  // Not used with auto-calibration, kept for compatibility
-      warmup: 10      // More warmup for stable results
+      iterations: 1, // Not used with auto-calibration, kept for compatibility
+      warmup: 10, // More warmup for stable results
     },
     large: {
-      iterations: 1,  // Not used with auto-calibration, kept for compatibility
-      warmup: 5       // Moderate warmup for large arrays
-    }
+      iterations: 1, // Not used with auto-calibration, kept for compatibility
+      warmup: 5, // Moderate warmup for large arrays
+    },
   };
 
   const config = warmupConfig[mode] || warmupConfig.standard;
@@ -57,10 +57,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
     category: 'creation',
     operation: 'zeros',
     setup: {
-      shape: { shape: [sizes.small] }
+      shape: { shape: [sizes.small] },
     },
     iterations,
-    warmup
+    warmup,
   });
 
   if (Array.isArray(sizes.medium)) {
@@ -69,10 +69,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'creation',
       operation: 'zeros',
       setup: {
-        shape: { shape: sizes.medium }
+        shape: { shape: sizes.medium },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -80,10 +80,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'creation',
       operation: 'ones',
       setup: {
-        shape: { shape: sizes.medium }
+        shape: { shape: sizes.medium },
       },
       iterations,
-      warmup
+      warmup,
     });
   }
 
@@ -92,10 +92,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
     category: 'creation',
     operation: 'arange',
     setup: {
-      n: { shape: [sizes.small] }
+      n: { shape: [sizes.small] },
     },
     iterations,
-    warmup
+    warmup,
   });
 
   specs.push({
@@ -103,10 +103,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
     category: 'creation',
     operation: 'linspace',
     setup: {
-      n: { shape: [sizes.small] }
+      n: { shape: [sizes.small] },
     },
     iterations,
-    warmup
+    warmup,
   });
 
   specs.push({
@@ -114,10 +114,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
     category: 'creation',
     operation: 'logspace',
     setup: {
-      n: { shape: [sizes.small] }
+      n: { shape: [sizes.small] },
     },
     iterations,
-    warmup
+    warmup,
   });
 
   specs.push({
@@ -125,10 +125,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
     category: 'creation',
     operation: 'geomspace',
     setup: {
-      n: { shape: [sizes.small] }
+      n: { shape: [sizes.small] },
     },
     iterations,
-    warmup
+    warmup,
   });
 
   if (Array.isArray(sizes.medium)) {
@@ -138,10 +138,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'creation',
       operation: 'eye',
       setup: {
-        n: { shape: [eyeSize] }
+        n: { shape: [eyeSize] },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -149,10 +149,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'creation',
       operation: 'identity',
       setup: {
-        n: { shape: [eyeSize] }
+        n: { shape: [eyeSize] },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -160,10 +160,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'creation',
       operation: 'empty',
       setup: {
-        shape: { shape: sizes.medium }
+        shape: { shape: sizes.medium },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -172,10 +172,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       operation: 'full',
       setup: {
         shape: { shape: sizes.medium },
-        fill_value: { shape: [7] }
+        fill_value: { shape: [7] },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -183,10 +183,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'creation',
       operation: 'copy',
       setup: {
-        a: { shape: sizes.medium, fill: 'ones' }
+        a: { shape: sizes.medium, fill: 'ones' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -194,10 +194,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'creation',
       operation: 'zeros_like',
       setup: {
-        a: { shape: sizes.medium, fill: 'ones' }
+        a: { shape: sizes.medium, fill: 'ones' },
       },
       iterations,
-      warmup
+      warmup,
     });
   }
 
@@ -212,10 +212,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       operation: 'add',
       setup: {
         a: { shape: sizes.medium, fill: 'ones' },
-        b: { shape: [1], fill: 'ones' }
+        b: { shape: [1], fill: 'ones' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -224,10 +224,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       operation: 'add',
       setup: {
         a: { shape: sizes.medium, fill: 'ones' },
-        b: { shape: sizes.medium, fill: 'ones' }
+        b: { shape: sizes.medium, fill: 'ones' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -236,10 +236,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       operation: 'multiply',
       setup: {
         a: { shape: sizes.medium, fill: 'ones' },
-        b: { shape: [1], value: 2 }
+        b: { shape: [1], value: 2 },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -248,10 +248,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       operation: 'multiply',
       setup: {
         a: { shape: sizes.medium, fill: 'arange' },
-        b: { shape: sizes.medium, fill: 'arange' }
+        b: { shape: sizes.medium, fill: 'arange' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -260,10 +260,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       operation: 'mod',
       setup: {
         a: { shape: sizes.medium, fill: 'arange' }, // arange data
-        b: { shape: [1], value: 7 } // Scalar 7
+        b: { shape: [1], value: 7 }, // Scalar 7
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -272,10 +272,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       operation: 'floor_divide',
       setup: {
         a: { shape: sizes.medium, fill: 'arange' }, // arange data
-        b: { shape: [1], value: 3 } // Scalar 3 (avoid zeros)
+        b: { shape: [1], value: 3 }, // Scalar 3 (avoid zeros)
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -283,10 +283,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'arithmetic',
       operation: 'reciprocal',
       setup: {
-        a: { shape: sizes.medium, fill: 'ones' } // Use ones to avoid 1/0
+        a: { shape: sizes.medium, fill: 'ones' }, // Use ones to avoid 1/0
       },
       iterations,
-      warmup
+      warmup,
     });
   }
 
@@ -300,10 +300,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'math',
       operation: 'sqrt',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange', value: 1 }
+        a: { shape: sizes.medium, fill: 'arange', value: 1 },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -312,10 +312,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       operation: 'power',
       setup: {
         a: { shape: sizes.medium, fill: 'arange', value: 1 },
-        b: { shape: [1], value: 2 }
+        b: { shape: [1], value: 2 },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -323,10 +323,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'math',
       operation: 'absolute',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange', value: -100 }
+        a: { shape: sizes.medium, fill: 'arange', value: -100 },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -334,10 +334,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'math',
       operation: 'negative',
       setup: {
-        a: { shape: sizes.medium, fill: 'ones' }
+        a: { shape: sizes.medium, fill: 'ones' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -345,10 +345,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'math',
       operation: 'sign',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange', value: -100 }
+        a: { shape: sizes.medium, fill: 'arange', value: -100 },
       },
       iterations,
-      warmup
+      warmup,
     });
   }
 
@@ -364,10 +364,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       operation: 'matmul',
       setup: {
         a: { shape: [m!, n!], fill: 'arange', dtype: 'float64' },
-        b: { shape: [n!, m!], fill: 'arange', dtype: 'float64' }
+        b: { shape: [n!, m!], fill: 'arange', dtype: 'float64' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -375,10 +375,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'linalg',
       operation: 'transpose',
       setup: {
-        a: { shape: [m!, n!], fill: 'arange' }
+        a: { shape: [m!, n!], fill: 'arange' },
       },
       iterations,
-      warmup
+      warmup,
     });
   }
 
@@ -391,10 +391,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       operation: 'matmul',
       setup: {
         a: { shape: [m!, n!], fill: 'arange', dtype: 'float64' },
-        b: { shape: [n!, m!], fill: 'arange', dtype: 'float64' }
+        b: { shape: [n!, m!], fill: 'arange', dtype: 'float64' },
       },
       iterations: Math.floor(iterations / 2), // Fewer iterations for large
-      warmup: Math.floor(warmup / 2)
+      warmup: Math.floor(warmup / 2),
     });
   }
 
@@ -408,10 +408,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'reductions',
       operation: 'sum',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange' }
+        a: { shape: sizes.medium, fill: 'arange' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -420,10 +420,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       operation: 'sum',
       setup: {
         a: { shape: sizes.medium, fill: 'arange' },
-        axis: { shape: [0] }
+        axis: { shape: [0] },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -431,10 +431,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'reductions',
       operation: 'mean',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange' }
+        a: { shape: sizes.medium, fill: 'arange' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -442,10 +442,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'reductions',
       operation: 'max',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange' }
+        a: { shape: sizes.medium, fill: 'arange' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -453,10 +453,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'reductions',
       operation: 'min',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange' }
+        a: { shape: sizes.medium, fill: 'arange' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -464,10 +464,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'reductions',
       operation: 'prod',
       setup: {
-        a: { shape: sizes.medium, fill: 'ones' }
+        a: { shape: sizes.medium, fill: 'ones' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -475,10 +475,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'reductions',
       operation: 'argmin',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange' }
+        a: { shape: sizes.medium, fill: 'arange' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -486,10 +486,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'reductions',
       operation: 'argmax',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange' }
+        a: { shape: sizes.medium, fill: 'arange' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -497,10 +497,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'reductions',
       operation: 'var',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange' }
+        a: { shape: sizes.medium, fill: 'arange' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -508,10 +508,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'reductions',
       operation: 'std',
       setup: {
-        a: { shape: sizes.medium, fill: 'arange' }
+        a: { shape: sizes.medium, fill: 'arange' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -519,10 +519,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'reductions',
       operation: 'all',
       setup: {
-        a: { shape: sizes.medium, fill: 'ones' }
+        a: { shape: sizes.medium, fill: 'ones' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -530,10 +530,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'reductions',
       operation: 'any',
       setup: {
-        a: { shape: sizes.medium, fill: 'zeros' }
+        a: { shape: sizes.medium, fill: 'zeros' },
       },
       iterations,
-      warmup
+      warmup,
     });
   }
 
@@ -543,7 +543,6 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
 
   if (Array.isArray(sizes.medium)) {
     const [m, n] = sizes.medium;
-    const total = m! * n!;
 
     specs.push({
       name: `reshape [${m}x${n}] -> [${n}x${m}] (contiguous)`,
@@ -551,10 +550,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       operation: 'reshape',
       setup: {
         a: { shape: [m!, n!], fill: 'arange' },
-        new_shape: { shape: [n!, m!] }
+        new_shape: { shape: [n!, m!] },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -562,10 +561,10 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'reshape',
       operation: 'flatten',
       setup: {
-        a: { shape: [m!, n!], fill: 'arange' }
+        a: { shape: [m!, n!], fill: 'arange' },
       },
       iterations,
-      warmup
+      warmup,
     });
 
     specs.push({
@@ -573,10 +572,103 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       category: 'reshape',
       operation: 'ravel',
       setup: {
-        a: { shape: [m!, n!], fill: 'arange' }
+        a: { shape: [m!, n!], fill: 'arange' },
       },
       iterations,
-      warmup
+      warmup,
+    });
+  }
+
+  // ========================================
+  // BigInt (64-bit) Benchmarks
+  // ========================================
+  // Tests representative operations with int64/uint64 dtypes
+  // to compare BigInt performance vs standard numeric types
+
+  if (Array.isArray(sizes.medium)) {
+    // Creation with BigInt
+    specs.push({
+      name: `zeros [${sizes.medium.join('x')}] (int64)`,
+      category: 'bigint',
+      operation: 'zeros',
+      setup: {
+        shape: { shape: sizes.medium, dtype: 'int64' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // Arithmetic with BigInt
+    specs.push({
+      name: `add [${sizes.medium.join('x')}] + [${sizes.medium.join('x')}] (int64)`,
+      category: 'bigint',
+      operation: 'add',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', dtype: 'int64' },
+        b: { shape: sizes.medium, fill: 'ones', dtype: 'int64' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `multiply [${sizes.medium.join('x')}] * scalar (int64)`,
+      category: 'bigint',
+      operation: 'multiply',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', dtype: 'int64' },
+        b: { shape: [1], value: 2, dtype: 'int64' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // Math operations with BigInt
+    specs.push({
+      name: `absolute [${sizes.medium.join('x')}] (int64)`,
+      category: 'bigint',
+      operation: 'absolute',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: -100, dtype: 'int64' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // Reductions with BigInt
+    specs.push({
+      name: `sum [${sizes.medium.join('x')}] (int64)`,
+      category: 'bigint',
+      operation: 'sum',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', dtype: 'int64' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `max [${sizes.medium.join('x')}] (int64)`,
+      category: 'bigint',
+      operation: 'max',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', dtype: 'int64' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // Unsigned BigInt test
+    specs.push({
+      name: `add [${sizes.medium.join('x')}] + [${sizes.medium.join('x')}] (uint64)`,
+      category: 'bigint',
+      operation: 'add',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', dtype: 'uint64' },
+        b: { shape: sizes.medium, fill: 'ones', dtype: 'uint64' },
+      },
+      iterations,
+      warmup,
     });
   }
 

@@ -86,10 +86,18 @@ async function main() {
   console.log(`Total benchmarks: ${specs.length}\n`);
 
   try {
-    // Validate correctness before benchmarking
-    console.log('Validating correctness against NumPy...');
-    await validateBenchmarks(specs);
-    console.log('');
+    // Validate correctness before benchmarking (skip BigInt benchmarks)
+    const nonBigIntSpecs = specs.filter((spec) => spec.category !== 'bigint');
+    if (nonBigIntSpecs.length > 0) {
+      console.log('Validating correctness against NumPy...');
+      await validateBenchmarks(nonBigIntSpecs);
+      console.log('');
+    }
+    if (specs.length > nonBigIntSpecs.length) {
+      console.log(
+        `⚠️  Skipping validation for ${specs.length - nonBigIntSpecs.length} BigInt benchmarks (BigInt values cannot be serialized to JSON)\n`
+      );
+    }
 
     // Run numpy-ts benchmarks
     console.log('Running numpy-ts benchmarks...');
