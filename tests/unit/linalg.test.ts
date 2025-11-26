@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { array, dot, trace, transpose } from '../../src';
+import { array, dot, trace, transpose, inner, outer, tensordot } from '../../src';
 
 describe('Linear Algebra Operations', () => {
   describe('dot()', () => {
@@ -332,6 +332,153 @@ describe('Linear Algebra Operations', () => {
 
       expect(result.base).toBe(a);
       expect(result.flags.OWNDATA).toBe(false);
+    });
+  });
+
+  describe('inner()', () => {
+    it('computes inner product for 1D vectors (same as dot)', () => {
+      const a = array([1, 2, 3]);
+      const b = array([4, 5, 6]);
+      const result = inner(a, b);
+
+      expect(result).toBe(32); // 1*4 + 2*5 + 3*6
+      expect(result).toBe(dot(a, b)); // Should match dot for 1D
+    });
+
+    it('computes inner product for 2D arrays', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]); // (2, 2)
+      const b = array([
+        [5, 6],
+        [7, 8],
+      ]); // (2, 2)
+      const result = a.inner(b) as any;
+
+      // Shape should be (2, 2) - contracts last dim of each
+      expect(result.shape).toEqual([2, 2]);
+      // result[i,j] = sum_k a[i,k] * b[j,k]
+      expect(result.toArray()).toEqual([
+        [1 * 5 + 2 * 6, 1 * 7 + 2 * 8], // [17, 23]
+        [3 * 5 + 4 * 6, 3 * 7 + 4 * 8], // [39, 53]
+      ]);
+    });
+
+    it('throws on incompatible last dimensions', () => {
+      const a = array([1, 2, 3]);
+      const b = array([4, 5]);
+
+      expect(() => inner(a, b)).toThrow("don't match");
+    });
+  });
+
+  describe('outer()', () => {
+    it('computes outer product for 1D vectors', () => {
+      const a = array([1, 2, 3]);
+      const b = array([4, 5]);
+      const result = outer(a, b);
+
+      expect(result.shape).toEqual([3, 2]);
+      expect(result.toArray()).toEqual([
+        [4, 5], // 1*4, 1*5
+        [8, 10], // 2*4, 2*5
+        [12, 15], // 3*4, 3*5
+      ]);
+    });
+
+    it('flattens 2D inputs', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]); // Will be flattened to [1,2,3,4]
+      const b = array([5, 6]);
+      const result = a.outer(b);
+
+      expect(result.shape).toEqual([4, 2]);
+      const arr = result.toArray() as number[][];
+      expect(arr[0]![0]).toBe(1 * 5);
+      expect(arr[3]![1]).toBe(4 * 6);
+    });
+
+    it('handles scalars (treats as size-1 arrays)', () => {
+      const a = array([2]);
+      const b = array([3]);
+      const result = a.outer(b);
+
+      expect(result.shape).toEqual([1, 1]);
+      expect((result.toArray() as number[][])[0]![0]).toBe(6);
+    });
+  });
+
+  describe('tensordot()', () => {
+    it('computes outer product with axes=0', () => {
+      const a = array([1, 2]);
+      const b = array([3, 4]);
+      const result = tensordot(a, b, 0) as any;
+
+      // axes=0 means no contraction (outer product)
+      expect(result.shape).toEqual([2, 2]);
+      expect(result.toArray()).toEqual([
+        [1 * 3, 1 * 4],
+        [2 * 3, 2 * 4],
+      ]);
+    });
+
+    it('validates axes parameter', () => {
+      const a = array([1, 2]);
+      const b = array([3, 4]);
+
+      expect(() => tensordot(a, b, -1)).toThrow('non-negative');
+      expect(() => tensordot(a, b, 5)).toThrow('exceeds');
+    });
+
+    it('computes axes=1 contraction (dot product)', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]); // (2, 2)
+      const b = array([
+        [5, 6],
+        [7, 8],
+      ]); // (2, 2)
+      const result = tensordot(a, b, 1) as any;
+
+      // axes=1: contract last 1 axis of a with first 1 of b
+      // Same as matmul
+      expect(result.shape).toEqual([2, 2]);
+    });
+
+    it('computes axes=2 full contraction (scalar)', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]); // (2, 2)
+      const b = array([
+        [5, 6],
+        [7, 8],
+      ]); // (2, 2)
+      const result = tensordot(a, b, 2);
+
+      // axes=2: contract all axes -> scalar
+      // sum of element-wise products
+      expect(typeof result).toBe('number');
+      expect(result).toBe(1 * 5 + 2 * 6 + 3 * 7 + 4 * 8); // 70
+    });
+
+    it('computes custom axis pairs', () => {
+      const a = array([
+        [
+          [1, 2],
+          [3, 4],
+        ],
+      ]); // (1, 2, 2)
+      const b = array([[[5, 6]], [[7, 8]]]); // (2, 1, 2)
+      const result = tensordot(a, b, [[2], [2]]) as any;
+
+      // Contract axis 2 of a with axis 2 of b
+      // Result shape: (1, 2, 2, 1) = (1, 2) + (2, 1)
+      expect(result.shape).toEqual([1, 2, 2, 1]);
     });
   });
 });

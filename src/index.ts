@@ -36,6 +36,9 @@ export {
   dot,
   trace,
   transpose,
+  inner,
+  outer,
+  tensordot,
 } from './core/ndarray';
 
 // Version (replaced at build time from package.json)

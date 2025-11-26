@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { array, dot, trace, transpose } from '../../src';
+import { array, dot, trace, transpose, inner, outer, tensordot } from '../../src';
 import { runNumPy, arraysClose, checkNumPyAvailable } from './numpy-oracle';
 
 describe('NumPy Validation: Linear Algebra', () => {
@@ -458,6 +458,218 @@ result = np.transpose(a, (1, 0, 2))
 
       const pyResult = runNumPy(`
 result = np.transpose([1, 2, 3, 4, 5])
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+  });
+
+  describe('inner()', () => {
+    it('matches NumPy for 1D vectors', () => {
+      const a = array([1, 2, 3]);
+      const b = array([4, 5, 6]);
+      const jsResult = inner(a, b);
+
+      const pyResult = runNumPy(`
+result = np.inner([1, 2, 3], [4, 5, 6])
+      `);
+
+      expect(jsResult).toBe(pyResult.value);
+    });
+
+    it('matches NumPy for 2D arrays', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [5, 6],
+        [7, 8],
+      ]);
+      const jsResult = inner(a, b) as any;
+
+      const pyResult = runNumPy(`
+result = np.inner([[1, 2], [3, 4]], [[5, 6], [7, 8]])
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for 2D · 1D', () => {
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      const b = array([7, 8, 9]);
+      const jsResult = inner(a, b) as any;
+
+      const pyResult = runNumPy(`
+result = np.inner([[1, 2, 3], [4, 5, 6]], [7, 8, 9])
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for different shapes', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+        [5, 6],
+      ]); // (3, 2)
+      const b = array([
+        [7, 8],
+        [9, 10],
+      ]); // (2, 2)
+      const jsResult = inner(a, b) as any;
+
+      const pyResult = runNumPy(`
+result = np.inner([[1, 2], [3, 4], [5, 6]], [[7, 8], [9, 10]])
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+  });
+
+  describe('outer()', () => {
+    it('matches NumPy for 1D vectors', () => {
+      const a = array([1, 2, 3]);
+      const b = array([4, 5]);
+      const jsResult = outer(a, b);
+
+      const pyResult = runNumPy(`
+result = np.outer([1, 2, 3], [4, 5])
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy with 2D inputs (flattens)', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([5, 6]);
+      const jsResult = outer(a, b);
+
+      const pyResult = runNumPy(`
+result = np.outer([[1, 2], [3, 4]], [5, 6])
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+  });
+
+  describe('tensordot()', () => {
+    it('matches NumPy for axes=0 (outer product)', () => {
+      const a = array([1, 2]);
+      const b = array([3, 4]);
+      const jsResult = tensordot(a, b, 0) as any;
+
+      const pyResult = runNumPy(`
+result = np.tensordot([1, 2], [3, 4], axes=0)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for axes=1 (dot product)', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [5, 6],
+        [7, 8],
+      ]);
+      const jsResult = tensordot(a, b, 1) as any;
+
+      const pyResult = runNumPy(`
+result = np.tensordot([[1, 2], [3, 4]], [[5, 6], [7, 8]], axes=1)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for axes=2 (full contraction -> scalar)', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [5, 6],
+        [7, 8],
+      ]);
+      const jsResult = tensordot(a, b, 2);
+
+      const pyResult = runNumPy(`
+result = np.tensordot([[1, 2], [3, 4]], [[5, 6], [7, 8]], axes=2)
+      `);
+
+      expect(jsResult).toBe(pyResult.value);
+    });
+
+    it('matches NumPy for custom axis pairs', () => {
+      const a = array([
+        [
+          [1, 2],
+          [3, 4],
+        ],
+        [
+          [5, 6],
+          [7, 8],
+        ],
+      ]); // (2, 2, 2)
+      const b = array([[[9, 10]], [[11, 12]]]); // (2, 1, 2)
+      const jsResult = tensordot(a, b, [[2], [2]]) as any;
+
+      const pyResult = runNumPy(`
+a = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+b = np.array([[[9, 10]], [[11, 12]]])
+result = np.tensordot(a, b, axes=([2], [2]))
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for multiple axis contraction', () => {
+      const a = array([
+        [
+          [1, 2],
+          [3, 4],
+        ],
+        [
+          [5, 6],
+          [7, 8],
+        ],
+      ]); // (2, 2, 2)
+      const b = array([
+        [
+          [9, 10],
+          [11, 12],
+        ],
+        [
+          [13, 14],
+          [15, 16],
+        ],
+      ]); // (2, 2, 2)
+      const jsResult = tensordot(a, b, [
+        [1, 2],
+        [0, 1],
+      ]) as any;
+
+      const pyResult = runNumPy(`
+a = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+b = np.array([[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
+result = np.tensordot(a, b, axes=([1, 2], [0, 1]))
       `);
 
       expect(jsResult.shape).toEqual(pyResult.shape);
