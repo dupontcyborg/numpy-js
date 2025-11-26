@@ -5,9 +5,159 @@
  * @module ops/linalg
  */
 
-import dgemm from '@stdlib/blas/base/dgemm';
 import { ArrayStorage } from '../core/storage';
 import { promoteDTypes } from '../core/dtype';
+
+/**
+ * BLAS-like types for matrix operations
+ */
+type Layout = 'row-major' | 'column-major';
+type Transpose = 'no-transpose' | 'transpose';
+
+/**
+ * Double-precision general matrix multiply (DGEMM)
+ *
+ * Full BLAS-compatible implementation without external dependencies.
+ * Performs: C = alpha * op(A) * op(B) + beta * C
+ *
+ * Supports all combinations of:
+ * - Row-major and column-major layouts
+ * - Transpose and no-transpose operations
+ * - Arbitrary alpha and beta scalars
+ *
+ * Uses specialized loops for each case to avoid function call overhead.
+ *
+ * @internal
+ */
+function dgemm(
+  layout: Layout,
+  transA: Transpose,
+  transB: Transpose,
+  M: number, // rows of op(A) and C
+  N: number, // cols of op(B) and C
+  K: number, // cols of op(A) and rows of op(B)
+  alpha: number, // scalar alpha
+  A: Float64Array, // matrix A
+  lda: number, // leading dimension of A
+  B: Float64Array, // matrix B
+  ldb: number, // leading dimension of B
+  beta: number, // scalar beta
+  C: Float64Array, // matrix C (output)
+  ldc: number // leading dimension of C
+): void {
+  // Apply beta scaling to C first
+  if (beta === 0) {
+    for (let i = 0; i < M * N; i++) {
+      C[i] = 0;
+    }
+  } else if (beta !== 1) {
+    for (let i = 0; i < M * N; i++) {
+      C[i] = (C[i] ?? 0) * beta;
+    }
+  }
+
+  // Select specialized loop based on layout and transpose modes
+  // This avoids function call overhead in the hot loop
+  const isRowMajor = layout === 'row-major';
+  const transposeA = transA === 'transpose';
+  const transposeB = transB === 'transpose';
+
+  if (isRowMajor && !transposeA && !transposeB) {
+    // Row-major, no transpose (most common case)
+    // C[i,j] = sum_k A[i,k] * B[k,j]
+    for (let i = 0; i < M; i++) {
+      for (let j = 0; j < N; j++) {
+        let sum = 0;
+        for (let k = 0; k < K; k++) {
+          sum += (A[i * lda + k] ?? 0) * (B[k * ldb + j] ?? 0);
+        }
+        C[i * ldc + j] = (C[i * ldc + j] ?? 0) + alpha * sum;
+      }
+    }
+  } else if (isRowMajor && transposeA && !transposeB) {
+    // Row-major, A transposed
+    // C[i,j] = sum_k A[k,i] * B[k,j]
+    for (let i = 0; i < M; i++) {
+      for (let j = 0; j < N; j++) {
+        let sum = 0;
+        for (let k = 0; k < K; k++) {
+          sum += (A[k * lda + i] ?? 0) * (B[k * ldb + j] ?? 0);
+        }
+        C[i * ldc + j] = (C[i * ldc + j] ?? 0) + alpha * sum;
+      }
+    }
+  } else if (isRowMajor && !transposeA && transposeB) {
+    // Row-major, B transposed
+    // C[i,j] = sum_k A[i,k] * B[j,k]
+    for (let i = 0; i < M; i++) {
+      for (let j = 0; j < N; j++) {
+        let sum = 0;
+        for (let k = 0; k < K; k++) {
+          sum += (A[i * lda + k] ?? 0) * (B[j * ldb + k] ?? 0);
+        }
+        C[i * ldc + j] = (C[i * ldc + j] ?? 0) + alpha * sum;
+      }
+    }
+  } else if (isRowMajor && transposeA && transposeB) {
+    // Row-major, both transposed
+    // C[i,j] = sum_k A[k,i] * B[j,k]
+    for (let i = 0; i < M; i++) {
+      for (let j = 0; j < N; j++) {
+        let sum = 0;
+        for (let k = 0; k < K; k++) {
+          sum += (A[k * lda + i] ?? 0) * (B[j * ldb + k] ?? 0);
+        }
+        C[i * ldc + j] = (C[i * ldc + j] ?? 0) + alpha * sum;
+      }
+    }
+  } else if (!isRowMajor && !transposeA && !transposeB) {
+    // Column-major, no transpose
+    // C[i,j] = sum_k A[i,k] * B[k,j]
+    // Column-major: A[i,k] = A[k*lda + i], C[i,j] = C[j*ldc + i]
+    for (let i = 0; i < M; i++) {
+      for (let j = 0; j < N; j++) {
+        let sum = 0;
+        for (let k = 0; k < K; k++) {
+          sum += (A[k * lda + i] ?? 0) * (B[j * ldb + k] ?? 0);
+        }
+        C[j * ldc + i] = (C[j * ldc + i] ?? 0) + alpha * sum;
+      }
+    }
+  } else if (!isRowMajor && transposeA && !transposeB) {
+    // Column-major, A transposed
+    for (let i = 0; i < M; i++) {
+      for (let j = 0; j < N; j++) {
+        let sum = 0;
+        for (let k = 0; k < K; k++) {
+          sum += (A[i * lda + k] ?? 0) * (B[j * ldb + k] ?? 0);
+        }
+        C[j * ldc + i] = (C[j * ldc + i] ?? 0) + alpha * sum;
+      }
+    }
+  } else if (!isRowMajor && !transposeA && transposeB) {
+    // Column-major, B transposed
+    for (let i = 0; i < M; i++) {
+      for (let j = 0; j < N; j++) {
+        let sum = 0;
+        for (let k = 0; k < K; k++) {
+          sum += (A[k * lda + i] ?? 0) * (B[k * ldb + j] ?? 0);
+        }
+        C[j * ldc + i] = (C[j * ldc + i] ?? 0) + alpha * sum;
+      }
+    }
+  } else {
+    // Column-major, both transposed
+    for (let i = 0; i < M; i++) {
+      for (let j = 0; j < N; j++) {
+        let sum = 0;
+        for (let k = 0; k < K; k++) {
+          sum += (A[i * lda + k] ?? 0) * (B[k * ldb + j] ?? 0);
+        }
+        C[j * ldc + i] = (C[j * ldc + i] ?? 0) + alpha * sum;
+      }
+    }
+  }
+}
 
 /**
  * Matrix multiplication
