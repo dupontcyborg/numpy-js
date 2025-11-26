@@ -33,6 +33,9 @@ export {
   floor_divide,
   positive,
   reciprocal,
+  dot,
+  trace,
+  transpose,
 } from './core/ndarray';
 
 // Version (replaced at build time from package.json)

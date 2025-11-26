@@ -233,8 +233,8 @@ All operations preserve dtype or follow NumPy promotion rules:
 ## Linear Algebra (numpy.linalg)
 
 ### Matrix Products
-- [ ] `dot(a, b)` - Dot product
-- [x] `matmul(a, b)` - Matrix product _(implemented as NDArray.matmul() method)_
+- [x] `dot(a, b)` - Dot product _(fully NumPy-compatible: all 0D-ND combinations including scalars, vectors, matrices, and tensors)_
+- [x] `matmul(a, b)` - Matrix product _(fully implemented with transpose detection via strides)_
 - [ ] `inner(a, b)` - Inner product
 - [ ] `outer(a, b)` - Outer product
 - [ ] `tensordot(a, b, axes)` - Tensor dot product
@@ -258,7 +258,7 @@ All operations preserve dtype or follow NumPy promotion rules:
 - [ ] `linalg.norm(x, ord?, axis?)` - Norm
 - [ ] `linalg.det(a)` - Determinant
 - [ ] `linalg.matrix_rank(a, tol?)` - Matrix rank
-- [ ] `trace(a)` - Trace
+- [x] `trace(a)` - Trace _(implemented as NDArray.trace() method; supports square and non-square matrices)_
 
 ---
 

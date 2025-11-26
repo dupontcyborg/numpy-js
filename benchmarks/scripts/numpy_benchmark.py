@@ -119,8 +119,12 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         return np.sign(arrays["a"])
 
     # Linear algebra
+    elif operation == "dot":
+        return np.dot(arrays["a"], arrays["b"])
     elif operation == "matmul":
         return arrays["a"] @ arrays["b"]
+    elif operation == "trace":
+        return np.trace(arrays["a"])
     elif operation == "transpose":
         return arrays["a"].T
 

@@ -7,6 +7,7 @@
 
 import { ArrayStorage } from '../core/storage';
 import { promoteDTypes } from '../core/dtype';
+import * as shapeOps from './shape';
 
 /**
  * BLAS-like types for matrix operations
@@ -160,6 +161,300 @@ function dgemm(
 }
 
 /**
+ * Dot product of two arrays (fully NumPy-compatible)
+ *
+ * Behavior depends on input dimensions:
+ * - 0D · 0D: Multiply scalars → scalar
+ * - 0D · ND or ND · 0D: Element-wise multiply → ND
+ * - 1D · 1D: Inner product → scalar
+ * - 2D · 2D: Matrix multiplication → 2D
+ * - 2D · 1D: Matrix-vector product → 1D
+ * - 1D · 2D: Vector-matrix product → 1D
+ * - ND · 1D (N≥2): Sum product over last axis of a → (N-1)D
+ * - 1D · ND (N≥2): Sum product over first axis of b → (N-1)D
+ * - ND · MD (N,M≥2): Sum product over last axis of a and second-to-last of b → (N+M-2)D
+ *
+ * For 2D·2D, prefer using matmul() instead.
+ */
+export function dot(a: ArrayStorage, b: ArrayStorage): ArrayStorage | number | bigint {
+  const aDim = a.ndim;
+  const bDim = b.ndim;
+
+  // Case 0: Scalar (0D) cases - treat as multiplication
+  if (aDim === 0 || bDim === 0) {
+    // Get scalar values
+    const aVal = aDim === 0 ? a.get() : null;
+    const bVal = bDim === 0 ? b.get() : null;
+
+    if (aDim === 0 && bDim === 0) {
+      // Both scalars: multiply them
+      if (typeof aVal === 'bigint' && typeof bVal === 'bigint') {
+        return aVal * bVal;
+      }
+      return Number(aVal) * Number(bVal);
+    } else if (aDim === 0) {
+      // a is scalar, b is array: scalar * array (element-wise)
+      // Equivalent to multiply(a, b)
+      const resultDtype = promoteDTypes(a.dtype, b.dtype);
+      const result = ArrayStorage.zeros([...b.shape], resultDtype);
+      for (let i = 0; i < b.size; i++) {
+        const bData = b.data[i + b.offset];
+        if (typeof aVal === 'bigint' && typeof bData === 'bigint') {
+          result.data[i] = aVal * bData;
+        } else {
+          result.data[i] = Number(aVal) * Number(bData);
+        }
+      }
+      return result;
+    } else {
+      // b is scalar, a is array: array * scalar (element-wise)
+      const resultDtype = promoteDTypes(a.dtype, b.dtype);
+      const result = ArrayStorage.zeros([...a.shape], resultDtype);
+      for (let i = 0; i < a.size; i++) {
+        const aData = a.data[i + a.offset];
+        if (typeof aData === 'bigint' && typeof bVal === 'bigint') {
+          result.data[i] = aData * bVal;
+        } else {
+          result.data[i] = Number(aData) * Number(bVal);
+        }
+      }
+      return result;
+    }
+  }
+
+  // Case 1: Both 1D -> scalar (inner product)
+  if (aDim === 1 && bDim === 1) {
+    if (a.shape[0] !== b.shape[0]) {
+      throw new Error(`dot: incompatible shapes (${a.shape[0]},) and (${b.shape[0]},)`);
+    }
+    const n = a.shape[0]!;
+    let sum = 0;
+    for (let i = 0; i < n; i++) {
+      const aVal = a.get(i);
+      const bVal = b.get(i);
+      // Handle BigInt
+      if (typeof aVal === 'bigint' && typeof bVal === 'bigint') {
+        sum = Number(sum) + Number(aVal * bVal);
+      } else {
+        sum += Number(aVal) * Number(bVal);
+      }
+    }
+    return sum;
+  }
+
+  // Case 2: Both 2D -> matrix multiplication (delegate to matmul)
+  if (aDim === 2 && bDim === 2) {
+    return matmul(a, b);
+  }
+
+  // Case 3: 2D · 1D -> matrix-vector product (returns 1D)
+  if (aDim === 2 && bDim === 1) {
+    const [m, k] = a.shape;
+    const n = b.shape[0]!;
+    if (k !== n) {
+      throw new Error(`dot: incompatible shapes (${m},${k}) and (${n},)`);
+    }
+
+    const resultDtype = promoteDTypes(a.dtype, b.dtype);
+    const result = ArrayStorage.zeros([m!], resultDtype);
+
+    for (let i = 0; i < m!; i++) {
+      let sum = 0;
+      for (let j = 0; j < k!; j++) {
+        const aVal = a.get(i, j);
+        const bVal = b.get(j);
+        if (typeof aVal === 'bigint' && typeof bVal === 'bigint') {
+          sum = Number(sum) + Number(aVal * bVal);
+        } else {
+          sum += Number(aVal) * Number(bVal);
+        }
+      }
+      result.set([i], sum);
+    }
+
+    return result;
+  }
+
+  // Case 4: 1D · 2D -> vector-matrix product (returns 1D)
+  if (aDim === 1 && bDim === 2) {
+    const m = a.shape[0]!;
+    const [k, n] = b.shape;
+    if (m !== k) {
+      throw new Error(`dot: incompatible shapes (${m},) and (${k},${n})`);
+    }
+
+    const resultDtype = promoteDTypes(a.dtype, b.dtype);
+    const result = ArrayStorage.zeros([n!], resultDtype);
+
+    for (let j = 0; j < n!; j++) {
+      let sum = 0;
+      for (let i = 0; i < m; i++) {
+        const aVal = a.get(i);
+        const bVal = b.get(i, j);
+        if (typeof aVal === 'bigint' && typeof bVal === 'bigint') {
+          sum = Number(sum) + Number(aVal * bVal);
+        } else {
+          sum += Number(aVal) * Number(bVal);
+        }
+      }
+      result.set([j], sum);
+    }
+
+    return result;
+  }
+
+  // Case 5: ND · 1D (N > 2) -> sum product over last axis, result is (N-1)D
+  if (aDim > 2 && bDim === 1) {
+    const lastDimA = a.shape[aDim - 1]!;
+    const bSize = b.shape[0]!;
+    if (lastDimA !== bSize) {
+      throw new Error(`dot: incompatible shapes ${JSON.stringify(a.shape)} and (${bSize},)`);
+    }
+
+    // Result shape is a.shape[:-1]
+    const resultShape = [...a.shape.slice(0, -1)];
+    const resultDtype = promoteDTypes(a.dtype, b.dtype);
+    const result = ArrayStorage.zeros(resultShape, resultDtype);
+
+    // Iterate over all positions in result
+    const resultSize = resultShape.reduce((acc, dim) => acc * dim, 1);
+    for (let i = 0; i < resultSize; i++) {
+      let sum = 0;
+      // Compute multi-dimensional index for result
+      let temp = i;
+      const resultIdx: number[] = [];
+      for (let d = resultShape.length - 1; d >= 0; d--) {
+        resultIdx[d] = temp % resultShape[d]!;
+        temp = Math.floor(temp / resultShape[d]!);
+      }
+
+      // Sum over the last dimension of a
+      for (let k = 0; k < lastDimA; k++) {
+        const aIdx = [...resultIdx, k];
+        const aVal = a.get(...aIdx);
+        const bVal = b.get(k);
+        if (typeof aVal === 'bigint' && typeof bVal === 'bigint') {
+          sum = Number(sum) + Number(aVal * bVal);
+        } else {
+          sum += Number(aVal) * Number(bVal);
+        }
+      }
+      result.set(resultIdx, sum);
+    }
+
+    return result;
+  }
+
+  // Case 6: 1D · ND (N > 2) -> sum product over SECOND axis of b, result is (b.shape[0], b.shape[2:])
+  // Actually for 1D·3D: sum over axis 1 of b
+  // For general case: need to handle this more carefully
+  if (aDim === 1 && bDim > 2) {
+    const aSize = a.shape[0]!;
+    // For 1D (size K) · ND, we contract over axis 1 of b (which should have size K)
+    const contractAxisB = 1;
+    const contractDimB = b.shape[contractAxisB]!;
+
+    if (aSize !== contractDimB) {
+      throw new Error(`dot: incompatible shapes (${aSize},) and ${JSON.stringify(b.shape)}`);
+    }
+
+    // Result shape: b.shape[0:1] + b.shape[2:]
+    // For (K,) · (L, K, M, N, ...) -> (L, M, N, ...)
+    const resultShape = [...b.shape.slice(0, contractAxisB), ...b.shape.slice(contractAxisB + 1)];
+    const resultDtype = promoteDTypes(a.dtype, b.dtype);
+    const result = ArrayStorage.zeros(resultShape, resultDtype);
+
+    // Compute using multi-dimensional indices
+    const resultSize = resultShape.reduce((acc, dim) => acc * dim, 1);
+    for (let i = 0; i < resultSize; i++) {
+      // Convert flat index to multi-dim result index
+      let temp = i;
+      const resultIdx: number[] = [];
+      for (let d = resultShape.length - 1; d >= 0; d--) {
+        resultIdx[d] = temp % resultShape[d]!;
+        temp = Math.floor(temp / resultShape[d]!);
+      }
+
+      // Build b index by inserting the contract dimension
+      // result[i,j,...] corresponds to b[i, :, j, ...]
+      const bIdxBefore = resultIdx.slice(0, contractAxisB);
+      const bIdxAfter = resultIdx.slice(contractAxisB);
+
+      let sum = 0;
+      for (let k = 0; k < aSize; k++) {
+        const aVal = a.get(k);
+        const bIdx = [...bIdxBefore, k, ...bIdxAfter];
+        const bVal = b.get(...bIdx);
+        if (typeof aVal === 'bigint' && typeof bVal === 'bigint') {
+          sum = Number(sum) + Number(aVal * bVal);
+        } else {
+          sum += Number(aVal) * Number(bVal);
+        }
+      }
+      result.set(resultIdx, sum);
+    }
+
+    return result;
+  }
+
+  // Case 7: ND · MD (N,M ≥ 2, not both 2) -> general tensor contraction
+  // Result shape: a.shape[:-1] + b.shape[:-2] + b.shape[-1:]
+  if (aDim >= 2 && bDim >= 2 && !(aDim === 2 && bDim === 2)) {
+    const lastDimA = a.shape[aDim - 1]!;
+    const secondLastDimB = b.shape[bDim - 2]!;
+
+    if (lastDimA !== secondLastDimB) {
+      throw new Error(
+        `dot: incompatible shapes ${JSON.stringify(a.shape)} and ${JSON.stringify(b.shape)}`
+      );
+    }
+
+    // Build result shape
+    const resultShape = [...a.shape.slice(0, -1), ...b.shape.slice(0, -2), b.shape[bDim - 1]!];
+    const resultDtype = promoteDTypes(a.dtype, b.dtype);
+    const result = ArrayStorage.zeros(resultShape, resultDtype);
+
+    const aOuterSize = a.shape.slice(0, -1).reduce((acc, dim) => acc * dim, 1);
+    const bOuterSize = b.shape.slice(0, -2).reduce((acc, dim) => acc * dim, 1);
+    const bLastDim = b.shape[bDim - 1]!;
+    const contractionDim = lastDimA;
+
+    // Iterate: result[i, j, k] = sum_m a[i, m] * b[j, m, k]
+    for (let i = 0; i < aOuterSize; i++) {
+      for (let j = 0; j < bOuterSize; j++) {
+        for (let k = 0; k < bLastDim; k++) {
+          let sum = 0;
+          for (let m = 0; m < contractionDim; m++) {
+            // Get a[i, m] - need to convert flat index i to multi-dim
+            const aIdx = i * contractionDim + m;
+            const aVal = a.data[aIdx + a.offset];
+
+            // Get b[j, m, k] - need multi-dim indexing
+            const bIdx = j * contractionDim * bLastDim + m * bLastDim + k;
+            const bVal = b.data[bIdx + b.offset];
+
+            if (typeof aVal === 'bigint' && typeof bVal === 'bigint') {
+              sum = Number(sum) + Number(aVal * bVal);
+            } else {
+              sum += Number(aVal) * Number(bVal);
+            }
+          }
+
+          // Set result at the appropriate position
+          const resultIdx = i * bOuterSize * bLastDim + j * bLastDim + k;
+          result.data[resultIdx] = sum;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  // Should never reach here - all cases covered
+  throw new Error(`dot: unexpected combination of dimensions ${aDim}D · ${bDim}D`);
+}
+
+/**
  * Matrix multiplication
  * Requires 2D arrays with compatible shapes
  *
@@ -271,4 +566,49 @@ export function matmul(a: ArrayStorage, b: ArrayStorage): ArrayStorage {
   );
 
   return result;
+}
+
+/**
+ * Sum along the diagonal of a 2D array
+ *
+ * Computes the trace (sum of diagonal elements) of a matrix.
+ * For non-square matrices, sums along the diagonal up to min(rows, cols).
+ *
+ * @param a - Input 2D array
+ * @returns Sum of diagonal elements
+ */
+export function trace(a: ArrayStorage): number | bigint {
+  if (a.ndim !== 2) {
+    throw new Error(`trace requires 2D array, got ${a.ndim}D`);
+  }
+
+  const [rows = 0, cols = 0] = a.shape;
+  const diagLen = Math.min(rows, cols);
+
+  let sum: number | bigint = 0;
+
+  for (let i = 0; i < diagLen; i++) {
+    const val = a.get(i, i);
+    if (typeof val === 'bigint') {
+      sum = (typeof sum === 'bigint' ? sum : BigInt(sum)) + val;
+    } else {
+      sum = (typeof sum === 'bigint' ? Number(sum) : sum) + val;
+    }
+  }
+
+  return sum;
+}
+
+/**
+ * Permute the dimensions of an array
+ *
+ * Standalone version of NDArray.transpose() method.
+ * Returns a view with axes permuted.
+ *
+ * @param a - Input array
+ * @param axes - Optional permutation of axes (defaults to reverse order)
+ * @returns Transposed view
+ */
+export function transpose(a: ArrayStorage, axes?: number[]): ArrayStorage {
+  return shapeOps.transpose(a, axes);
 }

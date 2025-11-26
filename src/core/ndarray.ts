@@ -688,7 +688,7 @@ export class NDArray {
     return NDArray._fromStorage(resultStorage, base);
   }
 
-  // Matrix multiplication
+  // Linear algebra operations
   /**
    * Matrix multiplication
    * @param other - Array to multiply with
@@ -697,6 +697,27 @@ export class NDArray {
   matmul(other: NDArray): NDArray {
     const resultStorage = linalgOps.matmul(this._storage, other._storage);
     return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Dot product (matching NumPy behavior)
+   * @param other - Array to dot with
+   * @returns Result of dot product (scalar or array depending on dimensions)
+   */
+  dot(other: NDArray): NDArray | number | bigint {
+    const result = linalgOps.dot(this._storage, other._storage);
+    if (typeof result === 'number' || typeof result === 'bigint') {
+      return result;
+    }
+    return NDArray._fromStorage(result);
+  }
+
+  /**
+   * Sum of diagonal elements (trace)
+   * @returns Sum of diagonal elements
+   */
+  trace(): number | bigint {
+    return linalgOps.trace(this._storage);
   }
 
   // Slicing
@@ -1488,4 +1509,47 @@ export function positive(x: NDArray): NDArray {
  */
 export function reciprocal(x: NDArray): NDArray {
   return x.reciprocal();
+}
+
+/**
+ * Dot product of two arrays
+ *
+ * Fully NumPy-compatible. Behavior depends on input dimensions:
+ * - 0D · 0D: Multiply scalars → scalar
+ * - 0D · ND or ND · 0D: Element-wise multiply → ND
+ * - 1D · 1D: Inner product → scalar
+ * - 2D · 2D: Matrix multiplication → 2D
+ * - 2D · 1D: Matrix-vector product → 1D
+ * - 1D · 2D: Vector-matrix product → 1D
+ * - ND · 1D (N>2): Sum over last axis → (N-1)D
+ * - 1D · ND (N>2): Sum over first axis → (N-1)D
+ * - ND · MD (N,M≥2): Tensor contraction → (N+M-2)D
+ *
+ * @param a - First array
+ * @param b - Second array
+ * @returns Result of dot product
+ */
+export function dot(a: NDArray, b: NDArray): NDArray | number | bigint {
+  return a.dot(b);
+}
+
+/**
+ * Sum of diagonal elements
+ *
+ * @param a - Input 2D array
+ * @returns Sum of diagonal elements
+ */
+export function trace(a: NDArray): number | bigint {
+  return a.trace();
+}
+
+/**
+ * Permute array dimensions
+ *
+ * @param a - Input array
+ * @param axes - Optional permutation of axes (defaults to reverse order)
+ * @returns Transposed view
+ */
+export function transpose(a: NDArray, axes?: number[]): NDArray {
+  return a.transpose(axes);
 }
