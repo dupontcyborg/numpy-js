@@ -83,7 +83,6 @@
   },
   "homepage": "https://github.com/dupontcyborg/numpy-ts#readme",
   "devDependencies": {
-    "@stdlib/types": "^0.4.3",
     "@types/node": "^24.9.1",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.46.2",
@@ -104,9 +103,6 @@
     "tsx": "^4.20.6",
     "typescript": "^5.3.3",
     "vitest": "^4.0.3"
-  },
-  "dependencies": {
-    "@stdlib/blas": "^0.3.3"
   },
   "engines": {
     "node": ">=18.0.0"

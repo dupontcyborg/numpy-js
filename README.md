@@ -364,7 +364,6 @@ Correctness and completeness first, then performance.
 ## Links
 
 - **NumPy**: https://numpy.org/
-- **@stdlib**: https://stdlib.io/
 - **Issues**: https://github.com/dupontcyborg/numpy-ts/issues
 
 ---
