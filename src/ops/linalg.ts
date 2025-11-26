@@ -612,3 +612,299 @@ export function trace(a: ArrayStorage): number | bigint {
 export function transpose(a: ArrayStorage, axes?: number[]): ArrayStorage {
   return shapeOps.transpose(a, axes);
 }
+
+/**
+ * Inner product of two arrays
+ *
+ * Computes sum product over the LAST axes of both a and b.
+ * - 1D · 1D: Same as dot (ordinary inner product) → scalar
+ * - ND · MD: Contracts last dimension of each → (*a.shape[:-1], *b.shape[:-1])
+ *
+ * Different from dot: always uses last axis of BOTH arrays.
+ *
+ * @param a - First array
+ * @param b - Second array
+ * @returns Inner product result
+ */
+export function inner(a: ArrayStorage, b: ArrayStorage): ArrayStorage | number | bigint {
+  const aDim = a.ndim;
+  const bDim = b.ndim;
+
+  // Last dimensions must match
+  const aLastDim = a.shape[aDim - 1]!;
+  const bLastDim = b.shape[bDim - 1]!;
+
+  if (aLastDim !== bLastDim) {
+    throw new Error(
+      `inner: incompatible shapes - last dimensions ${aLastDim} and ${bLastDim} don't match`
+    );
+  }
+
+  // Special case: both 1D -> scalar
+  if (aDim === 1 && bDim === 1) {
+    return dot(a, b) as number;
+  }
+
+  // General case: result shape is a.shape[:-1] + b.shape[:-1]
+  const resultShape = [...a.shape.slice(0, -1), ...b.shape.slice(0, -1)];
+  const resultDtype = promoteDTypes(a.dtype, b.dtype);
+  const result = ArrayStorage.zeros(resultShape, resultDtype);
+
+  const aOuterSize = aDim === 1 ? 1 : a.shape.slice(0, -1).reduce((acc, dim) => acc * dim, 1);
+  const bOuterSize = bDim === 1 ? 1 : b.shape.slice(0, -1).reduce((acc, dim) => acc * dim, 1);
+  const contractionDim = aLastDim;
+
+  // Compute: result[i, j] = sum_k a[i, k] * b[j, k]
+  for (let i = 0; i < aOuterSize; i++) {
+    for (let j = 0; j < bOuterSize; j++) {
+      let sum = 0;
+      for (let k = 0; k < contractionDim; k++) {
+        // Get a[i, k] and b[j, k]
+        const aIdx = aDim === 1 ? k : i * contractionDim + k;
+        const bIdx = bDim === 1 ? k : j * contractionDim + k;
+        const aVal = a.data[aIdx + a.offset];
+        const bVal = b.data[bIdx + b.offset];
+
+        if (typeof aVal === 'bigint' && typeof bVal === 'bigint') {
+          sum = Number(sum) + Number(aVal * bVal);
+        } else {
+          sum += Number(aVal) * Number(bVal);
+        }
+      }
+
+      // Set result
+      if (resultShape.length === 0) {
+        // Scalar result
+        return sum;
+      }
+      const resultIdx = aOuterSize === 1 ? j : i * bOuterSize + j;
+      result.data[resultIdx] = sum;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Outer product of two vectors
+ *
+ * Computes out[i, j] = a[i] * b[j]
+ * Input arrays are flattened if not 1D.
+ *
+ * @param a - First input (flattened to 1D)
+ * @param b - Second input (flattened to 1D)
+ * @returns 2D array of shape (a.size, b.size)
+ */
+export function outer(a: ArrayStorage, b: ArrayStorage): ArrayStorage {
+  // Flatten inputs to 1D
+  const aFlat = a.ndim === 1 ? a : shapeOps.ravel(a);
+  const bFlat = b.ndim === 1 ? b : shapeOps.ravel(b);
+
+  const m = aFlat.size;
+  const n = bFlat.size;
+
+  const resultDtype = promoteDTypes(a.dtype, b.dtype);
+  const result = ArrayStorage.zeros([m, n], resultDtype);
+
+  // Compute outer product: result[i,j] = a[i] * b[j]
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+      const aVal = aFlat.get(i);
+      const bVal = bFlat.get(j);
+
+      let product;
+      if (typeof aVal === 'bigint' && typeof bVal === 'bigint') {
+        product = aVal * bVal;
+      } else {
+        product = Number(aVal) * Number(bVal);
+      }
+
+      result.set([i, j], product);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Tensor dot product along specified axes
+ *
+ * Computes sum product over specified axes.
+ *
+ * @param a - First array
+ * @param b - Second array
+ * @param axes - Axes to contract:
+ *   - Integer N: Contract last N axes of a with first N of b
+ *   - [a_axes, b_axes]: Contract specified axes
+ * @returns Tensor dot product
+ */
+export function tensordot(
+  a: ArrayStorage,
+  b: ArrayStorage,
+  axes: number | [number[], number[]]
+): ArrayStorage | number | bigint {
+  let aAxes: number[];
+  let bAxes: number[];
+
+  if (typeof axes === 'number') {
+    // Contract last N axes of a with first N of b
+    const N = axes;
+    if (N < 0) {
+      throw new Error('tensordot: axes must be non-negative');
+    }
+    if (N > a.ndim || N > b.ndim) {
+      throw new Error('tensordot: axes exceeds array dimensions');
+    }
+
+    // Last N axes of a
+    aAxes = Array.from({ length: N }, (_, i) => a.ndim - N + i);
+    // First N axes of b
+    bAxes = Array.from({ length: N }, (_, i) => i);
+  } else {
+    [aAxes, bAxes] = axes;
+    if (aAxes.length !== bAxes.length) {
+      throw new Error('tensordot: axes lists must have same length');
+    }
+  }
+
+  // Validate axes and check dimension compatibility
+  for (let i = 0; i < aAxes.length; i++) {
+    const aAxis = aAxes[i]!;
+    const bAxis = bAxes[i]!;
+    if (aAxis < 0 || aAxis >= a.ndim || bAxis < 0 || bAxis >= b.ndim) {
+      throw new Error('tensordot: axis out of bounds');
+    }
+    if (a.shape[aAxis] !== b.shape[bAxis]) {
+      throw new Error(
+        `tensordot: shape mismatch on axes ${aAxis} and ${bAxis}: ${a.shape[aAxis]} != ${b.shape[bAxis]}`
+      );
+    }
+  }
+
+  // Separate axes into contracted and free axes
+  const aFreeAxes: number[] = [];
+  const bFreeAxes: number[] = [];
+
+  for (let i = 0; i < a.ndim; i++) {
+    if (!aAxes.includes(i)) {
+      aFreeAxes.push(i);
+    }
+  }
+  for (let i = 0; i < b.ndim; i++) {
+    if (!bAxes.includes(i)) {
+      bFreeAxes.push(i);
+    }
+  }
+
+  // Build result shape: free axes of a + free axes of b
+  const resultShape = [
+    ...aFreeAxes.map((ax) => a.shape[ax]!),
+    ...bFreeAxes.map((ax) => b.shape[ax]!),
+  ];
+
+  // Special case: no free axes (full contraction) -> scalar result
+  if (resultShape.length === 0) {
+    let sum = 0;
+    // Iterate over all combinations of contracted axes
+    const contractSize = aAxes.map((ax) => a.shape[ax]!).reduce((acc, dim) => acc * dim, 1);
+
+    for (let i = 0; i < contractSize; i++) {
+      // Convert flat index to contracted indices
+      let temp = i;
+      const contractedIdx: number[] = new Array(aAxes.length);
+      for (let j = aAxes.length - 1; j >= 0; j--) {
+        const ax = aAxes[j]!;
+        contractedIdx[j] = temp % a.shape[ax]!;
+        temp = Math.floor(temp / a.shape[ax]!);
+      }
+
+      // Build full indices for a and b
+      const aIdx: number[] = new Array(a.ndim);
+      const bIdx: number[] = new Array(b.ndim);
+
+      for (let j = 0; j < aAxes.length; j++) {
+        aIdx[aAxes[j]!] = contractedIdx[j]!;
+      }
+      for (let j = 0; j < bAxes.length; j++) {
+        bIdx[bAxes[j]!] = contractedIdx[j]!;
+      }
+
+      const aVal = a.get(...aIdx);
+      const bVal = b.get(...bIdx);
+
+      if (typeof aVal === 'bigint' && typeof bVal === 'bigint') {
+        sum = Number(sum) + Number(aVal * bVal);
+      } else {
+        sum += Number(aVal) * Number(bVal);
+      }
+    }
+    return sum;
+  }
+
+  // General case: with free axes
+  const resultDtype = promoteDTypes(a.dtype, b.dtype);
+  const result = ArrayStorage.zeros(resultShape, resultDtype);
+
+  const resultSize = resultShape.reduce((acc, dim) => acc * dim, 1);
+  const contractSize = aAxes.map((ax) => a.shape[ax]!).reduce((acc, dim) => acc * dim, 1);
+
+  // Iterate over all result positions
+  for (let resIdx = 0; resIdx < resultSize; resIdx++) {
+    // Convert flat result index to multi-dimensional
+    let temp = resIdx;
+    const resultIndices: number[] = [];
+    for (let i = resultShape.length - 1; i >= 0; i--) {
+      resultIndices[i] = temp % resultShape[i]!;
+      temp = Math.floor(temp / resultShape[i]!);
+    }
+
+    // Extract indices for a's free axes and b's free axes
+    const aFreeIndices = resultIndices.slice(0, aFreeAxes.length);
+    const bFreeIndices = resultIndices.slice(aFreeAxes.length);
+
+    let sum = 0;
+
+    // Sum over all contracted axes
+    for (let c = 0; c < contractSize; c++) {
+      // Convert flat contracted index to multi-dimensional
+      temp = c;
+      const contractedIndices: number[] = [];
+      for (let i = aAxes.length - 1; i >= 0; i--) {
+        const ax = aAxes[i]!;
+        contractedIndices[i] = temp % a.shape[ax]!;
+        temp = Math.floor(temp / a.shape[ax]!);
+      }
+
+      // Build full indices for a and b
+      const aFullIdx: number[] = new Array(a.ndim);
+      const bFullIdx: number[] = new Array(b.ndim);
+
+      // Fill in free axes
+      for (let i = 0; i < aFreeAxes.length; i++) {
+        aFullIdx[aFreeAxes[i]!] = aFreeIndices[i]!;
+      }
+      for (let i = 0; i < bFreeAxes.length; i++) {
+        bFullIdx[bFreeAxes[i]!] = bFreeIndices[i]!;
+      }
+
+      // Fill in contracted axes
+      for (let i = 0; i < aAxes.length; i++) {
+        aFullIdx[aAxes[i]!] = contractedIndices[i]!;
+        bFullIdx[bAxes[i]!] = contractedIndices[i]!;
+      }
+
+      const aVal = a.get(...aFullIdx);
+      const bVal = b.get(...bFullIdx);
+
+      if (typeof aVal === 'bigint' && typeof bVal === 'bigint') {
+        sum = Number(sum) + Number(aVal * bVal);
+      } else {
+        sum += Number(aVal) * Number(bVal);
+      }
+    }
+
+    result.set(resultIndices, sum);
+  }
+
+  return result;
+}

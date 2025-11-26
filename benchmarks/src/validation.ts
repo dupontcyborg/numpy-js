@@ -158,6 +158,12 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
     // Linalg
     case 'dot':
       return arrays.a.dot(arrays.b);
+    case 'inner':
+      return arrays.a.inner(arrays.b);
+    case 'outer':
+      return arrays.a.outer(arrays.b);
+    case 'tensordot':
+      return arrays.a.tensordot(arrays.b, arrays.axes ?? 2);
     case 'matmul':
       return arrays.a.matmul(arrays.b);
     case 'trace':

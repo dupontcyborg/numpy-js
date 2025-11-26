@@ -720,6 +720,43 @@ export class NDArray {
     return linalgOps.trace(this._storage);
   }
 
+  /**
+   * Inner product (contracts over last axes of both arrays)
+   * @param other - Array to compute inner product with
+   * @returns Inner product result
+   */
+  inner(other: NDArray): NDArray | number | bigint {
+    const result = linalgOps.inner(this._storage, other._storage);
+    if (typeof result === 'number' || typeof result === 'bigint') {
+      return result;
+    }
+    return NDArray._fromStorage(result);
+  }
+
+  /**
+   * Outer product (flattens inputs then computes a[i]*b[j])
+   * @param other - Array to compute outer product with
+   * @returns 2D outer product matrix
+   */
+  outer(other: NDArray): NDArray {
+    const result = linalgOps.outer(this._storage, other._storage);
+    return NDArray._fromStorage(result);
+  }
+
+  /**
+   * Tensor dot product along specified axes
+   * @param other - Array to contract with
+   * @param axes - Axes to contract (integer or [a_axes, b_axes])
+   * @returns Tensor dot product result
+   */
+  tensordot(other: NDArray, axes: number | [number[], number[]] = 2): NDArray | number | bigint {
+    const result = linalgOps.tensordot(this._storage, other._storage, axes);
+    if (typeof result === 'number' || typeof result === 'bigint') {
+      return result;
+    }
+    return NDArray._fromStorage(result);
+  }
+
   // Slicing
   /**
    * Slice the array using NumPy-style string syntax
@@ -1552,4 +1589,47 @@ export function trace(a: NDArray): number | bigint {
  */
 export function transpose(a: NDArray, axes?: number[]): NDArray {
   return a.transpose(axes);
+}
+
+/**
+ * Inner product of two arrays
+ *
+ * Contracts over last axes of both arrays.
+ * Result shape: (*a.shape[:-1], *b.shape[:-1])
+ *
+ * @param a - First array
+ * @param b - Second array
+ * @returns Inner product result
+ */
+export function inner(a: NDArray, b: NDArray): NDArray | number | bigint {
+  return a.inner(b);
+}
+
+/**
+ * Outer product of two arrays
+ *
+ * Flattens inputs then computes result[i,j] = a[i] * b[j]
+ *
+ * @param a - First array
+ * @param b - Second array
+ * @returns 2D outer product matrix
+ */
+export function outer(a: NDArray, b: NDArray): NDArray {
+  return a.outer(b);
+}
+
+/**
+ * Tensor dot product along specified axes
+ *
+ * @param a - First array
+ * @param b - Second array
+ * @param axes - Axes to contract (integer or [a_axes, b_axes])
+ * @returns Tensor dot product
+ */
+export function tensordot(
+  a: NDArray,
+  b: NDArray,
+  axes: number | [number[], number[]] = 2
+): NDArray | number | bigint {
+  return a.tensordot(b, axes);
 }

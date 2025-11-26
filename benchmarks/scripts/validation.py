@@ -112,6 +112,10 @@ def run_operation(spec):
     # Linalg
     elif operation == "dot":
         result = np.dot(arrays["a"], arrays["b"])
+    elif operation == "inner":
+        result = np.inner(arrays["a"], arrays["b"])
+    elif operation == "outer":
+        result = np.outer(arrays["a"], arrays["b"])
     elif operation == "matmul":
         result = arrays["a"] @ arrays["b"]
     elif operation == "trace":

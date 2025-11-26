@@ -148,15 +148,18 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
 
   // Linear algebra
   else if (operation === 'dot') {
-    const result = arrays['a'].dot(arrays['b']);
-    // dot can return scalar or array
-    return result;
+    return arrays['a'].dot(arrays['b']);
+  } else if (operation === 'inner') {
+    return arrays['a'].inner(arrays['b']);
+  } else if (operation === 'outer') {
+    return arrays['a'].outer(arrays['b']);
+  } else if (operation === 'tensordot') {
+    const axes = arrays['axes'] ?? 2;
+    return arrays['a'].tensordot(arrays['b'], axes);
   } else if (operation === 'matmul') {
     return arrays['a'].matmul(arrays['b']);
   } else if (operation === 'trace') {
-    // trace returns scalar, wrap it as array for consistency
-    const result = arrays['a'].trace();
-    return result;
+    return arrays['a'].trace();
   } else if (operation === 'transpose') {
     return arrays['a'].transpose();
   }

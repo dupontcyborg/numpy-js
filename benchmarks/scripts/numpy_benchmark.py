@@ -121,6 +121,13 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
     # Linear algebra
     elif operation == "dot":
         return np.dot(arrays["a"], arrays["b"])
+    elif operation == "inner":
+        return np.inner(arrays["a"], arrays["b"])
+    elif operation == "outer":
+        return np.outer(arrays["a"], arrays["b"])
+    elif operation == "tensordot":
+        axes = arrays.get("axes", 2)
+        return np.tensordot(arrays["a"], arrays["b"], axes=axes)
     elif operation == "matmul":
         return arrays["a"] @ arrays["b"]
     elif operation == "trace":

@@ -235,9 +235,9 @@ All operations preserve dtype or follow NumPy promotion rules:
 ### Matrix Products
 - [x] `dot(a, b)` - Dot product _(fully NumPy-compatible: all 0D-ND combinations including scalars, vectors, matrices, and tensors)_
 - [x] `matmul(a, b)` - Matrix product _(fully implemented with transpose detection via strides)_
-- [ ] `inner(a, b)` - Inner product
-- [ ] `outer(a, b)` - Outer product
-- [ ] `tensordot(a, b, axes)` - Tensor dot product
+- [x] `inner(a, b)` - Inner product _(contracts over last axes of both arrays)_
+- [x] `outer(a, b)` - Outer product _(flattens inputs, computes all pairwise products)_
+- [x] `tensordot(a, b, axes)` - Tensor dot product
 - [ ] `einsum(subscripts, *operands)` - Einstein summation
 
 ### Decompositions
