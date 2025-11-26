@@ -358,6 +358,45 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
 
   if (Array.isArray(sizes.medium)) {
     const [m, n] = sizes.medium;
+
+    // Dot product benchmarks
+    specs.push({
+      name: `dot 1D · 1D [${sizes.small}]`,
+      category: 'linalg',
+      operation: 'dot',
+      setup: {
+        a: { shape: [sizes.small], fill: 'arange' },
+        b: { shape: [sizes.small], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `dot 2D · 1D [${m}x${n}] · [${n}]`,
+      category: 'linalg',
+      operation: 'dot',
+      setup: {
+        a: { shape: [m!, n!], fill: 'arange' },
+        b: { shape: [n!], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `dot 2D · 2D [${m}x${n}] · [${n}x${m}]`,
+      category: 'linalg',
+      operation: 'dot',
+      setup: {
+        a: { shape: [m!, n!], fill: 'arange', dtype: 'float64' },
+        b: { shape: [n!, m!], fill: 'arange', dtype: 'float64' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // Matrix multiplication
     specs.push({
       name: `matmul [${m}x${n}] @ [${n}x${m}]`,
       category: 'linalg',
@@ -370,6 +409,19 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       warmup,
     });
 
+    // Trace
+    specs.push({
+      name: `trace [${m}x${n}]`,
+      category: 'linalg',
+      operation: 'trace',
+      setup: {
+        a: { shape: [m!, n!], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // Transpose
     specs.push({
       name: `transpose [${m}x${n}]`,
       category: 'linalg',

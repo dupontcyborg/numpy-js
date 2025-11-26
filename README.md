@@ -201,7 +201,6 @@ import * as np from 'numpy-ts';
 - [API-REFERENCE.md](https://github.com/dupontcyborg/numpy-ts/blob/main/docs/API-REFERENCE.md) - Complete API checklist
 
 ### Developer Documentation
-- [ARCHITECTURE.md](https://github.com/dupontcyborg/numpy-ts/blob/main/docs/ARCHITECTURE.md) - Design and implementation details
 - [TESTING-GUIDE.md](https://github.com/dupontcyborg/numpy-ts/blob/main/docs/TESTING-GUIDE.md) - How to add tests (unit, validation, benchmarks)
 - [benchmarks/README.md](https://github.com/dupontcyborg/numpy-ts/blob/main/benchmarks/README.md) - Performance benchmarking guide
 
@@ -269,8 +268,6 @@ it('int8 overflow wraps like NumPy', () => {
 **Correctness First**
 - Validate against Python NumPy before optimizing
 - Performance improvements (WASM/SIMD) come later
-
-See [ARCHITECTURE.md](https://github.com/dupontcyborg/numpy-ts/blob/main/docs/ARCHITECTURE.md) for detailed design rationale.
 
 ---
 

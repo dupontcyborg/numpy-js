@@ -156,8 +156,12 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
       return np.sign(arrays.a);
 
     // Linalg
+    case 'dot':
+      return arrays.a.dot(arrays.b);
     case 'matmul':
       return arrays.a.matmul(arrays.b);
+    case 'trace':
+      return arrays.a.trace();
     case 'transpose':
       return arrays.a.transpose();
 

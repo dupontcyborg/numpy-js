@@ -147,8 +147,16 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
   }
 
   // Linear algebra
-  else if (operation === 'matmul') {
+  else if (operation === 'dot') {
+    const result = arrays['a'].dot(arrays['b']);
+    // dot can return scalar or array
+    return result;
+  } else if (operation === 'matmul') {
     return arrays['a'].matmul(arrays['b']);
+  } else if (operation === 'trace') {
+    // trace returns scalar, wrap it as array for consistency
+    const result = arrays['a'].trace();
+    return result;
   } else if (operation === 'transpose') {
     return arrays['a'].transpose();
   }

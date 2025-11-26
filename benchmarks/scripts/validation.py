@@ -110,8 +110,12 @@ def run_operation(spec):
         result = np.sign(arrays["a"])
 
     # Linalg
+    elif operation == "dot":
+        result = np.dot(arrays["a"], arrays["b"])
     elif operation == "matmul":
         result = arrays["a"] @ arrays["b"]
+    elif operation == "trace":
+        result = np.trace(arrays["a"])
     elif operation == "transpose":
         result = arrays["a"].T
 
