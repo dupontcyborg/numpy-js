@@ -39,6 +39,27 @@ export {
   inner,
   outer,
   tensordot,
+  // Array manipulation
+  swapaxes,
+  moveaxis,
+  concatenate,
+  stack,
+  vstack,
+  hstack,
+  dstack,
+  split,
+  array_split,
+  vsplit,
+  hsplit,
+  tile,
+  repeat,
+  // Advanced
+  broadcast_to,
+  broadcast_arrays,
+  take,
+  put,
+  choose,
+  array_equal,
 } from './core/ndarray';
 
 // Version (replaced at build time from package.json)
