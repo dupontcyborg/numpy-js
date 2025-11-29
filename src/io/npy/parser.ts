@@ -194,7 +194,17 @@ function createTypedArray(
   numElements: number,
   needsByteSwap: boolean,
   itemsize: number
-): Float64Array | Float32Array | BigInt64Array | Int32Array | Int16Array | Int8Array | BigUint64Array | Uint32Array | Uint16Array | Uint8Array {
+):
+  | Float64Array
+  | Float32Array
+  | BigInt64Array
+  | Int32Array
+  | Int16Array
+  | Int8Array
+  | BigUint64Array
+  | Uint32Array
+  | Uint16Array
+  | Uint8Array {
   const Constructor = getTypedArrayConstructor(dtype);
   if (!Constructor) {
     throw new InvalidNpyError(`Cannot create array for dtype: ${dtype}`);

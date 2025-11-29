@@ -104,10 +104,7 @@ export async function loadNpzFile(
  * @param options - Load options
  * @returns Object with array names as keys
  */
-export function loadNpzFileSync(
-  path: string,
-  options: NpzParseOptions = {}
-): NpzParseResult {
+export function loadNpzFileSync(path: string, options: NpzParseOptions = {}): NpzParseResult {
   const buffer = readFileSync(path);
   // Note: This will throw if the file is compressed
   const { parseNpzSync } = require('./io/npz/parser');
@@ -139,10 +136,7 @@ export async function saveNpz(
  * @param path - Path to save the .npz file
  * @param arrays - Arrays to save (same types as saveNpz)
  */
-export function saveNpzSync(
-  path: string,
-  arrays: NpzArraysInput
-): void {
+export function saveNpzSync(path: string, arrays: NpzArraysInput): void {
   const { serializeNpzSync } = require('./io/npz/serializer');
   const data = serializeNpzSync(arrays);
   writeFileSync(path, data);
@@ -169,9 +163,7 @@ export async function load(
   } else if (path.endsWith('.npz')) {
     return loadNpzFile(path, options);
   } else {
-    throw new Error(
-      `Unknown file extension. Expected .npy or .npz, got: ${path}`
-    );
+    throw new Error(`Unknown file extension. Expected .npy or .npz, got: ${path}`);
   }
 }
 
@@ -182,10 +174,7 @@ export async function load(
  * @param options - Load options
  * @returns NDArray for .npy files, or NpzParseResult for .npz files
  */
-export function loadSync(
-  path: string,
-  options: LoadOptions = {}
-): NDArray | NpzParseResult {
+export function loadSync(path: string, options: LoadOptions = {}): NDArray | NpzParseResult {
   if (path.endsWith('.npy')) {
     if (options.allowNpy === false) {
       throw new Error('Loading .npy files is disabled (allowNpy: false)');
@@ -194,9 +183,7 @@ export function loadSync(
   } else if (path.endsWith('.npz')) {
     return loadNpzFileSync(path, options);
   } else {
-    throw new Error(
-      `Unknown file extension. Expected .npy or .npz, got: ${path}`
-    );
+    throw new Error(`Unknown file extension. Expected .npy or .npz, got: ${path}`);
   }
 }
 
@@ -208,9 +195,7 @@ export function loadSync(
  */
 export async function save(path: string, arr: NDArray): Promise<void> {
   if (!path.endsWith('.npy')) {
-    throw new Error(
-      `save() is for .npy files. Use saveNpz() for .npz files. Got: ${path}`
-    );
+    throw new Error(`save() is for .npy files. Use saveNpz() for .npz files. Got: ${path}`);
   }
   return saveNpy(path, arr);
 }
@@ -223,9 +208,7 @@ export async function save(path: string, arr: NDArray): Promise<void> {
  */
 export function saveSync(path: string, arr: NDArray): void {
   if (!path.endsWith('.npy')) {
-    throw new Error(
-      `saveSync() is for .npy files. Use saveNpzSync() for .npz files. Got: ${path}`
-    );
+    throw new Error(`saveSync() is for .npy files. Use saveNpzSync() for .npz files. Got: ${path}`);
   }
   return saveNpySync(path, arr);
 }
@@ -245,10 +228,7 @@ export function saveSync(path: string, arr: NDArray): void {
  * // Named arrays
  * await savez('data.npz', { x: arr1, y: arr2 })
  */
-export async function savez(
-  path: string,
-  arrays: NpzArraysInput
-): Promise<void> {
+export async function savez(path: string, arrays: NpzArraysInput): Promise<void> {
   if (!path.endsWith('.npz')) {
     path = path + '.npz';
   }
@@ -261,10 +241,7 @@ export async function savez(
  * @param path - Path to save the .npz file
  * @param arrays - Arrays to save (same input types as savez)
  */
-export async function savez_compressed(
-  path: string,
-  arrays: NpzArraysInput
-): Promise<void> {
+export async function savez_compressed(path: string, arrays: NpzArraysInput): Promise<void> {
   if (!path.endsWith('.npz')) {
     path = path + '.npz';
   }

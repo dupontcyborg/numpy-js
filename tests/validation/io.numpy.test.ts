@@ -14,7 +14,7 @@ import { join } from 'path';
 
 import { parseNpy, serializeNpy } from '../../src/io/npy';
 import { parseNpz, serializeNpz, serializeNpzSync } from '../../src/io/npz';
-import { array, zeros, arange } from '../../src/core/ndarray';
+import { array, arange } from '../../src/core/ndarray';
 import type { DType } from '../../src/core/dtype';
 
 // Get Python command from environment or use default
@@ -54,13 +54,33 @@ describeIfNumPy('NPY/NPZ Cross-Language Validation', () => {
       values: string;
       expected: number[] | bigint[];
     }> = [
-      { dtype: 'float64', npDtype: 'float64', values: '[1.5, 2.5, 3.5]', expected: [1.5, 2.5, 3.5] },
-      { dtype: 'float32', npDtype: 'float32', values: '[1.5, 2.5, 3.5]', expected: [1.5, 2.5, 3.5] },
-      { dtype: 'int64', npDtype: 'int64', values: '[1, 2, 3]', expected: [BigInt(1), BigInt(2), BigInt(3)] },
+      {
+        dtype: 'float64',
+        npDtype: 'float64',
+        values: '[1.5, 2.5, 3.5]',
+        expected: [1.5, 2.5, 3.5],
+      },
+      {
+        dtype: 'float32',
+        npDtype: 'float32',
+        values: '[1.5, 2.5, 3.5]',
+        expected: [1.5, 2.5, 3.5],
+      },
+      {
+        dtype: 'int64',
+        npDtype: 'int64',
+        values: '[1, 2, 3]',
+        expected: [BigInt(1), BigInt(2), BigInt(3)],
+      },
       { dtype: 'int32', npDtype: 'int32', values: '[1, 2, 3]', expected: [1, 2, 3] },
       { dtype: 'int16', npDtype: 'int16', values: '[1, 2, 3]', expected: [1, 2, 3] },
       { dtype: 'int8', npDtype: 'int8', values: '[1, 2, 3]', expected: [1, 2, 3] },
-      { dtype: 'uint64', npDtype: 'uint64', values: '[1, 2, 3]', expected: [BigInt(1), BigInt(2), BigInt(3)] },
+      {
+        dtype: 'uint64',
+        npDtype: 'uint64',
+        values: '[1, 2, 3]',
+        expected: [BigInt(1), BigInt(2), BigInt(3)],
+      },
       { dtype: 'uint32', npDtype: 'uint32', values: '[1, 2, 3]', expected: [1, 2, 3] },
       { dtype: 'uint16', npDtype: 'uint16', values: '[1, 2, 3]', expected: [1, 2, 3] },
       { dtype: 'uint8', npDtype: 'uint8', values: '[1, 2, 3]', expected: [1, 2, 3] },

@@ -187,7 +187,13 @@ function writeLocalHeader(
   output: Uint8Array,
   view: DataView,
   offset: number,
-  entry: { name: string; compressedData: Uint8Array; data: Uint8Array; crc: number; compressionMethod: number }
+  entry: {
+    name: string;
+    compressedData: Uint8Array;
+    data: Uint8Array;
+    crc: number;
+    compressionMethod: number;
+  }
 ): number {
   const nameBytes = new TextEncoder().encode(entry.name);
 

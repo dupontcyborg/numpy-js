@@ -7,8 +7,7 @@ import {
   loadNpz,
   loadNpzSync,
 } from '../../../src/io/npz';
-import { UnsupportedDTypeError } from '../../../src/io/npy';
-import { array, zeros, ones, arange } from '../../../src/core/ndarray';
+import { array, zeros, arange } from '../../../src/core/ndarray';
 
 describe('NPZ Format', () => {
   describe('serializeNpzSync and parseNpzSync', () => {

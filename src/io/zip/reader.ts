@@ -102,7 +102,8 @@ function parseZipEntries(buffer: ArrayBuffer | Uint8Array): RawZipEntry[] {
 
   for (let i = 0; i < numEntries; i++) {
     const signature = view.getUint32(cdOffset, true);
-    if (signature !== 0x02014b50) {  // Central directory signature
+    if (signature !== 0x02014b50) {
+      // Central directory signature
       break;
     }
 
