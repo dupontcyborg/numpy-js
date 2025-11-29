@@ -681,11 +681,7 @@ export function arraySplit(
 /**
  * Helper to split array at specified indices
  */
-function splitAtIndices(
-  storage: ArrayStorage,
-  indices: number[],
-  axis: number
-): ArrayStorage[] {
+function splitAtIndices(storage: ArrayStorage, indices: number[], axis: number): ArrayStorage[] {
   const shape = storage.shape;
   const axisSize = shape[axis]!;
 

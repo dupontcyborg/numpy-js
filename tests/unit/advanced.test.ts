@@ -5,18 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import {
-  array,
-  zeros,
-  ones,
-  arange,
-  broadcast_to,
-  broadcast_arrays,
-  take,
-  put,
-  choose,
-  array_equal,
-} from '../../src';
+import { array, broadcast_to, broadcast_arrays, take, put, choose, array_equal } from '../../src';
 
 describe('Advanced Functions', () => {
   // ========================================

@@ -9,8 +9,6 @@ import { describe, it, expect } from 'vitest';
 import {
   array,
   zeros,
-  ones,
-  arange,
   swapaxes,
   moveaxis,
   concatenate,

@@ -19,9 +19,7 @@ export function broadcast_to(storage: ArrayStorage, targetShape: number[]): Arra
   const targetNdim = targetShape.length;
 
   if (targetNdim < ndim) {
-    throw new Error(
-      `input operand has more dimensions than allowed by the axis remapping`
-    );
+    throw new Error(`input operand has more dimensions than allowed by the axis remapping`);
   }
 
   // Validate that broadcasting is possible
@@ -74,11 +72,7 @@ export function broadcast_arrays(storages: ArrayStorage[]): ArrayStorage[] {
 /**
  * Take elements from an array along an axis
  */
-export function take(
-  storage: ArrayStorage,
-  indices: number[],
-  axis?: number
-): ArrayStorage {
+export function take(storage: ArrayStorage, indices: number[], axis?: number): ArrayStorage {
   const shape = storage.shape;
   const ndim = shape.length;
   const dtype = storage.dtype;
@@ -130,7 +124,9 @@ export function take(
   for (const idx of indices) {
     const normalizedIdx = idx < 0 ? axisSize + idx : idx;
     if (normalizedIdx < 0 || normalizedIdx >= axisSize) {
-      throw new Error(`index ${idx} is out of bounds for axis ${normalizedAxis} with size ${axisSize}`);
+      throw new Error(
+        `index ${idx} is out of bounds for axis ${normalizedAxis} with size ${axisSize}`
+      );
     }
   }
 
@@ -246,10 +242,7 @@ export function put(
 /**
  * Construct array from index array and choices
  */
-export function choose(
-  indexStorage: ArrayStorage,
-  choices: ArrayStorage[]
-): ArrayStorage {
+export function choose(indexStorage: ArrayStorage, choices: ArrayStorage[]): ArrayStorage {
   if (choices.length === 0) {
     throw new Error('choices cannot be empty');
   }
@@ -302,11 +295,7 @@ export function choose(
 /**
  * Check if two arrays are element-wise equal
  */
-export function array_equal(
-  a: ArrayStorage,
-  b: ArrayStorage,
-  equal_nan: boolean = false
-): boolean {
+export function array_equal(a: ArrayStorage, b: ArrayStorage, equal_nan: boolean = false): boolean {
   // Check shapes match
   if (a.ndim !== b.ndim) {
     return false;
