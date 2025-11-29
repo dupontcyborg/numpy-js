@@ -118,6 +118,26 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
     elif operation == "sign":
         return np.sign(arrays["a"])
 
+    # Trigonometric
+    elif operation == "sin":
+        return np.sin(arrays["a"])
+    elif operation == "cos":
+        return np.cos(arrays["a"])
+    elif operation == "tan":
+        return np.tan(arrays["a"])
+    elif operation == "arctan2":
+        return np.arctan2(arrays["a"], arrays["b"])
+    elif operation == "hypot":
+        return np.hypot(arrays["a"], arrays["b"])
+
+    # Hyperbolic
+    elif operation == "sinh":
+        return np.sinh(arrays["a"])
+    elif operation == "cosh":
+        return np.cosh(arrays["a"])
+    elif operation == "tanh":
+        return np.tanh(arrays["a"])
+
     # Linear algebra
     elif operation == "dot":
         return np.dot(arrays["a"], arrays["b"])

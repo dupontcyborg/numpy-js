@@ -350,6 +350,99 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       iterations,
       warmup,
     });
+
+    // Trigonometric functions
+    specs.push({
+      name: `sin [${sizes.medium.join('x')}]`,
+      category: 'math',
+      operation: 'sin',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `cos [${sizes.medium.join('x')}]`,
+      category: 'math',
+      operation: 'cos',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `tan [${sizes.medium.join('x')}]`,
+      category: 'math',
+      operation: 'tan',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `arctan2 [${sizes.medium.join('x')}]`,
+      category: 'math',
+      operation: 'arctan2',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: 1 },
+        b: { shape: sizes.medium, fill: 'arange', value: 1 },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `hypot [${sizes.medium.join('x')}]`,
+      category: 'math',
+      operation: 'hypot',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: 1 },
+        b: { shape: sizes.medium, fill: 'arange', value: 1 },
+      },
+      iterations,
+      warmup,
+    });
+
+    // Hyperbolic functions
+    // Use scaled values to avoid overflow (sinh/cosh overflow around 710)
+    specs.push({
+      name: `sinh [${sizes.medium.join('x')}]`,
+      category: 'math',
+      operation: 'sinh',
+      setup: {
+        a: { shape: sizes.medium, fill: 'ones' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `cosh [${sizes.medium.join('x')}]`,
+      category: 'math',
+      operation: 'cosh',
+      setup: {
+        a: { shape: sizes.medium, fill: 'ones' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `tanh [${sizes.medium.join('x')}]`,
+      category: 'math',
+      operation: 'tanh',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
   }
 
   // ========================================

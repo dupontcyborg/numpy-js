@@ -115,8 +115,8 @@ All operations preserve dtype or follow NumPy promotion rules:
 **File organization:**
 - Arithmetic operations → `src/ops/arithmetic.ts`
 - Exponential/logarithmic/power → `src/ops/exponential.ts`
-- Trigonometric → `src/ops/trig.ts` (future)
-- Hyperbolic → `src/ops/hyperbolic.ts` (future)
+- Trigonometric → `src/ops/trig.ts`
+- Hyperbolic → `src/ops/hyperbolic.ts`
 - Rounding → `src/ops/rounding.ts` (future)
 
 ### Arithmetic
@@ -133,24 +133,24 @@ All operations preserve dtype or follow NumPy promotion rules:
 - [x] `reciprocal(x)` - Reciprocal
 
 ### Trigonometric
-- [ ] `sin(x)` - Sine
-- [ ] `cos(x)` - Cosine
-- [ ] `tan(x)` - Tangent
-- [ ] `arcsin(x)` - Inverse sine
-- [ ] `arccos(x)` - Inverse cosine
-- [ ] `arctan(x)` - Inverse tangent
-- [ ] `arctan2(x1, x2)` - Four-quadrant inverse tangent
-- [ ] `hypot(x1, x2)` - Hypotenuse
-- [ ] `degrees(x)` - Radians to degrees
-- [ ] `radians(x)` - Degrees to radians
+- [x] `sin(x)` - Sine
+- [x] `cos(x)` - Cosine
+- [x] `tan(x)` - Tangent
+- [x] `arcsin(x)` - Inverse sine
+- [x] `arccos(x)` - Inverse cosine
+- [x] `arctan(x)` - Inverse tangent
+- [x] `arctan2(x1, x2)` - Four-quadrant inverse tangent
+- [x] `hypot(x1, x2)` - Hypotenuse
+- [x] `degrees(x)` - Radians to degrees
+- [x] `radians(x)` - Degrees to radians
 
 ### Hyperbolic
-- [ ] `sinh(x)` - Hyperbolic sine
-- [ ] `cosh(x)` - Hyperbolic cosine
-- [ ] `tanh(x)` - Hyperbolic tangent
-- [ ] `arcsinh(x)` - Inverse hyperbolic sine
-- [ ] `arccosh(x)` - Inverse hyperbolic cosine
-- [ ] `arctanh(x)` - Inverse hyperbolic tangent
+- [x] `sinh(x)` - Hyperbolic sine
+- [x] `cosh(x)` - Hyperbolic cosine
+- [x] `tanh(x)` - Hyperbolic tangent
+- [x] `arcsinh(x)` - Inverse hyperbolic sine
+- [x] `arccosh(x)` - Inverse hyperbolic cosine
+- [x] `arctanh(x)` - Inverse hyperbolic tangent
 
 ### Exponential and Logarithmic
 - [x] `sqrt(x)` - Square root
@@ -396,4 +396,4 @@ All operations preserve dtype or follow NumPy promotion rules:
 
 ---
 
-**Last Updated**: 2025-10-23
+**Last Updated**: 2025-11-29
