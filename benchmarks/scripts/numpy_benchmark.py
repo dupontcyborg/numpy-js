@@ -31,12 +31,17 @@ def setup_arrays(setup: Dict[str, Any]) -> Dict[str, np.ndarray]:
         dtype = spec.get("dtype", "float64")
         fill_type = spec.get("fill", "zeros")
 
-        # Handle scalar values (n, axis, new_shape, shape, fill_value)
-        if key in ["n", "axis", "new_shape", "shape", "fill_value"]:
+        # Handle scalar values (n, axis, new_shape, shape, fill_value, target_shape)
+        if key in ["n", "axis", "new_shape", "shape", "fill_value", "target_shape"]:
             if len(shape) == 1:
                 arrays[key] = shape[0]
             else:
                 arrays[key] = tuple(shape)
+            continue
+
+        # Handle indices array
+        if key == "indices":
+            arrays[key] = shape
             continue
 
         # Check 'value' first to avoid default fill creating zeros
@@ -183,6 +188,28 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
     # Slicing
     elif operation == "slice":
         return arrays["a"][:100, :100]
+
+    # Array manipulation
+    elif operation == "swapaxes":
+        return np.swapaxes(arrays["a"], 0, 1)
+    elif operation == "concatenate":
+        return np.concatenate([arrays["a"], arrays["b"]], axis=0)
+    elif operation == "stack":
+        return np.stack([arrays["a"], arrays["b"]], axis=0)
+    elif operation == "vstack":
+        return np.vstack([arrays["a"], arrays["b"]])
+    elif operation == "hstack":
+        return np.hstack([arrays["a"], arrays["b"]])
+    elif operation == "tile":
+        return np.tile(arrays["a"], [2, 2])
+    elif operation == "repeat":
+        return np.repeat(arrays["a"], 2)
+
+    # Advanced
+    elif operation == "broadcast_to":
+        return np.broadcast_to(arrays["a"], arrays["target_shape"])
+    elif operation == "take":
+        return np.take(arrays["a"], arrays["indices"])
 
     else:
         raise ValueError(f"Unknown operation: {operation}")

@@ -172,30 +172,30 @@
     <p class="subtitle">Performance comparison of numpy-ts against Python NumPy</p>
 
     <div class="meta">
-      <div><strong>Timestamp:</strong> 11/26/2025, 4:15:59 PM</div>
-      <div><strong>Node:</strong> v22.11.0</div>
-      <div><strong>Python:</strong> 3.13.0</div>
-      <div><strong>NumPy:</strong> 2.3.3</div>
-      <div><strong>numpy-ts:</strong> 0.3.0</div>
-      <div><strong>Total Benchmarks:</strong> 57</div>
+      <div><strong>Timestamp:</strong> 11/29/2025, 8:40:32 PM</div>
+      <div><strong>Node:</strong> v22.21.1</div>
+      <div><strong>Python:</strong> 3.11.14</div>
+      <div><strong>NumPy:</strong> 2.3.5</div>
+      <div><strong>numpy-ts:</strong> 0.4.0</div>
+      <div><strong>Total Benchmarks:</strong> 66</div>
     </div>
 
     <div class="summary-grid">
       <div class="summary-card">
         <h3>Average Slowdown</h3>
-        <div class="value">19.36x</div>
+        <div class="value">28.05x</div>
       </div>
       <div class="summary-card">
         <h3>Median Slowdown</h3>
-        <div class="value">2.68x</div>
+        <div class="value">5.07x</div>
       </div>
       <div class="summary-card best">
         <h3>Best Case</h3>
-        <div class="value">0.05x</div>
+        <div class="value">0.07x</div>
       </div>
       <div class="summary-card worst">
         <h3>Worst Case</h3>
-        <div class="value">150.84x</div>
+        <div class="value">160.41x</div>
       </div>
     </div>
 
@@ -225,94 +225,94 @@
         <tbody>
           <tr>
             <td>zeros [1000]</td>
-            <td>4.85M</td>
-            <td>3.65M</td>
-            <td>0.27μs</td>
-            <td><span class="ratio good">1.33x</span></td>
+            <td>2.56M</td>
+            <td>129.9K</td>
+            <td>7.70μs</td>
+            <td><span class="ratio bad">19.72x</span></td>
           </tr>
           <tr>
             <td>zeros [100x100]</td>
-            <td>1.46M</td>
-            <td>966.0K</td>
-            <td>1.04μs</td>
-            <td><span class="ratio good">1.51x</span></td>
+            <td>620.0K</td>
+            <td>85.2K</td>
+            <td>11.74μs</td>
+            <td><span class="ratio bad">7.28x</span></td>
           </tr>
           <tr>
             <td>ones [100x100]</td>
-            <td>836.7K</td>
-            <td>596.6K</td>
-            <td>1.68μs</td>
-            <td><span class="ratio good">1.40x</span></td>
+            <td>326.6K</td>
+            <td>73.5K</td>
+            <td>13.60μs</td>
+            <td><span class="ratio ok">4.44x</span></td>
           </tr>
           <tr>
             <td>arange(1000)</td>
-            <td>2.84M</td>
-            <td>1.22M</td>
-            <td>0.82μs</td>
-            <td><span class="ratio ok">2.33x</span></td>
+            <td>959.2K</td>
+            <td>256.8K</td>
+            <td>3.89μs</td>
+            <td><span class="ratio ok">3.74x</span></td>
           </tr>
           <tr>
             <td>linspace(0, 100, 1000)</td>
-            <td>413.0K</td>
-            <td>1.49M</td>
-            <td>0.67μs</td>
-            <td><span class="ratio good">0.28x</span></td>
+            <td>117.7K</td>
+            <td>288.6K</td>
+            <td>3.47μs</td>
+            <td><span class="ratio good">0.41x</span></td>
           </tr>
           <tr>
             <td>logspace(0, 3, 1000)</td>
-            <td>136.6K</td>
-            <td>56.2K</td>
-            <td>17.78μs</td>
-            <td><span class="ratio ok">2.43x</span></td>
+            <td>64.7K</td>
+            <td>13.5K</td>
+            <td>73.84μs</td>
+            <td><span class="ratio ok">4.78x</span></td>
           </tr>
           <tr>
             <td>geomspace(1, 1000, 1000)</td>
-            <td>77.6K</td>
-            <td>285.2K</td>
-            <td>3.51μs</td>
-            <td><span class="ratio good">0.27x</span></td>
+            <td>29.0K</td>
+            <td>63.1K</td>
+            <td>15.85μs</td>
+            <td><span class="ratio good">0.46x</span></td>
           </tr>
           <tr>
             <td>eye(100)</td>
-            <td>571.4K</td>
-            <td>506.7K</td>
-            <td>1.97μs</td>
-            <td><span class="ratio good">1.13x</span></td>
+            <td>292.9K</td>
+            <td>107.4K</td>
+            <td>9.32μs</td>
+            <td><span class="ratio ok">2.73x</span></td>
           </tr>
           <tr>
             <td>identity(100)</td>
-            <td>518.4K</td>
-            <td>479.9K</td>
-            <td>2.08μs</td>
-            <td><span class="ratio good">1.08x</span></td>
+            <td>248.8K</td>
+            <td>118.8K</td>
+            <td>8.42μs</td>
+            <td><span class="ratio ok">2.09x</span></td>
           </tr>
           <tr>
             <td>empty [100x100]</td>
-            <td>7.63M</td>
-            <td>812.0K</td>
-            <td>1.23μs</td>
-            <td><span class="ratio bad">9.39x</span></td>
+            <td>3.00M</td>
+            <td>146.3K</td>
+            <td>6.84μs</td>
+            <td><span class="ratio bad">20.51x</span></td>
           </tr>
           <tr>
             <td>full [100x100]</td>
-            <td>889.6K</td>
-            <td>762.2K</td>
-            <td>1.31μs</td>
-            <td><span class="ratio good">1.17x</span></td>
+            <td>343.5K</td>
+            <td>186.7K</td>
+            <td>5.36μs</td>
+            <td><span class="ratio good">1.84x</span></td>
           </tr>
           <tr>
             <td>copy [100x100]</td>
-            <td>999.7K</td>
-            <td>565.3K</td>
-            <td>1.77μs</td>
-            <td><span class="ratio good">1.77x</span></td>
+            <td>367.8K</td>
+            <td>115.0K</td>
+            <td>8.69μs</td>
+            <td><span class="ratio ok">3.20x</span></td>
           </tr>
           <tr>
             <td>zeros_like [100x100]</td>
-            <td>802.1K</td>
-            <td>869.2K</td>
-            <td>1.15μs</td>
-            <td><span class="ratio good">0.92x</span></td>
+            <td>289.6K</td>
+            <td>121.2K</td>
+            <td>8.25μs</td>
+            <td><span class="ratio ok">2.39x</span></td>
           </tr>
         </tbody>
       </table>
@@ -332,52 +332,52 @@
         <tbody>
           <tr>
             <td>add [100x100] + scalar</td>
-            <td>711.5K</td>
-            <td>6.4K</td>
-            <td>155.76μs</td>
-            <td><span class="ratio bad">110.83x</span></td>
+            <td>288.7K</td>
+            <td>2.5K</td>
+            <td>407.39μs</td>
+            <td><span class="ratio bad">117.61x</span></td>
           </tr>
           <tr>
             <td>add [100x100] + [100x100]</td>
-            <td>449.7K</td>
-            <td>85.3K</td>
-            <td>11.73μs</td>
-            <td><span class="ratio bad">5.27x</span></td>
+            <td>161.7K</td>
+            <td>37.6K</td>
+            <td>26.58μs</td>
+            <td><span class="ratio ok">4.30x</span></td>
           </tr>
           <tr>
             <td>multiply [100x100] * scalar</td>
-            <td>734.5K</td>
-            <td>7.2K</td>
-            <td>138.82μs</td>
-            <td><span class="ratio bad">101.96x</span></td>
+            <td>283.2K</td>
+            <td>2.3K</td>
+            <td>443.32μs</td>
+            <td><span class="ratio bad">125.57x</span></td>
           </tr>
           <tr>
             <td>multiply [100x100] * [100x100]</td>
-            <td>442.2K</td>
-            <td>85.8K</td>
-            <td>11.66μs</td>
-            <td><span class="ratio bad">5.15x</span></td>
+            <td>162.3K</td>
+            <td>36.3K</td>
+            <td>27.57μs</td>
+            <td><span class="ratio ok">4.48x</span></td>
           </tr>
           <tr>
             <td>mod [100x100] % scalar</td>
-            <td>14.0K</td>
-            <td>5.8K</td>
-            <td>173.31μs</td>
-            <td><span class="ratio ok">2.43x</span></td>
+            <td>9.6K</td>
+            <td>1.5K</td>
+            <td>671.31μs</td>
+            <td><span class="ratio bad">6.45x</span></td>
           </tr>
           <tr>
             <td>floor_divide [100x100] // scalar</td>
-            <td>13.5K</td>
-            <td>5.7K</td>
-            <td>174.98μs</td>
-            <td><span class="ratio ok">2.35x</span></td>
+            <td>8.4K</td>
+            <td>2.2K</td>
+            <td>456.93μs</td>
+            <td><span class="ratio ok">3.82x</span></td>
           </tr>
           <tr>
             <td>reciprocal [100x100]</td>
-            <td>653.9K</td>
-            <td>82.3K</td>
-            <td>12.14μs</td>
-            <td><span class="ratio bad">7.94x</span></td>
+            <td>141.5K</td>
+            <td>41.8K</td>
+            <td>23.92μs</td>
+            <td><span class="ratio ok">3.39x</span></td>
           </tr>
         </tbody>
       </table>
@@ -397,38 +397,38 @@
         <tbody>
           <tr>
             <td>sqrt [100x100]</td>
-            <td>384.6K</td>
-            <td>79.4K</td>
-            <td>12.59μs</td>
-            <td><span class="ratio ok">4.84x</span></td>
+            <td>129.1K</td>
+            <td>47.2K</td>
+            <td>21.21μs</td>
+            <td><span class="ratio ok">2.74x</span></td>
           </tr>
           <tr>
             <td>power [100x100] ** 2</td>
-            <td>133.9K</td>
-            <td>5.6K</td>
-            <td>179.57μs</td>
-            <td><span class="ratio bad">24.05x</span></td>
+            <td>150.1K</td>
+            <td>2.1K</td>
+            <td>477.13μs</td>
+            <td><span class="ratio bad">71.60x</span></td>
           </tr>
           <tr>
             <td>absolute [100x100]</td>
-            <td>848.9K</td>
-            <td>80.6K</td>
-            <td>12.40μs</td>
-            <td><span class="ratio bad">10.53x</span></td>
+            <td>315.1K</td>
+            <td>46.7K</td>
+            <td>21.40μs</td>
+            <td><span class="ratio bad">6.74x</span></td>
           </tr>
           <tr>
             <td>negative [100x100]</td>
-            <td>885.1K</td>
-            <td>80.2K</td>
-            <td>12.47μs</td>
-            <td><span class="ratio bad">11.03x</span></td>
+            <td>284.8K</td>
+            <td>40.5K</td>
+            <td>24.70μs</td>
+            <td><span class="ratio bad">7.03x</span></td>
           </tr>
           <tr>
             <td>sign [100x100]</td>
-            <td>220.4K</td>
-            <td>82.2K</td>
-            <td>12.16μs</td>
-            <td><span class="ratio ok">2.68x</span></td>
+            <td>94.4K</td>
+            <td>34.2K</td>
+            <td>29.23μs</td>
+            <td><span class="ratio ok">2.76x</span></td>
           </tr>
         </tbody>
       </table>
@@ -448,73 +448,73 @@
         <tbody>
           <tr>
             <td>dot 1D · 1D [1000]</td>
-            <td>1.41M</td>
-            <td>330.6K</td>
-            <td>3.03μs</td>
-            <td><span class="ratio ok">4.27x</span></td>
+            <td>740.7K</td>
+            <td>127.2K</td>
+            <td>7.86μs</td>
+            <td><span class="ratio bad">5.82x</span></td>
           </tr>
           <tr>
             <td>dot 2D · 1D [100x100] · [100]</td>
-            <td>856.3K</td>
-            <td>22.4K</td>
-            <td>44.71μs</td>
-            <td><span class="ratio bad">38.29x</span></td>
+            <td>425.6K</td>
+            <td>10.1K</td>
+            <td>99.34μs</td>
+            <td><span class="ratio bad">42.28x</span></td>
           </tr>
           <tr>
             <td>dot 2D · 2D [100x100] · [100x100]</td>
-            <td>124.7K</td>
-            <td>1.2K</td>
-            <td>829.07μs</td>
-            <td><span class="ratio bad">103.38x</span></td>
+            <td>24.7K</td>
+            <td>559</td>
+            <td>1.790ms</td>
+            <td><span class="ratio bad">44.24x</span></td>
           </tr>
           <tr>
             <td>matmul [100x100] @ [100x100]</td>
-            <td>125.8K</td>
-            <td>1.3K</td>
-            <td>780.48μs</td>
-            <td><span class="ratio bad">98.17x</span></td>
+            <td>25.0K</td>
+            <td>540</td>
+            <td>1.853ms</td>
+            <td><span class="ratio bad">46.31x</span></td>
           </tr>
           <tr>
             <td>trace [100x100]</td>
-            <td>1.07M</td>
-            <td>4.04M</td>
-            <td>0.25μs</td>
-            <td><span class="ratio good">0.26x</span></td>
+            <td>398.0K</td>
+            <td>1.58M</td>
+            <td>0.63μs</td>
+            <td><span class="ratio good">0.25x</span></td>
           </tr>
           <tr>
             <td>inner 1D · 1D [1000]</td>
-            <td>1.23M</td>
-            <td>368.6K</td>
-            <td>2.71μs</td>
-            <td><span class="ratio ok">3.33x</span></td>
+            <td>663.0K</td>
+            <td>123.5K</td>
+            <td>8.10μs</td>
+            <td><span class="ratio bad">5.37x</span></td>
           </tr>
           <tr>
             <td>inner 2D · 2D [100x100]</td>
-            <td>114.2K</td>
-            <td>757</td>
-            <td>1.321ms</td>
-            <td><span class="ratio bad">150.84x</span></td>
+            <td>19.0K</td>
+            <td>344</td>
+            <td>2.907ms</td>
+            <td><span class="ratio bad">55.21x</span></td>
           </tr>
           <tr>
             <td>outer [1000] x [1000]</td>
-            <td>1.4K</td>
-            <td>210</td>
-            <td>4.769ms</td>
-            <td><span class="ratio bad">6.85x</span></td>
+            <td>799</td>
+            <td>62</td>
+            <td>16.194ms</td>
+            <td><span class="ratio bad">12.94x</span></td>
           </tr>
           <tr>
             <td>trace [100x100]</td>
-            <td>1.06M</td>
-            <td>4.13M</td>
-            <td>0.24μs</td>
-            <td><span class="ratio good">0.26x</span></td>
+            <td>406.5K</td>
+            <td>1.60M</td>
+            <td>0.62μs</td>
+            <td><span class="ratio good">0.25x</span></td>
           </tr>
           <tr>
             <td>transpose [100x100]</td>
-            <td>4.12M</td>
-            <td>7.54M</td>
-            <td>0.13μs</td>
-            <td><span class="ratio good">0.55x</span></td>
+            <td>2.00M</td>
+            <td>2.72M</td>
+            <td>0.37μs</td>
+            <td><span class="ratio good">0.73x</span></td>
           </tr>
         </tbody>
       </table>
@@ -534,87 +534,87 @@
         <tbody>
           <tr>
             <td>sum [100x100]</td>
-            <td>557.3K</td>
-            <td>168.5K</td>
-            <td>5.93μs</td>
-            <td><span class="ratio ok">3.31x</span></td>
+            <td>230.7K</td>
+            <td>81.9K</td>
+            <td>12.21μs</td>
+            <td><span class="ratio ok">2.82x</span></td>
           </tr>
           <tr>
             <td>sum [100x100] axis=0</td>
-            <td>408.0K</td>
-            <td>4.8K</td>
-            <td>209.44μs</td>
-            <td><span class="ratio bad">85.46x</span></td>
+            <td>202.3K</td>
+            <td>1.6K</td>
+            <td>624.72μs</td>
+            <td><span class="ratio bad">126.41x</span></td>
           </tr>
           <tr>
             <td>mean [100x100]</td>
-            <td>394.1K</td>
-            <td>166.8K</td>
-            <td>5.99μs</td>
-            <td><span class="ratio ok">2.36x</span></td>
+            <td>155.8K</td>
+            <td>74.7K</td>
+            <td>13.38μs</td>
+            <td><span class="ratio ok">2.08x</span></td>
           </tr>
           <tr>
             <td>max [100x100]</td>
-            <td>845.0K</td>
-            <td>139.1K</td>
-            <td>7.19μs</td>
-            <td><span class="ratio bad">6.07x</span></td>
+            <td>291.2K</td>
+            <td>66.7K</td>
+            <td>15.00μs</td>
+            <td><span class="ratio ok">4.37x</span></td>
           </tr>
           <tr>
             <td>min [100x100]</td>
-            <td>836.2K</td>
-            <td>203.4K</td>
-            <td>4.92μs</td>
-            <td><span class="ratio ok">4.11x</span></td>
+            <td>287.1K</td>
+            <td>77.1K</td>
+            <td>12.97μs</td>
+            <td><span class="ratio ok">3.72x</span></td>
           </tr>
           <tr>
             <td>prod [100x100]</td>
-            <td>118.6K</td>
-            <td>123.2K</td>
-            <td>8.12μs</td>
-            <td><span class="ratio good">0.96x</span></td>
+            <td>71.0K</td>
+            <td>78.8K</td>
+            <td>12.68μs</td>
+            <td><span class="ratio good">0.90x</span></td>
           </tr>
           <tr>
             <td>argmin [100x100]</td>
-            <td>180.0K</td>
-            <td>171.6K</td>
-            <td>5.83μs</td>
-            <td><span class="ratio good">1.05x</span></td>
+            <td>470.8K</td>
+            <td>80.0K</td>
+            <td>12.50μs</td>
+            <td><span class="ratio bad">5.88x</span></td>
           </tr>
           <tr>
             <td>argmax [100x100]</td>
-            <td>182.7K</td>
-            <td>140.5K</td>
-            <td>7.12μs</td>
-            <td><span class="ratio good">1.30x</span></td>
+            <td>364.6K</td>
+            <td>57.2K</td>
+            <td>17.47μs</td>
+            <td><span class="ratio bad">6.37x</span></td>
           </tr>
           <tr>
             <td>var [100x100]</td>
-            <td>106.0K</td>
-            <td>83.0K</td>
-            <td>12.04μs</td>
-            <td><span class="ratio good">1.28x</span></td>
+            <td>49.9K</td>
+            <td>40.9K</td>
+            <td>24.47μs</td>
+            <td><span class="ratio good">1.22x</span></td>
           </tr>
           <tr>
             <td>std [100x100]</td>
-            <td>101.7K</td>
-            <td>79.9K</td>
-            <td>12.52μs</td>
-            <td><span class="ratio good">1.27x</span></td>
+            <td>48.7K</td>
+            <td>40.2K</td>
+            <td>24.90μs</td>
+            <td><span class="ratio good">1.21x</span></td>
           </tr>
           <tr>
             <td>all [100x100]</td>
-            <td>289.1K</td>
-            <td>163.8K</td>
-            <td>6.10μs</td>
-            <td><span class="ratio good">1.76x</span></td>
+            <td>196.5K</td>
+            <td>105.5K</td>
+            <td>9.48μs</td>
+            <td><span class="ratio good">1.86x</span></td>
           </tr>
           <tr>
             <td>any [100x100]</td>
-            <td>286.2K</td>
-            <td>167.4K</td>
-            <td>5.98μs</td>
-            <td><span class="ratio good">1.71x</span></td>
+            <td>197.5K</td>
+            <td>103.2K</td>
+            <td>9.69μs</td>
+            <td><span class="ratio good">1.91x</span></td>
           </tr>
         </tbody>
       </table>
@@ -634,24 +634,119 @@
         <tbody>
           <tr>
             <td>reshape [100x100] -> [100x100] (contiguous)</td>
-            <td>3.38M</td>
-            <td>37.08M</td>
-            <td>0.03μs</td>
-            <td><span class="ratio good">0.09x</span></td>
+            <td>1.41M</td>
+            <td>13.40M</td>
+            <td>0.07μs</td>
+            <td><span class="ratio good">0.11x</span></td>
           </tr>
           <tr>
             <td>flatten [100x100]</td>
-            <td>868.1K</td>
-            <td>8.4K</td>
-            <td>119.38μs</td>
-            <td><span class="ratio bad">103.64x</span></td>
+            <td>328.0K</td>
+            <td>4.1K</td>
+            <td>241.61μs</td>
+            <td><span class="ratio bad">79.25x</span></td>
           </tr>
           <tr>
             <td>ravel [100x100]</td>
-            <td>3.08M</td>
-            <td>67.31M</td>
-            <td>0.01μs</td>
-            <td><span class="ratio good">0.05x</span></td>
+            <td>1.73M</td>
+            <td>11.63M</td>
+            <td>0.09μs</td>
+            <td><span class="ratio good">0.15x</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="category-section">
+      <h2>MANIPULATION</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Benchmark</th>
+            <th>NumPy (ops/sec)</th>
+            <th>numpy-ts (ops/sec)</th>
+            <th>Time (ms)</th>
+            <th>Ratio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>swapaxes [100x100]</td>
+            <td>959.3K</td>
+            <td>12.97M</td>
+            <td>0.08μs</td>
+            <td><span class="ratio good">0.07x</span></td>
+          </tr>
+          <tr>
+            <td>concatenate [100x100] + [100x100]</td>
+            <td>183.1K</td>
+            <td>1.1K</td>
+            <td>875.85μs</td>
+            <td><span class="ratio bad">160.41x</span></td>
+          </tr>
+          <tr>
+            <td>stack [100x100] + [100x100]</td>
+            <td>134.3K</td>
+            <td>1.1K</td>
+            <td>947.71μs</td>
+            <td><span class="ratio bad">127.31x</span></td>
+          </tr>
+          <tr>
+            <td>vstack [100x100]</td>
+            <td>155.9K</td>
+            <td>1.0K</td>
+            <td>958.36μs</td>
+            <td><span class="ratio bad">149.37x</span></td>
+          </tr>
+          <tr>
+            <td>hstack [100x100]</td>
+            <td>137.1K</td>
+            <td>1.2K</td>
+            <td>856.93μs</td>
+            <td><span class="ratio bad">117.50x</span></td>
+          </tr>
+          <tr>
+            <td>tile [100x100] x [2,2]</td>
+            <td>58.6K</td>
+            <td>540</td>
+            <td>1.850ms</td>
+            <td><span class="ratio bad">108.40x</span></td>
+          </tr>
+          <tr>
+            <td>repeat [100x100] x 2</td>
+            <td>59.0K</td>
+            <td>3.5K</td>
+            <td>286.70μs</td>
+            <td><span class="ratio bad">16.91x</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="category-section">
+      <h2>ADVANCED</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Benchmark</th>
+            <th>NumPy (ops/sec)</th>
+            <th>numpy-ts (ops/sec)</th>
+            <th>Time (ms)</th>
+            <th>Ratio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>broadcast_to [100] -> [100x100]</td>
+            <td>307.9K</td>
+            <td>4.56M</td>
+            <td>0.22μs</td>
+            <td><span class="ratio good">0.07x</span></td>
+          </tr>
+          <tr>
+            <td>take [100x100] 100 indices</td>
+            <td>111.9K</td>
+            <td>327.4K</td>
+            <td>3.05μs</td>
+            <td><span class="ratio good">0.34x</span></td>
           </tr>
         </tbody>
       </table>
@@ -671,52 +766,52 @@
         <tbody>
           <tr>
             <td>zeros [100x100] (int64)</td>
-            <td>1.52M</td>
-            <td>889.3K</td>
-            <td>1.12μs</td>
-            <td><span class="ratio good">1.71x</span></td>
+            <td>626.7K</td>
+            <td>29.6K</td>
+            <td>33.77μs</td>
+            <td><span class="ratio bad">21.16x</span></td>
           </tr>
           <tr>
             <td>add [100x100] + [100x100] (int64)</td>
-            <td>452.3K</td>
-            <td>86.1K</td>
-            <td>11.61μs</td>
-            <td><span class="ratio bad">5.25x</span></td>
+            <td>248.3K</td>
+            <td>36.4K</td>
+            <td>27.47μs</td>
+            <td><span class="ratio bad">6.82x</span></td>
           </tr>
           <tr>
             <td>multiply [100x100] * scalar (int64)</td>
-            <td>326.1K</td>
-            <td>7.3K</td>
-            <td>136.21μs</td>
-            <td><span class="ratio bad">44.42x</span></td>
+            <td>261.5K</td>
+            <td>2.3K</td>
+            <td>443.32μs</td>
+            <td><span class="ratio bad">115.92x</span></td>
           </tr>
           <tr>
             <td>absolute [100x100] (int64)</td>
-            <td>828.6K</td>
-            <td>23.5K</td>
-            <td>42.62μs</td>
-            <td><span class="ratio bad">35.32x</span></td>
+            <td>323.5K</td>
+            <td>7.3K</td>
+            <td>137.53μs</td>
+            <td><span class="ratio bad">44.48x</span></td>
           </tr>
           <tr>
             <td>sum [100x100] (int64)</td>
-            <td>807.8K</td>
-            <td>51.9K</td>
-            <td>19.28μs</td>
-            <td><span class="ratio bad">15.57x</span></td>
+            <td>299.7K</td>
+            <td>16.2K</td>
+            <td>61.80μs</td>
+            <td><span class="ratio bad">18.52x</span></td>
           </tr>
           <tr>
             <td>max [100x100] (int64)</td>
-            <td>753.2K</td>
-            <td>16.0K</td>
-            <td>62.46μs</td>
-            <td><span class="ratio bad">47.05x</span></td>
+            <td>287.7K</td>
+            <td>6.4K</td>
+            <td>156.66μs</td>
+            <td><span class="ratio bad">45.07x</span></td>
           </tr>
           <tr>
             <td>add [100x100] + [100x100] (uint64)</td>
-            <td>453.9K</td>
-            <td>23.0K</td>
-            <td>43.56μs</td>
-            <td><span class="ratio bad">19.77x</span></td>
+            <td>248.3K</td>
+            <td>6.7K</td>
+            <td>148.64μs</td>
+            <td><span class="ratio bad">36.90x</span></td>
           </tr>
         </tbody>
       </table>
@@ -733,10 +828,10 @@
     new Chart(document.getElementById('categoryChart'), {
       type: 'bar',
       data: {
-        labels: ["creation","arithmetic","math","linalg","reductions","reshape","bigint"],
+        labels: ["creation","arithmetic","math","linalg","reductions","reshape","manipulation","advanced","bigint"],
         datasets: [{
           label: 'Average Slowdown (x times slower than NumPy)',
-          data: [1.9233665641839557,33.70501388650688,10.627327734763957,40.620158158895734,9.220945091038306,34.59185121535804,24.156525043315753],
+          data: [5.660710859454365,37.94490449165621,18.17402433469802,21.34179615278846,13.23055778945556,26.502563739698576,97.14018785832809,0.20469572357310256,41.26885881069453],
           backgroundColor: 'rgba(102, 126, 234, 0.8)',
           borderColor: 'rgba(102, 126, 234, 1)',
           borderWidth: 2
@@ -765,11 +860,11 @@
     new Chart(document.getElementById('detailedChart'), {
       type: 'bar',
       data: {
-        labels: ["zeros [1000]","zeros [100x100]","ones [100x100]","arange(1000)","linspace(0, 100, 1000)","logspace(0, 3, 1000)","geomspace(1, 1000, 1000)","eye(100)","identity(100)","empty [100x100]","full [100x100]","copy [100x100]","zeros_like [100x100]","add [100x100] + scalar","add [100x100] + [100x100]","multiply [100x100] * scalar","multiply [100x100] * [100x100]","mod [100x100] % scalar","floor_divide [100x100] // scalar","reciprocal [100x100]","sqrt [100x100]","power [100x100] ** 2","absolute [100x100]","negative [100x100]","sign [100x100]","dot 1D · 1D [1000]","dot 2D · 1D [100x100] · [100]","dot 2D · 2D [100x100] · [100x100]","matmul [100x100] @ [100x100]","trace [100x100]","inner 1D · 1D [1000]","inner 2D · 2D [100x100]","outer [1000] x [1000]","trace [100x100]","transpose [100x100]","sum [100x100]","sum [100x100] axis=0","mean [100x100]","max [100x100]","min [100x100]","prod [100x100]","argmin [100x100]","argmax [100x100]","var [100x100]","std [100x100]","all [100x100]","any [100x100]","reshape [100x100] -> [100x100] (contiguous)","flatten [100x100]","ravel [100x100]","zeros [100x100] (int64)","add [100x100] + [100x100] (int64)","multiply [100x100] * scalar (int64)","absolute [100x100] (int64)","sum [100x100] (int64)","max [100x100] (int64)","add [100x100] + [100x100] (uint64)"],
+        labels: ["zeros [1000]","zeros [100x100]","ones [100x100]","arange(1000)","linspace(0, 100, 1000)","logspace(0, 3, 1000)","geomspace(1, 1000, 1000)","eye(100)","identity(100)","empty [100x100]","full [100x100]","copy [100x100]","zeros_like [100x100]","add [100x100] + scalar","add [100x100] + [100x100]","multiply [100x100] * scalar","multiply [100x100] * [100x100]","mod [100x100] % scalar","floor_divide [100x100] // scalar","reciprocal [100x100]","sqrt [100x100]","power [100x100] ** 2","absolute [100x100]","negative [100x100]","sign [100x100]","dot 1D · 1D [1000]","dot 2D · 1D [100x100] · [100]","dot 2D · 2D [100x100] · [100x100]","matmul [100x100] @ [100x100]","trace [100x100]","inner 1D · 1D [1000]","inner 2D · 2D [100x100]","outer [1000] x [1000]","trace [100x100]","transpose [100x100]","sum [100x100]","sum [100x100] axis=0","mean [100x100]","max [100x100]","min [100x100]","prod [100x100]","argmin [100x100]","argmax [100x100]","var [100x100]","std [100x100]","all [100x100]","any [100x100]","reshape [100x100] -> [100x100] (contiguous)","flatten [100x100]","ravel [100x100]","swapaxes [100x100]","concatenate [100x100] + [100x100]","stack [100x100] + [100x100]","vstack [100x100]","hstack [100x100]","tile [100x100] x [2,2]","repeat [100x100] x 2","broadcast_to [100] -> [100x100]","take [100x100] 100 indices","zeros [100x100] (int64)","add [100x100] + [100x100] (int64)","multiply [100x100] * scalar (int64)","absolute [100x100] (int64)","sum [100x100] (int64)","max [100x100] (int64)","add [100x100] + [100x100] (uint64)"],
         datasets: [{
           label: 'Slowdown Ratio (x times slower)',
-          data: [1.3274483970302349,1.5112125165675887,1.4025422184269,2.327410947102705,0.27641115900258884,2.42904286573035,0.27207791784573915,1.1276030339462442,1.08020138674279,9.391253148565555,1.1672308422204323,1.7685373000519446,0.9227936011583449,110.82527645435034,5.27413722311583,101.95620594631436,5.154898181536367,2.4281846794873934,2.3543858810777913,7.942008839666096,4.843204126897251,24.049169762235483,10.528469112436317,11.03492170737631,2.680873964874421,4.271512063464838,38.288227827408264,103.38389486117342,98.17094270957823,0.2645565491174616,3.334584323738843,150.83884064218,6.847975499208972,0.2553768905073429,0.5456702225798823,3.307190061090218,85.458595492405,2.3623864032179003,6.074987186225303,4.111688576699333,0.9627625175806818,1.048443347050134,1.3007304951460426,1.2770303002136199,1.2731050580283907,1.7643867426423885,1.7100349121606557,0.09113333315968143,103.638641542958,0.04577876995645757,1.7135395867093737,5.252752222558724,44.419188483849446,35.317446216919045,15.574028547599314,47.046837314152846,19.771882931421523],
-          backgroundColor: ["rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(255, 195, 18, 0.8)","rgba(46, 213, 115, 0.8)","rgba(255, 195, 18, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)"],
+          data: [19.72381654337775,7.278396687026204,4.443175298394887,3.7351909361740936,0.4078244037410511,4.779367448921167,0.4595198072402075,2.7287108876210073,2.0948906991716343,20.509482472809896,1.8404371725547624,3.197982053695786,2.3904467621783145,117.60671120760361,4.298503656501519,125.56869479077282,4.475501480260834,6.45453062300723,3.8247730459414147,3.385616637506032,2.7379557233942604,71.5953720228409,6.743625258139919,7.033900469929356,2.759268199185671,5.82182736340351,42.28086480331665,44.24487020576778,46.31182689503142,0.25192715874113564,5.370380467305574,55.20675985025966,12.942423862810116,0.2538026324088081,0.7332782888399216,2.8164862333390093,126.4110774143203,2.0844248541671244,4.367559648689144,3.723969899726761,0.9002413126446978,5.883084780577516,6.3708217978005415,1.2205601617921609,1.2124433388796458,1.862073380746164,1.9139506507836772,0.10531741165141659,79.25334729324037,0.14902651420394622,0.07397581178084665,160.40814861205646,127.3135545008072,149.37401217496986,117.49591906469163,108.40193047719916,16.913774366791472,0.06752755512760972,0.3418638920185954,21.161341656208442,6.821300977496205,115.92373990896964,44.48470695363659,18.520212214878132,45.06965324963215,36.90105671404052],
+          backgroundColor: ["rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(255, 195, 18, 0.8)","rgba(46, 213, 115, 0.8)","rgba(255, 195, 18, 0.8)","rgba(46, 213, 115, 0.8)","rgba(255, 195, 18, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(255, 195, 18, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(255, 195, 18, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(255, 195, 18, 0.8)","rgba(235, 77, 75, 0.8)","rgba(255, 195, 18, 0.8)","rgba(255, 195, 18, 0.8)","rgba(255, 195, 18, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(46, 213, 115, 0.8)","rgba(46, 213, 115, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)","rgba(235, 77, 75, 0.8)"],
           borderWidth: 1
         }]
       },
