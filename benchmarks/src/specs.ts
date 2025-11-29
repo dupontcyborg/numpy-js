@@ -679,6 +679,119 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       iterations,
       warmup,
     });
+
+    // ========================================
+    // Array Manipulation Benchmarks
+    // ========================================
+
+    specs.push({
+      name: `swapaxes [${m}x${n}]`,
+      category: 'manipulation',
+      operation: 'swapaxes',
+      setup: {
+        a: { shape: [m!, n!], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `concatenate [${m}x${n}] + [${m}x${n}]`,
+      category: 'manipulation',
+      operation: 'concatenate',
+      setup: {
+        a: { shape: [m!, n!], fill: 'arange' },
+        b: { shape: [m!, n!], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `stack [${m}x${n}] + [${m}x${n}]`,
+      category: 'manipulation',
+      operation: 'stack',
+      setup: {
+        a: { shape: [m!, n!], fill: 'arange' },
+        b: { shape: [m!, n!], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `vstack [${m}x${n}]`,
+      category: 'manipulation',
+      operation: 'vstack',
+      setup: {
+        a: { shape: [m!, n!], fill: 'arange' },
+        b: { shape: [m!, n!], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `hstack [${m}x${n}]`,
+      category: 'manipulation',
+      operation: 'hstack',
+      setup: {
+        a: { shape: [m!, n!], fill: 'arange' },
+        b: { shape: [m!, n!], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `tile [${m}x${n}] x [2,2]`,
+      category: 'manipulation',
+      operation: 'tile',
+      setup: {
+        a: { shape: [m!, n!], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `repeat [${m}x${n}] x 2`,
+      category: 'manipulation',
+      operation: 'repeat',
+      setup: {
+        a: { shape: [m!, n!], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // ========================================
+    // Advanced Function Benchmarks
+    // ========================================
+
+    specs.push({
+      name: `broadcast_to [${n}] -> [${m}x${n}]`,
+      category: 'advanced',
+      operation: 'broadcast_to',
+      setup: {
+        a: { shape: [n!], fill: 'arange' },
+        target_shape: { shape: [m!, n!] },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `take [${m}x${n}] 100 indices`,
+      category: 'advanced',
+      operation: 'take',
+      setup: {
+        a: { shape: [m!, n!], fill: 'arange' },
+        indices: { shape: Array.from({ length: 100 }, (_, i) => i % (m! * n!)) },
+      },
+      iterations,
+      warmup,
+    });
   }
 
   // ========================================
