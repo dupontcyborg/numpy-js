@@ -151,9 +151,7 @@ export const UNSUPPORTED_DTYPE_PATTERNS: Record<string, string> = {
 export function parseDescriptor(descr: string): DTypeParseResult {
   // Handle structured dtypes (tuples/lists) - not supported
   if (descr.startsWith('[') || descr.startsWith('(')) {
-    throw new UnsupportedDTypeError(
-      `Structured/compound dtypes are not supported: ${descr}`
-    );
+    throw new UnsupportedDTypeError(`Structured/compound dtypes are not supported: ${descr}`);
   }
 
   // Extract endianness, type, and size
@@ -195,10 +193,9 @@ export function parseDescriptor(descr: string): DTypeParseResult {
   // - Data is little-endian and system is big-endian
   // But only for multi-byte types
   const itemsize = parseInt(typeAndSize.slice(1), 10);
-  const needsByteSwap = itemsize > 1 && (
-    (dataIsBigEndian && isLittleEndian) ||
-    (dataIsLittleEndian && !isLittleEndian)
-  );
+  const needsByteSwap =
+    itemsize > 1 &&
+    ((dataIsBigEndian && isLittleEndian) || (dataIsLittleEndian && !isLittleEndian));
 
   return {
     dtype,

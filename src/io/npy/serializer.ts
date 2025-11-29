@@ -23,7 +23,8 @@ export function serializeNpy(arr: NDArray): Uint8Array {
 
   // Build header dictionary string
   const descr = DTYPE_TO_DESCR[dtype];
-  const shapeStr = shape.length === 0 ? '()' : shape.length === 1 ? `(${shape[0]},)` : `(${shape.join(', ')})`;
+  const shapeStr =
+    shape.length === 0 ? '()' : shape.length === 1 ? `(${shape[0]},)` : `(${shape.join(', ')})`;
 
   // Python dict format: {'descr': '<f8', 'fortran_order': False, 'shape': (3, 4), }
   let headerDict = `{'descr': '${descr}', 'fortran_order': False, 'shape': ${shapeStr}, }`;

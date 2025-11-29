@@ -14,10 +14,7 @@ import { writeZip, writeZipSync } from '../zip/writer';
  * - Map of names to NDArrays
  * - Object with names as keys
  */
-export type NpzArraysInput =
-  | NDArray[]
-  | Map<string, NDArray>
-  | Record<string, NDArray>;
+export type NpzArraysInput = NDArray[] | Map<string, NDArray> | Record<string, NDArray>;
 
 /**
  * Options for serializing NPZ files
@@ -83,8 +80,7 @@ function prepareNpzFiles(arrays: NpzArraysInput): Map<string, Uint8Array> {
   }
 
   // Handle both Map and plain object
-  const entries =
-    arrays instanceof Map ? arrays.entries() : Object.entries(arrays);
+  const entries = arrays instanceof Map ? arrays.entries() : Object.entries(arrays);
 
   for (const [name, arr] of entries) {
     // Validate array name

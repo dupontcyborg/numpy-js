@@ -178,7 +178,9 @@ describe('ZIP Format', () => {
       const compressedZip = await writeZip(files, { compress: true });
 
       // Sync read should fail for compressed entries
-      expect(() => readZipSync(compressedZip)).toThrow('Cannot read compressed entry synchronously');
+      expect(() => readZipSync(compressedZip)).toThrow(
+        'Cannot read compressed entry synchronously'
+      );
     });
   });
 });
