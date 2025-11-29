@@ -56,7 +56,23 @@ export function readZipSync(buffer: ArrayBuffer | Uint8Array): Map<string, Uint8
 }
 
 /**
+ * Central directory entry info
+ */
+interface CentralDirEntry {
+  name: string;
+  compressionMethod: number;
+  crc32: number;
+  compressedSize: number;
+  uncompressedSize: number;
+  localHeaderOffset: number;
+}
+
+/**
  * Parse ZIP entries without decompressing
+ *
+ * Uses central directory for reliable size information, as some ZIP writers
+ * (including Python's zipfile module used by NumPy) set local header sizes to
+ * 0xFFFFFFFF when streaming.
  */
 function parseZipEntries(buffer: ArrayBuffer | Uint8Array): RawZipEntry[] {
   const bytes = buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : buffer;
@@ -80,41 +96,63 @@ function parseZipEntries(buffer: ArrayBuffer | Uint8Array): RawZipEntry[] {
   const centralDirOffset = view.getUint32(eocdOffset + 16, true);
   const numEntries = view.getUint16(eocdOffset + 10, true);
 
-  // Parse local file headers (more reliable for data extraction)
-  let offset = 0;
-  while (offset < centralDirOffset && entries.length < numEntries) {
-    const signature = view.getUint32(offset, true);
-    if (signature !== ZIP_LOCAL_SIGNATURE) {
+  // Parse central directory entries first to get reliable sizes
+  const centralEntries: CentralDirEntry[] = [];
+  let cdOffset = centralDirOffset;
+
+  for (let i = 0; i < numEntries; i++) {
+    const signature = view.getUint32(cdOffset, true);
+    if (signature !== 0x02014b50) {  // Central directory signature
       break;
     }
 
-    // const version = view.getUint16(offset + 4, true);
-    // const flags = view.getUint16(offset + 6, true);
-    const compressionMethod = view.getUint16(offset + 8, true);
-    // const modTime = view.getUint16(offset + 10, true);
-    // const modDate = view.getUint16(offset + 12, true);
-    const crc32 = view.getUint32(offset + 14, true);
-    const compressedSize = view.getUint32(offset + 18, true);
-    const uncompressedSize = view.getUint32(offset + 22, true);
-    const fileNameLength = view.getUint16(offset + 26, true);
-    const extraFieldLength = view.getUint16(offset + 28, true);
+    const compressionMethod = view.getUint16(cdOffset + 10, true);
+    const crc32 = view.getUint32(cdOffset + 16, true);
+    const compressedSize = view.getUint32(cdOffset + 20, true);
+    const uncompressedSize = view.getUint32(cdOffset + 24, true);
+    const fileNameLength = view.getUint16(cdOffset + 28, true);
+    const extraFieldLength = view.getUint16(cdOffset + 30, true);
+    const commentLength = view.getUint16(cdOffset + 32, true);
+    const localHeaderOffset = view.getUint32(cdOffset + 42, true);
 
-    const fileNameBytes = bytes.slice(offset + 30, offset + 30 + fileNameLength);
+    const fileNameBytes = bytes.slice(cdOffset + 46, cdOffset + 46 + fileNameLength);
     const fileName = new TextDecoder('utf-8').decode(fileNameBytes);
 
-    const dataStart = offset + 30 + fileNameLength + extraFieldLength;
-    const compressedData = bytes.slice(dataStart, dataStart + compressedSize);
-
-    entries.push({
+    centralEntries.push({
       name: fileName,
-      compressedData,
       compressionMethod,
       crc32,
       compressedSize,
       uncompressedSize,
+      localHeaderOffset,
     });
 
-    offset = dataStart + compressedSize;
+    cdOffset = cdOffset + 46 + fileNameLength + extraFieldLength + commentLength;
+  }
+
+  // Now extract data using local headers for data location, but central directory for sizes
+  for (const ce of centralEntries) {
+    const localOffset = ce.localHeaderOffset;
+    const signature = view.getUint32(localOffset, true);
+
+    if (signature !== ZIP_LOCAL_SIGNATURE) {
+      throw new Error(`Invalid local file header at offset ${localOffset}`);
+    }
+
+    const fileNameLength = view.getUint16(localOffset + 26, true);
+    const extraFieldLength = view.getUint16(localOffset + 28, true);
+
+    const dataStart = localOffset + 30 + fileNameLength + extraFieldLength;
+    const compressedData = bytes.slice(dataStart, dataStart + ce.compressedSize);
+
+    entries.push({
+      name: ce.name,
+      compressedData,
+      compressionMethod: ce.compressionMethod,
+      crc32: ce.crc32,
+      compressedSize: ce.compressedSize,
+      uncompressedSize: ce.uncompressedSize,
+    });
   }
 
   return entries;

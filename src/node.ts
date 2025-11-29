@@ -12,7 +12,7 @@ import { NDArray } from './core/ndarray';
 import { parseNpy } from './io/npy/parser';
 import { serializeNpy } from './io/npy/serializer';
 import { parseNpz, type NpzParseOptions, type NpzParseResult } from './io/npz/parser';
-import { serializeNpz, type NpzSerializeOptions } from './io/npz/serializer';
+import { serializeNpz, type NpzSerializeOptions, type NpzArraysInput } from './io/npz/serializer';
 
 // Re-export everything from the main module
 export * from './index';
@@ -118,12 +118,15 @@ export function loadNpzFileSync(
  * Save arrays to a .npz file
  *
  * @param path - Path to save the .npz file
- * @param arrays - Map or object of array names to NDArrays
+ * @param arrays - Arrays to save:
+ *   - Array of NDArrays (positional, named arr_0, arr_1, etc.)
+ *   - Map of names to NDArrays
+ *   - Object with names as keys
  * @param options - Save options
  */
 export async function saveNpz(
   path: string,
-  arrays: Map<string, NDArray> | Record<string, NDArray>,
+  arrays: NpzArraysInput,
   options: SaveNpzOptions = {}
 ): Promise<void> {
   const data = await serializeNpz(arrays, options);
@@ -134,11 +137,11 @@ export async function saveNpz(
  * Synchronously save arrays to a .npz file (no compression)
  *
  * @param path - Path to save the .npz file
- * @param arrays - Map or object of array names to NDArrays
+ * @param arrays - Arrays to save (same types as saveNpz)
  */
 export function saveNpzSync(
   path: string,
-  arrays: Map<string, NDArray> | Record<string, NDArray>
+  arrays: NpzArraysInput
 ): void {
   const { serializeNpzSync } = require('./io/npz/serializer');
   const data = serializeNpzSync(arrays);
@@ -231,11 +234,20 @@ export function saveSync(path: string, arr: NDArray): void {
  * Save multiple arrays to a .npz file (like np.savez)
  *
  * @param path - Path to save the .npz file
- * @param arrays - Arrays to save, with names as keys
+ * @param arrays - Arrays to save:
+ *   - Array of NDArrays: named arr_0, arr_1, etc. (like np.savez positional args)
+ *   - Object/Map with names as keys (like np.savez keyword args)
+ *
+ * @example
+ * // Positional arrays
+ * await savez('data.npz', [arr1, arr2])  // saved as arr_0, arr_1
+ *
+ * // Named arrays
+ * await savez('data.npz', { x: arr1, y: arr2 })
  */
 export async function savez(
   path: string,
-  arrays: Map<string, NDArray> | Record<string, NDArray>
+  arrays: NpzArraysInput
 ): Promise<void> {
   if (!path.endsWith('.npz')) {
     path = path + '.npz';
@@ -247,11 +259,11 @@ export async function savez(
  * Save multiple arrays to a compressed .npz file (like np.savez_compressed)
  *
  * @param path - Path to save the .npz file
- * @param arrays - Arrays to save, with names as keys
+ * @param arrays - Arrays to save (same input types as savez)
  */
 export async function savez_compressed(
   path: string,
-  arrays: Map<string, NDArray> | Record<string, NDArray>
+  arrays: NpzArraysInput
 ): Promise<void> {
   if (!path.endsWith('.npz')) {
     path = path + '.npz';
