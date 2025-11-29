@@ -47,6 +47,20 @@ describe('NPZ Format', () => {
       expect(result.arrays.get('c')!.dtype).toBe('float32');
     });
 
+    it('works with positional array input (like np.savez positional args)', () => {
+      const arr1 = array([1, 2, 3]);
+      const arr2 = array([4, 5, 6]);
+      const arr3 = array([7, 8, 9]);
+
+      const npzBytes = serializeNpzSync([arr1, arr2, arr3]);
+      const result = parseNpzSync(npzBytes);
+
+      expect(result.arrays.size).toBe(3);
+      expect(result.arrays.get('arr_0')!.toArray()).toEqual([1, 2, 3]);
+      expect(result.arrays.get('arr_1')!.toArray()).toEqual([4, 5, 6]);
+      expect(result.arrays.get('arr_2')!.toArray()).toEqual([7, 8, 9]);
+    });
+
     it('works with Map input', () => {
       const arrays = new Map([
         ['x', array([1, 2, 3])],

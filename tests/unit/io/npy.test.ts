@@ -24,8 +24,8 @@ describe('NPY Format', () => {
       expect(bytes[4]).toBe(0x50); // P
       expect(bytes[5]).toBe(0x59); // Y
 
-      // Check version (2.0)
-      expect(bytes[6]).toBe(2);
+      // Check version (3.0)
+      expect(bytes[6]).toBe(3);
       expect(bytes[7]).toBe(0);
 
       // Verify we can round-trip
@@ -216,12 +216,12 @@ describe('NPY Format', () => {
   });
 
   describe('parseNpyHeader', () => {
-    it('parses v2.0 header', () => {
+    it('parses v3.0 header (our output format)', () => {
       const arr = array([1.0, 2.0, 3.0]);
       const bytes = serializeNpy(arr);
       const metadata = parseNpyHeader(bytes);
 
-      expect(metadata.version.major).toBe(2);
+      expect(metadata.version.major).toBe(3);
       expect(metadata.version.minor).toBe(0);
       expect(metadata.header.shape).toEqual([3]);
       expect(metadata.header.fortran_order).toBe(false);

@@ -1,8 +1,10 @@
 /**
  * NPY file serializer
  *
- * Serializes NDArray objects to NumPy .npy format (v2.0).
+ * Serializes NDArray objects to NumPy .npy format (v3.0).
  * Always writes in little-endian, C-contiguous order.
+ *
+ * v3.0 is identical to v2.0 but allows UTF-8 in dtype descriptions.
  */
 
 import { NDArray } from '../../core/ndarray';
@@ -10,7 +12,7 @@ import { getDTypeSize, isBigIntDType, type DType } from '../../core/dtype';
 import { NPY_MAGIC, DTYPE_TO_DESCR, isSystemLittleEndian } from './format';
 
 /**
- * Serialize an NDArray to NPY format (v2.0)
+ * Serialize an NDArray to NPY format (v3.0)
  *
  * @param arr - The NDArray to serialize
  * @returns A Uint8Array containing the NPY file data
@@ -27,7 +29,7 @@ export function serializeNpy(arr: NDArray): Uint8Array {
   let headerDict = `{'descr': '${descr}', 'fortran_order': False, 'shape': ${shapeStr}, }`;
 
   // Header must be padded to 64-byte alignment (including magic, version, header_len)
-  // v2.0 uses 4 bytes for header length
+  // v3.0 uses 4 bytes for header length (same as v2.0)
   // Total prefix is 6 (magic) + 2 (version) + 4 (header_len) = 12 bytes
   // Header string + newline should make total divisible by 64
   const PREFIX_LEN = 12;
@@ -50,8 +52,8 @@ export function serializeNpy(arr: NDArray): Uint8Array {
   // Write magic number
   output.set(NPY_MAGIC, 0);
 
-  // Write version (2.0)
-  output[6] = 2;
+  // Write version (3.0)
+  output[6] = 3;
   output[7] = 0;
 
   // Write header length (4-byte little-endian)
