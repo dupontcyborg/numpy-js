@@ -95,9 +95,15 @@ console.log(A.flags.F_CONTIGUOUS);    // false - not Fortran-order
 // Random
 const random = np.random.randn([100, 100]);
 
-// I/O (Node.js)
-np.save('matrix.npy', A);
-const loaded = np.load('matrix.npy');
+// I/O (Node.js) - use 'numpy-ts/node' for file operations
+import { load, save } from 'numpy-ts/node';
+save('matrix.npy', A);
+const loaded = load('matrix.npy');
+
+// I/O (Browser) - use in-memory parsing/serialization
+const response = await fetch('matrix.npy');
+const bytes = await response.arrayBuffer();
+const arr = np.parseNpy(bytes);
 ```
 
 ---
@@ -193,6 +199,47 @@ npm install numpy-ts
 ```typescript
 import * as np from 'numpy-ts';
 ```
+
+---
+
+## File I/O (NPY/NPZ)
+
+numpy-ts supports reading and writing `.npy` and `.npz` files. The API is split for bundler-friendliness:
+
+### Node.js (File System)
+
+```typescript
+import { load, save, savez, savez_compressed } from 'numpy-ts/node';
+
+// Save/load single arrays
+save('array.npy', arr);
+const arr = load('array.npy');
+
+// Save/load multiple arrays
+savez('arrays.npz', { a: arr1, b: arr2 });
+savez_compressed('arrays.npz', { a: arr1, b: arr2 });
+const { a, b } = load('arrays.npz');
+```
+
+### Browser (In-Memory)
+
+```typescript
+import * as np from 'numpy-ts';
+
+// Parse from fetched/uploaded bytes
+const response = await fetch('array.npy');
+const arr = np.parseNpy(await response.arrayBuffer());
+
+// Serialize to bytes for download
+const bytes = np.serializeNpy(arr);
+downloadBlob(new Blob([bytes]), 'array.npy');
+
+// NPZ (multiple arrays)
+const result = await np.parseNpz(npzBytes);
+const npzBytes = await np.serializeNpz({ a: arr1, b: arr2 });
+```
+
+**Why separate imports?** The `/node` entry point includes Node.js `fs` module usage. Keeping it separate ensures browser bundles don't accidentally include Node.js-specific code.
 
 ---
 
