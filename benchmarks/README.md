@@ -120,7 +120,7 @@ This chart is displayed in the main README and shows the average slowdown by cat
 
 ## Requirements
 
-- **Node.js**: >= 18.0.0
+- **Node.js**: >= 20.1.0
 - **Python**: >= 3.8 with NumPy installed
 - **NumPy**: >= 1.20
 

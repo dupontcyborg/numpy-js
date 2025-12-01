@@ -1,0 +1,95 @@
+# Scripts
+
+Utility scripts for numpy-ts development and maintenance.
+
+## API Coverage Scripts
+
+### `compare-api-coverage.py`
+
+Main script for tracking API coverage against NumPy.
+
+**Usage:**
+```bash
+# Update README with current coverage
+python scripts/compare-api-coverage.py
+
+# Show detailed list of missing functions
+python scripts/compare-api-coverage.py --verbose
+python scripts/compare-api-coverage.py -v
+```
+
+**What it does:**
+1. Runs `audit-numpy-api.py` to extract NumPy's API
+2. Runs `audit-numpyts-api.ts` to extract numpy-ts's API
+3. Compares them properly (member-vs-member, global-vs-global)
+4. Updates README.md with accurate coverage statistics
+5. With `--verbose`: Shows complete list of missing/extra functions
+
+**When to run:**
+- After implementing new functions
+- Before releases to update coverage stats
+- When investigating what to implement next
+
+### `audit-numpy-api.py`
+
+Extracts and categorizes all NumPy functions.
+
+**Output:** `scripts/numpy-api-audit.json`
+
+**Categories:**
+- Array Creation, Manipulation
+- Arithmetic, Trigonometric, Hyperbolic, Exponential
+- Reductions, Comparisons, Logic
+- Linear Algebra, Random, FFT
+- And more...
+
+### `audit-numpyts-api.ts`
+
+Extracts numpy-ts implementation (top-level functions and NDArray methods).
+
+**Output:** `scripts/numpyts-api-audit.json`
+
+**Extracted:**
+- All exported functions from `src/index.ts`
+- All NDArray prototype methods and properties
+
+## Generated Files
+
+These files are generated automatically and ignored by git:
+
+- `numpy-api-audit.json` - NumPy API audit results
+- `numpyts-api-audit.json` - numpy-ts API audit results
+
+## Requirements
+
+**Python scripts:**
+- Python 3.x
+- NumPy (conda environment: `py313`)
+
+**TypeScript scripts:**
+- Node.js
+- tsx (via npx)
+
+## Examples
+
+### Check coverage and update README
+```bash
+source ~/.zshrc && conda activate py313
+python scripts/compare-api-coverage.py
+```
+
+### See what's missing
+```bash
+source ~/.zshrc && conda activate py313
+python scripts/compare-api-coverage.py -v | grep "Missing from"
+```
+
+### Run audits manually
+```bash
+# Audit NumPy
+source ~/.zshrc && conda activate py313
+python scripts/audit-numpy-api.py
+
+# Audit numpy-ts
+npx tsx scripts/audit-numpyts-api.ts
+```

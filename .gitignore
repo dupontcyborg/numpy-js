@@ -35,3 +35,6 @@ coverage/
 
 # Archived docs
 docs/archive/
+
+# Script outputs
+scripts/*.json

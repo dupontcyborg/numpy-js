@@ -59,6 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -70,8 +71,85 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
-        run: npm run test:unit
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Generate coverage summary
+        id: coverage
+        run: |
+          node -e "
+          const coverage = require('./coverage/coverage-summary.json');
+          const total = coverage.total;
+
+          const formatMetric = (metric) => {
+            const pct = metric.pct;
+            const emoji = pct >= 90 ? '🟢' : pct >= 80 ? '🟡' : pct >= 70 ? '🟠' : '🔴';
+            return \`\${emoji} \${pct}%\`;
+          };
+
+          let comment = '## 📊 Coverage Report\n\n';
+          comment += '| Metric | Coverage | Threshold | Status |\n';
+          comment += '|--------|----------|-----------|--------|\n';
+          comment += \`| Statements | \${formatMetric(total.statements)} | 80% | \${total.statements.pct >= 80 ? '✅' : '❌'} |\n\`;
+          comment += \`| Branches | \${formatMetric(total.branches)} | 75% | \${total.branches.pct >= 75 ? '✅' : '❌'} |\n\`;
+          comment += \`| Functions | \${formatMetric(total.functions)} | 95% | \${total.functions.pct >= 95 ? '✅' : '❌'} |\n\`;
+          comment += \`| Lines | \${formatMetric(total.lines)} | 80% | \${total.lines.pct >= 80 ? '✅' : '❌'} |\n\`;
+
+          const allPass = total.statements.pct >= 80 &&
+                         total.branches.pct >= 75 &&
+                         total.functions.pct >= 95 &&
+                         total.lines.pct >= 80;
+
+          if (allPass) {
+            comment += '\n✅ All coverage thresholds met!\n';
+          } else {
+            comment += '\n⚠️ Some coverage thresholds not met. Please add tests.\n';
+          }
+
+          console.log('COMMENT<<EOF');
+          console.log(comment);
+          console.log('EOF');
+          " > coverage-comment.txt
+
+          echo "comment<<EOF" >> $GITHUB_OUTPUT
+          cat coverage-comment.txt | grep -A 1000 "COMMENT<<EOF" | grep -B 1000 "^EOF$" | grep -v "COMMENT<<EOF" | grep -v "^EOF$" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with coverage
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const comment = `${{ steps.coverage.outputs.comment }}`;
+
+            // Find existing coverage comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('📊 Coverage Report')
+            );
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
 
   # Run validation tests (requires Python + NumPy)
   test-validation:
