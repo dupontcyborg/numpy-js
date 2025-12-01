@@ -177,6 +177,28 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
     return arrays['a'].sign();
   }
 
+  // Trigonometric operations
+  else if (operation === 'sin') {
+    return arrays['a'].sin();
+  } else if (operation === 'cos') {
+    return arrays['a'].cos();
+  } else if (operation === 'tan') {
+    return arrays['a'].tan();
+  } else if (operation === 'arctan2') {
+    return arrays['a'].arctan2(arrays['b']);
+  } else if (operation === 'hypot') {
+    return arrays['a'].hypot(arrays['b']);
+  }
+
+  // Hyperbolic operations
+  else if (operation === 'sinh') {
+    return arrays['a'].sinh();
+  } else if (operation === 'cosh') {
+    return arrays['a'].cosh();
+  } else if (operation === 'tanh') {
+    return arrays['a'].tanh();
+  }
+
   // Linear algebra
   else if (operation === 'dot') {
     return arrays['a'].dot(arrays['b']);

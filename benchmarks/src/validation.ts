@@ -11,6 +11,28 @@ import type { BenchmarkCase } from './types';
 const FLOAT_TOLERANCE = 1e-10;
 
 /**
+ * Deserialize special float values from Python
+ */
+function deserializeValue(val: any): any {
+  if (Array.isArray(val)) {
+    return val.map((v) => deserializeValue(v));
+  } else if (typeof val === 'object' && val !== null) {
+    const result: Record<string, any> = {};
+    for (const [k, v] of Object.entries(val)) {
+      result[k] = deserializeValue(v);
+    }
+    return result;
+  } else if (val === '__Infinity__') {
+    return Infinity;
+  } else if (val === '__-Infinity__') {
+    return -Infinity;
+  } else if (val === '__NaN__') {
+    return NaN;
+  }
+  return val;
+}
+
+/**
  * Compare two arrays or scalars for equality with tolerance
  */
 function resultsMatch(numpytsResult: any, numpyResult: any): boolean {
@@ -161,6 +183,26 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
     case 'sign':
       return np.sign(arrays.a);
 
+    // Trigonometric
+    case 'sin':
+      return np.sin(arrays.a);
+    case 'cos':
+      return np.cos(arrays.a);
+    case 'tan':
+      return np.tan(arrays.a);
+    case 'arctan2':
+      return np.arctan2(arrays.a, arrays.b);
+    case 'hypot':
+      return np.hypot(arrays.a, arrays.b);
+
+    // Hyperbolic
+    case 'sinh':
+      return np.sinh(arrays.a);
+    case 'cosh':
+      return np.cosh(arrays.a);
+    case 'tanh':
+      return np.tanh(arrays.a);
+
     // Linalg
     case 'dot':
       return arrays.a.dot(arrays.b);
@@ -263,7 +305,9 @@ export async function validateBenchmarks(specs: BenchmarkCase[]): Promise<void> 
       }
 
       try {
-        const numpyResults = JSON.parse(stdout);
+        const rawResults = JSON.parse(stdout);
+        // Deserialize special values (Infinity, NaN)
+        const numpyResults = rawResults.map((r: any) => deserializeValue(r));
 
         // Run numpy-ts operations and compare
         let passed = 0;

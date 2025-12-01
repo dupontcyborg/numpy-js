@@ -19,6 +19,8 @@ import * as reductionOps from '../ops/reduction';
 import * as shapeOps from '../ops/shape';
 import * as linalgOps from '../ops/linalg';
 import * as exponentialOps from '../ops/exponential';
+import * as trigOps from '../ops/trig';
+import * as hyperbolicOps from '../ops/hyperbolic';
 import * as advancedOps from '../ops/advanced';
 
 export class NDArray {
@@ -400,6 +402,169 @@ export class NDArray {
    */
   sign(): NDArray {
     const resultStorage = arithmeticOps.sign(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  // Trigonometric operations
+  /**
+   * Sine of each element (in radians)
+   * Promotes integer types to float64
+   * @returns New array with sine values
+   */
+  sin(): NDArray {
+    const resultStorage = trigOps.sin(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Cosine of each element (in radians)
+   * Promotes integer types to float64
+   * @returns New array with cosine values
+   */
+  cos(): NDArray {
+    const resultStorage = trigOps.cos(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Tangent of each element (in radians)
+   * Promotes integer types to float64
+   * @returns New array with tangent values
+   */
+  tan(): NDArray {
+    const resultStorage = trigOps.tan(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Inverse sine of each element
+   * Promotes integer types to float64
+   * @returns New array with arcsin values (radians)
+   */
+  arcsin(): NDArray {
+    const resultStorage = trigOps.arcsin(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Inverse cosine of each element
+   * Promotes integer types to float64
+   * @returns New array with arccos values (radians)
+   */
+  arccos(): NDArray {
+    const resultStorage = trigOps.arccos(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Inverse tangent of each element
+   * Promotes integer types to float64
+   * @returns New array with arctan values (radians)
+   */
+  arctan(): NDArray {
+    const resultStorage = trigOps.arctan(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Element-wise arc tangent of this/other choosing the quadrant correctly
+   * @param other - x-coordinates (array or scalar)
+   * @returns Angle in radians between -π and π
+   */
+  arctan2(other: NDArray | number): NDArray {
+    const otherStorage = typeof other === 'number' ? other : other._storage;
+    const resultStorage = trigOps.arctan2(this._storage, otherStorage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Given the "legs" of a right triangle, return its hypotenuse
+   * Equivalent to sqrt(this**2 + other**2), element-wise
+   * @param other - Second leg (array or scalar)
+   * @returns Hypotenuse values
+   */
+  hypot(other: NDArray | number): NDArray {
+    const otherStorage = typeof other === 'number' ? other : other._storage;
+    const resultStorage = trigOps.hypot(this._storage, otherStorage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Convert angles from radians to degrees
+   * @returns New array with angles in degrees
+   */
+  degrees(): NDArray {
+    const resultStorage = trigOps.degrees(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Convert angles from degrees to radians
+   * @returns New array with angles in radians
+   */
+  radians(): NDArray {
+    const resultStorage = trigOps.radians(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  // Hyperbolic operations
+  /**
+   * Hyperbolic sine of each element
+   * Promotes integer types to float64
+   * @returns New array with sinh values
+   */
+  sinh(): NDArray {
+    const resultStorage = hyperbolicOps.sinh(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Hyperbolic cosine of each element
+   * Promotes integer types to float64
+   * @returns New array with cosh values
+   */
+  cosh(): NDArray {
+    const resultStorage = hyperbolicOps.cosh(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Hyperbolic tangent of each element
+   * Promotes integer types to float64
+   * @returns New array with tanh values
+   */
+  tanh(): NDArray {
+    const resultStorage = hyperbolicOps.tanh(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Inverse hyperbolic sine of each element
+   * Promotes integer types to float64
+   * @returns New array with arcsinh values
+   */
+  arcsinh(): NDArray {
+    const resultStorage = hyperbolicOps.arcsinh(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Inverse hyperbolic cosine of each element
+   * Promotes integer types to float64
+   * @returns New array with arccosh values
+   */
+  arccosh(): NDArray {
+    const resultStorage = hyperbolicOps.arccosh(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Inverse hyperbolic tangent of each element
+   * Promotes integer types to float64
+   * @returns New array with arctanh values
+   */
+  arctanh(): NDArray {
+    const resultStorage = hyperbolicOps.arctanh(this._storage);
     return NDArray._fromStorage(resultStorage);
   }
 
@@ -1689,6 +1854,157 @@ export function tensordot(
   axes: number | [number[], number[]] = 2
 ): NDArray | number | bigint {
   return a.tensordot(b, axes);
+}
+
+// Trigonometric functions (standalone)
+
+/**
+ * Element-wise sine
+ * @param x - Input array (angles in radians)
+ * @returns Array of sine values
+ */
+export function sin(x: NDArray): NDArray {
+  return x.sin();
+}
+
+/**
+ * Element-wise cosine
+ * @param x - Input array (angles in radians)
+ * @returns Array of cosine values
+ */
+export function cos(x: NDArray): NDArray {
+  return x.cos();
+}
+
+/**
+ * Element-wise tangent
+ * @param x - Input array (angles in radians)
+ * @returns Array of tangent values
+ */
+export function tan(x: NDArray): NDArray {
+  return x.tan();
+}
+
+/**
+ * Element-wise inverse sine
+ * @param x - Input array (values in range [-1, 1])
+ * @returns Array of angles in radians
+ */
+export function arcsin(x: NDArray): NDArray {
+  return x.arcsin();
+}
+
+/**
+ * Element-wise inverse cosine
+ * @param x - Input array (values in range [-1, 1])
+ * @returns Array of angles in radians
+ */
+export function arccos(x: NDArray): NDArray {
+  return x.arccos();
+}
+
+/**
+ * Element-wise inverse tangent
+ * @param x - Input array
+ * @returns Array of angles in radians
+ */
+export function arctan(x: NDArray): NDArray {
+  return x.arctan();
+}
+
+/**
+ * Element-wise arc tangent of x1/x2 choosing the quadrant correctly
+ * @param x1 - y-coordinates
+ * @param x2 - x-coordinates (array or scalar)
+ * @returns Angles in radians between -π and π
+ */
+export function arctan2(x1: NDArray, x2: NDArray | number): NDArray {
+  return x1.arctan2(x2);
+}
+
+/**
+ * Given the "legs" of a right triangle, return its hypotenuse
+ * Equivalent to sqrt(x1**2 + x2**2), element-wise
+ * @param x1 - First leg
+ * @param x2 - Second leg (array or scalar)
+ * @returns Hypotenuse values
+ */
+export function hypot(x1: NDArray, x2: NDArray | number): NDArray {
+  return x1.hypot(x2);
+}
+
+/**
+ * Convert angles from radians to degrees
+ * @param x - Input array (angles in radians)
+ * @returns Angles in degrees
+ */
+export function degrees(x: NDArray): NDArray {
+  return x.degrees();
+}
+
+/**
+ * Convert angles from degrees to radians
+ * @param x - Input array (angles in degrees)
+ * @returns Angles in radians
+ */
+export function radians(x: NDArray): NDArray {
+  return x.radians();
+}
+
+// Hyperbolic functions (standalone)
+
+/**
+ * Element-wise hyperbolic sine
+ * @param x - Input array
+ * @returns Array of sinh values
+ */
+export function sinh(x: NDArray): NDArray {
+  return x.sinh();
+}
+
+/**
+ * Element-wise hyperbolic cosine
+ * @param x - Input array
+ * @returns Array of cosh values
+ */
+export function cosh(x: NDArray): NDArray {
+  return x.cosh();
+}
+
+/**
+ * Element-wise hyperbolic tangent
+ * @param x - Input array
+ * @returns Array of tanh values
+ */
+export function tanh(x: NDArray): NDArray {
+  return x.tanh();
+}
+
+/**
+ * Element-wise inverse hyperbolic sine
+ * @param x - Input array
+ * @returns Array of arcsinh values
+ */
+export function arcsinh(x: NDArray): NDArray {
+  return x.arcsinh();
+}
+
+/**
+ * Element-wise inverse hyperbolic cosine
+ * @param x - Input array (values >= 1)
+ * @returns Array of arccosh values
+ */
+export function arccosh(x: NDArray): NDArray {
+  return x.arccosh();
+}
+
+/**
+ * Element-wise inverse hyperbolic tangent
+ * @param x - Input array (values in range (-1, 1))
+ * @returns Array of arctanh values
+ */
+export function arctanh(x: NDArray): NDArray {
+  return x.arctanh();
 }
 
 // ========================================

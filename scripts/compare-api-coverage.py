@@ -283,6 +283,7 @@ def update_readme(analysis):
         r'### API Coverage\n\n'
         r'Progress toward complete NumPy API compatibility:\n\n'
         r'(?:\|[^\n]*\n)+'  # Match table rows (non-capturing, possessive)
+        r'\n?'  # Optional blank line before Overall
         r'\*\*Overall:[^\n]*\n'
     )
     new_table_section = (

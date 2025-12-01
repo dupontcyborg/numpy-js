@@ -114,6 +114,26 @@ def run_operation(spec):
     elif operation == "sign":
         result = np.sign(arrays["a"])
 
+    # Trigonometric
+    elif operation == "sin":
+        result = np.sin(arrays["a"])
+    elif operation == "cos":
+        result = np.cos(arrays["a"])
+    elif operation == "tan":
+        result = np.tan(arrays["a"])
+    elif operation == "arctan2":
+        result = np.arctan2(arrays["a"], arrays["b"])
+    elif operation == "hypot":
+        result = np.hypot(arrays["a"], arrays["b"])
+
+    # Hyperbolic
+    elif operation == "sinh":
+        result = np.sinh(arrays["a"])
+    elif operation == "cosh":
+        result = np.cosh(arrays["a"])
+    elif operation == "tanh":
+        result = np.tanh(arrays["a"])
+
     # Linalg
     elif operation == "dot":
         result = np.dot(arrays["a"], arrays["b"])
@@ -196,6 +216,23 @@ def run_operation(spec):
         return result
 
 
+import math
+
+def serialize_value(val):
+    """Recursively serialize values, handling Infinity and NaN"""
+    if isinstance(val, dict):
+        return {k: serialize_value(v) for k, v in val.items()}
+    elif isinstance(val, (list, tuple)):
+        return [serialize_value(v) for v in val]
+    elif isinstance(val, float):
+        if math.isnan(val):
+            return "__NaN__"
+        elif math.isinf(val):
+            return "__Infinity__" if val > 0 else "__-Infinity__"
+        return val
+    return val
+
+
 def main():
     # Read specs from stdin
     input_data = json.loads(sys.stdin.read())
@@ -206,6 +243,8 @@ def main():
     for spec in specs:
         try:
             result = run_operation(spec)
+            # Serialize to handle Infinity/NaN
+            result = serialize_value(result)
             results.append(result)
         except Exception as e:
             print(f"Error running {spec['name']}: {e}", file=sys.stderr)
