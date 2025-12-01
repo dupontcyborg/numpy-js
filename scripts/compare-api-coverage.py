@@ -278,10 +278,12 @@ def update_readme(analysis):
     )
 
     # Find and replace the table
+    # Use a more specific pattern to avoid exponential backtracking
     table_pattern = (
-        r'(### API Coverage.*?\n\n.*?\n\n)'
-        r'(\|.*?\n)*'
-        r'(\*\*Overall:.*?\n)'
+        r'### API Coverage\n\n'
+        r'Progress toward complete NumPy API compatibility:\n\n'
+        r'(?:\|[^\n]*\n)+'  # Match table rows (non-capturing, possessive)
+        r'\*\*Overall:[^\n]*\n'
     )
     new_table_section = (
         f"### API Coverage\n\n"
