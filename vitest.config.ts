@@ -7,7 +7,7 @@ export default defineConfig({
     environment: 'node',
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'text-summary', 'json', 'html'],
+      reporter: ['text', 'text-summary', 'json', 'json-summary', 'html'],
       reportsDirectory: './coverage',
       exclude: [
         'node_modules/**',
@@ -18,6 +18,12 @@ export default defineConfig({
         '**/test/**',
         '**/tests/**',
       ],
+      thresholds: {
+        statements: 80,
+        branches: 75,
+        functions: 95,
+        lines: 80,
+      },
     },
     // Projects configuration (replaces workspace in Vitest 4+)
     projects: [
