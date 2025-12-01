@@ -460,6 +460,7 @@ function copyToOutput(
     const end = start + sourceSize;
 
     // Bulk copy the entire source array
+    // @ts-expect-error - TypedArray.set() works with any typed array subarray
     outputData.set(sourceData.subarray(start, end), outputOffset);
     return;
   }

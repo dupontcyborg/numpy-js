@@ -1,8 +1,16 @@
 /**
  * Node.js-specific entry point for numpy-ts
  *
- * This module provides file system operations for saving and loading NPY/NPZ files.
- * For browser usage, use the main entry point and handle file I/O separately.
+ * This module provides file system operations for saving and loading NPY/NPZ files,
+ * plus all core numpy-ts functionality in a single import.
+ *
+ * Usage:
+ *   import * as np from 'numpy-ts/node';
+ *   // Has everything from numpy-ts + file I/O
+ *   const arr = await np.loadNpy('data.npy');
+ *   await np.saveNpz('output.npz', { x: arr });
+ *
+ * For browser usage, use the main entry point (no file I/O).
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -14,7 +22,7 @@ import { serializeNpy } from './io/npy/serializer';
 import { parseNpz, type NpzParseOptions, type NpzParseResult } from './io/npz/parser';
 import { serializeNpz, type NpzSerializeOptions, type NpzArraysInput } from './io/npz/serializer';
 
-// Re-export everything from the main module
+// Re-export everything from the main module for convenience
 export * from './index';
 
 // Re-export IO parsing/serialization functions
