@@ -9,7 +9,7 @@
  */
 
 import { ArrayStorage } from '../core/storage';
-import { elementwiseUnaryOp, elementwiseBinaryOp } from '../internal/compute';
+import { elementwiseUnaryOp } from '../internal/compute';
 import { isBigIntDType } from '../core/dtype';
 
 /**
@@ -105,7 +105,7 @@ function arctan2Array(x1: ArrayStorage, x2: ArrayStorage): ArrayStorage {
 
   // Always promote to float64 for arctan2 (matching NumPy behavior)
   // Only preserve float32 if both inputs are float32
-  const resultDtype = (dtype1 === 'float32' && dtype2 === 'float32') ? 'float32' : 'float64';
+  const resultDtype = dtype1 === 'float32' && dtype2 === 'float32' ? 'float32' : 'float64';
 
   const result = ArrayStorage.zeros(shape, resultDtype);
   const resultData = result.data;
@@ -176,7 +176,7 @@ function hypotArray(x1: ArrayStorage, x2: ArrayStorage): ArrayStorage {
 
   // Always promote to float64 for hypot (matching NumPy behavior)
   // Only preserve float32 if both inputs are float32
-  const resultDtype = (dtype1 === 'float32' && dtype2 === 'float32') ? 'float32' : 'float64';
+  const resultDtype = dtype1 === 'float32' && dtype2 === 'float32' ? 'float32' : 'float64';
 
   const result = ArrayStorage.zeros(shape, resultDtype);
   const resultData = result.data;

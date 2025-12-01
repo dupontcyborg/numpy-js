@@ -49,7 +49,7 @@ describe('Trigonometric Operations', () => {
     it('works with 2D arrays', () => {
       const arr = array([
         [0, Math.PI / 2],
-        [Math.PI, 3 * Math.PI / 2],
+        [Math.PI, (3 * Math.PI) / 2],
       ]);
       const result = sin(arr);
       expect(result.shape).toEqual([2, 2]);
@@ -72,7 +72,7 @@ describe('Trigonometric Operations', () => {
       const result = arr.cos();
       const resultArr = result.toArray() as number[];
       expect(Math.abs(resultArr[0]! - 1)).toBeLessThan(1e-10);
-      expect(Math.abs(resultArr[1]! - (-1))).toBeLessThan(1e-10);
+      expect(Math.abs(resultArr[1]! - -1)).toBeLessThan(1e-10);
     });
 
     it('promotes integer arrays to float64', () => {
@@ -195,7 +195,7 @@ describe('Trigonometric Operations', () => {
       const y = array([1, 1, -1, -1]);
       const x = array([1, -1, 1, -1]);
       const result = arctan2(y, x);
-      const expected = [Math.PI / 4, 3 * Math.PI / 4, -Math.PI / 4, -3 * Math.PI / 4];
+      const expected = [Math.PI / 4, (3 * Math.PI) / 4, -Math.PI / 4, (-3 * Math.PI) / 4];
       const resultArr = result.toArray() as number[];
       for (let i = 0; i < expected.length; i++) {
         expect(Math.abs(resultArr[i]! - expected[i]!)).toBeLessThan(1e-10);

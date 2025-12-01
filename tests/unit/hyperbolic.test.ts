@@ -1,13 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  array,
-  sinh,
-  cosh,
-  tanh,
-  arcsinh,
-  arccosh,
-  arctanh,
-} from '../../src/core/ndarray';
+import { array, sinh, cosh, tanh, arcsinh, arccosh, arctanh } from '../../src/core/ndarray';
 
 describe('Hyperbolic Operations', () => {
   describe('sinh', () => {

@@ -2005,6 +2005,8 @@ export function arccosh(x: NDArray): NDArray {
  */
 export function arctanh(x: NDArray): NDArray {
   return x.arctanh();
+}
+
 // ========================================
 // Array Manipulation Functions
 // ========================================
