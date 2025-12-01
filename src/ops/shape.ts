@@ -6,7 +6,7 @@
  */
 
 import { ArrayStorage, computeStrides } from '../core/storage';
-import { getTypedArrayConstructor, type TypedArray } from '../core/dtype';
+import { getTypedArrayConstructor, isBigIntDType, type TypedArray } from '../core/dtype';
 
 /**
  * Reshape array to a new shape
@@ -63,8 +63,6 @@ export function reshape(storage: ArrayStorage, newShape: number[]): ArrayStorage
  * Always returns a copy (matching NumPy behavior)
  */
 export function flatten(storage: ArrayStorage): ArrayStorage {
-  const shape = storage.shape;
-  const ndim = shape.length;
   const size = storage.size;
   const dtype = storage.dtype;
   const Constructor = getTypedArrayConstructor(dtype);
@@ -73,33 +71,26 @@ export function flatten(storage: ArrayStorage): ArrayStorage {
     throw new Error(`Cannot flatten array with dtype ${dtype}`);
   }
 
-  // Always create a copy (NumPy flatten() behavior)
-  // Create new data buffer and copy elements in row-major order
-  // This respects the current array's strides (handles transposed arrays correctly)
+  // Fast path: if array is C-contiguous, just copy the underlying data
+  if (storage.isCContiguous) {
+    const data = storage.data;
+    const newData = data.slice(storage.offset, storage.offset + size);
+    return ArrayStorage.fromData(newData as TypedArray, [size], dtype, [1], 0);
+  }
+
+  // Slow path: non-contiguous array, copy using iget (flat index)
+  // This is much faster than recursive get(...indices) calls
   const newData = new Constructor(size);
-  let idx = 0;
+  const isBigInt = isBigIntDType(dtype);
 
-  // Helper function to recursively iterate through all indices in row-major order
-  const flattenRecursive = (indices: number[], dim: number) => {
-    if (dim === ndim) {
-      // At leaf, copy the value using get method which respects strides
-      const value = storage.get(...indices);
-      if (typeof value === 'bigint') {
-        (newData as BigInt64Array | BigUint64Array)[idx++] = value;
-      } else {
-        (newData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[idx++] = value;
-      }
-      return;
+  for (let i = 0; i < size; i++) {
+    const value = storage.iget(i);
+    if (isBigInt) {
+      (newData as BigInt64Array | BigUint64Array)[i] = value as bigint;
+    } else {
+      (newData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[i] = value as number;
     }
-
-    // Iterate through current dimension
-    for (let i = 0; i < shape[dim]!; i++) {
-      indices[dim] = i;
-      flattenRecursive(indices, dim + 1);
-    }
-  };
-
-  flattenRecursive(new Array(ndim), 0);
+  }
 
   return ArrayStorage.fromData(newData, [size], dtype, [1], 0);
 }
@@ -457,13 +448,29 @@ function copyToOutput(
   const sourceShape = source.shape;
   const ndim = sourceShape.length;
   const sourceSize = source.size;
+  const isBigInt = dtype === 'int64' || dtype === 'uint64';
 
-  // Iterate through all elements in source
+  // Fast path: if concatenating along axis 0 and both are C-contiguous,
+  // we can do bulk copy
+  if (axis === 0 && source.isCContiguous && ndim > 0) {
+    // Calculate the starting position in output array
+    const outputOffset = axisOffset * outputStrides[0]!;
+    const sourceData = source.data;
+    const start = source.offset;
+    const end = start + sourceSize;
+
+    // Bulk copy the entire source array
+    outputData.set(sourceData.subarray(start, end), outputOffset);
+    return;
+  }
+
+  // Slow path: element-by-element copy using flat indices (iget)
+  // Still much faster than get(...indices) with spread operator
   const indices = new Array(ndim).fill(0);
 
   for (let i = 0; i < sourceSize; i++) {
-    // Get value from source
-    const value = source.get(...indices);
+    // Get value from source using flat index
+    const value = source.iget(i);
 
     // Compute output index
     const outputIndices = [...indices];
@@ -475,7 +482,7 @@ function copyToOutput(
     }
 
     // Write to output
-    if (dtype === 'int64' || dtype === 'uint64') {
+    if (isBigInt) {
       (outputData as BigInt64Array | BigUint64Array)[outputIdx] = value as bigint;
     } else {
       (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[outputIdx] =
@@ -787,20 +794,30 @@ export function tile(storage: ArrayStorage, reps: number | number[]): ArrayStora
     expandedStorage = reshape(storage, paddedShape);
   }
 
+  const isBigInt = dtype === 'int64' || dtype === 'uint64';
+  const expandedStrides = expandedStorage.strides;
+
   // Fill output by iterating through all output positions
   const outputIndices = new Array(maxDim).fill(0);
-  for (let i = 0; i < outputSize; i++) {
-    // Compute source index (wrap around)
-    const sourceIndices = outputIndices.map((idx, d) => idx % paddedShape[d]!);
-    const value = expandedStorage.get(...sourceIndices);
 
-    // Write to output
+  for (let i = 0; i < outputSize; i++) {
+    // Compute source flat index directly (wrap around for tiling)
+    let sourceFlatIdx = expandedStorage.offset;
+    for (let d = 0; d < maxDim; d++) {
+      const sourceIdx = outputIndices[d]! % paddedShape[d]!;
+      sourceFlatIdx += sourceIdx * expandedStrides[d]!;
+    }
+
+    // Read value directly from flat index
+    const value = expandedStorage.data[sourceFlatIdx];
+
+    // Write to output using direct index calculation
     let outputIdx = 0;
     for (let d = 0; d < maxDim; d++) {
       outputIdx += outputIndices[d]! * outputStrides[d]!;
     }
 
-    if (dtype === 'int64' || dtype === 'uint64') {
+    if (isBigInt) {
       (outputData as BigInt64Array | BigUint64Array)[outputIdx] = value as bigint;
     } else {
       (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[outputIdx] =
@@ -897,7 +914,7 @@ export function repeat(
 
   // Iterate through source and write repeated values
   const sourceIndices = new Array(ndim).fill(0);
-  const outputIndices = new Array(ndim).fill(0);
+  const isBigInt = dtype === 'int64' || dtype === 'uint64';
 
   // Track cumulative positions along axis
   const axisPositions: number[] = [0];
@@ -906,28 +923,26 @@ export function repeat(
   }
 
   for (let i = 0; i < size; i++) {
-    const value = storage.get(...sourceIndices);
+    // Use iget for flat index access instead of get(...indices)
+    const value = storage.iget(i);
     const axisIdx = sourceIndices[normalizedAxis]!;
     const rep = repeatsArr[axisIdx]!;
 
+    // Calculate base output index (without axis component)
+    let baseOutIdx = 0;
+    for (let d = 0; d < ndim; d++) {
+      if (d !== normalizedAxis) {
+        baseOutIdx += sourceIndices[d]! * outputStrides[d]!;
+      }
+    }
+
     // Write repeated values
+    const axisStride = outputStrides[normalizedAxis]!;
+    const axisStart = axisPositions[axisIdx]!;
     for (let r = 0; r < rep; r++) {
-      // Set output indices
-      for (let d = 0; d < ndim; d++) {
-        if (d === normalizedAxis) {
-          outputIndices[d] = axisPositions[axisIdx]! + r;
-        } else {
-          outputIndices[d] = sourceIndices[d];
-        }
-      }
+      const outIdx = baseOutIdx + (axisStart + r) * axisStride;
 
-      // Calculate output flat index
-      let outIdx = 0;
-      for (let d = 0; d < ndim; d++) {
-        outIdx += outputIndices[d]! * outputStrides[d]!;
-      }
-
-      if (dtype === 'int64' || dtype === 'uint64') {
+      if (isBigInt) {
         (outputData as BigInt64Array | BigUint64Array)[outIdx] = value as bigint;
       } else {
         (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[outIdx] =

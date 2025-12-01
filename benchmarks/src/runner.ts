@@ -262,13 +262,11 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
     return np.tile(arrays['a'], [2, 2]);
   } else if (operation === 'repeat') {
     return arrays['a'].repeat(2);
-  }
-
-  // Advanced
-  else if (operation === 'broadcast_to') {
+  } else if (operation === 'broadcast_to') {
     return np.broadcast_to(arrays['a'], arrays['target_shape']);
   } else if (operation === 'take') {
     return arrays['a'].take(arrays['indices']);
+  }
 
   // IO operations
   else if (operation === 'serializeNpy') {

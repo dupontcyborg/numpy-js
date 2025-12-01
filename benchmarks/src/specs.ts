@@ -765,13 +765,9 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       warmup,
     });
 
-    // ========================================
-    // Advanced Function Benchmarks
-    // ========================================
-
     specs.push({
       name: `broadcast_to [${n}] -> [${m}x${n}]`,
-      category: 'advanced',
+      category: 'manipulation',
       operation: 'broadcast_to',
       setup: {
         a: { shape: [n!], fill: 'arange' },
@@ -783,7 +779,7 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
 
     specs.push({
       name: `take [${m}x${n}] 100 indices`,
-      category: 'advanced',
+      category: 'manipulation',
       operation: 'take',
       setup: {
         a: { shape: [m!, n!], fill: 'arange' },
