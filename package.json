@@ -1,6 +1,6 @@
 {
   "name": "numpy-ts",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Complete NumPy implementation for TypeScript and JavaScript (under construction)",
   "main": "dist/numpy-ts.node.cjs",
   "browser": "dist/numpy-ts.browser.js",
