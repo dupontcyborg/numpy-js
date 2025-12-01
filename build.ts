@@ -64,7 +64,7 @@ async function buildAll() {
     format: 'iife',
     globalName: 'np',
     outfile: 'dist/numpy-ts.browser.js',
-    sourcemap: true,
+    sourcemap: false, // Browser bundles don't need source maps in npm package
     minify: true,
     define: {
       __VERSION_PLACEHOLDER__: JSON.stringify(VERSION),
@@ -80,7 +80,7 @@ async function buildAll() {
     platform: 'browser',
     format: 'esm',
     outfile: 'dist/numpy-ts.esm.js',
-    sourcemap: true,
+    sourcemap: false, // Bundlers will create their own source maps
     minify: true,
     metafile: true,
     define: {

@@ -20,10 +20,15 @@ def setup_arrays(setup_config):
         value = config.get("value")
 
         # Handle scalar values
-        if key in ["n", "axis", "new_shape", "shape", "fill_value"]:
+        if key in ["n", "axis", "new_shape", "shape", "fill_value", "target_shape"]:
             arrays[key] = shape[0]
-            if key in ["new_shape", "shape"]:
+            if key in ["new_shape", "shape", "target_shape"]:
                 arrays[key] = shape
+            continue
+
+        # Handle indices array
+        if key == "indices":
+            arrays[key] = shape
             continue
 
         # Map dtype names
@@ -154,6 +159,28 @@ def run_operation(spec):
         result = arrays["a"].flatten()
     elif operation == "ravel":
         result = arrays["a"].ravel()
+
+    # Array manipulation
+    elif operation == "swapaxes":
+        result = np.swapaxes(arrays["a"], 0, 1)
+    elif operation == "concatenate":
+        result = np.concatenate([arrays["a"], arrays["b"]], axis=0)
+    elif operation == "stack":
+        result = np.stack([arrays["a"], arrays["b"]], axis=0)
+    elif operation == "vstack":
+        result = np.vstack([arrays["a"], arrays["b"]])
+    elif operation == "hstack":
+        result = np.hstack([arrays["a"], arrays["b"]])
+    elif operation == "tile":
+        result = np.tile(arrays["a"], [2, 2])
+    elif operation == "repeat":
+        result = np.repeat(arrays["a"], 2)
+
+    # Advanced
+    elif operation == "broadcast_to":
+        result = np.broadcast_to(arrays["a"], arrays["target_shape"])
+    elif operation == "take":
+        result = np.take(arrays["a"], arrays["indices"])
 
     else:
         raise ValueError(f"Unknown operation: {operation}")

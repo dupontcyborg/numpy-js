@@ -10,6 +10,9 @@
   "files": [
     "dist/**/*.js",
     "dist/**/*.cjs",
+    "dist/**/*.mjs",
+    "dist/**/*.cjs.map",
+    "dist/**/*.mjs.map",
     "dist/types/**/*.d.ts",
     "README.md",
     "LICENSE"
@@ -89,7 +92,7 @@
   "bugs": {
     "url": "https://github.com/dupontcyborg/numpy-ts/issues"
   },
-  "homepage": "https://github.com/dupontcyborg/numpy-ts#readme",
+  "homepage": "https://github.com/dupontcyborg/numpy-ts",
   "devDependencies": {
     "@types/node": "^24.9.1",
     "@typescript-eslint/eslint-plugin": "^8.46.2",

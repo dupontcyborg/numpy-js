@@ -50,12 +50,19 @@ function setupArrays(setup: BenchmarkSetup, operation?: string): Record<string, 
       key === 'axis' ||
       key === 'new_shape' ||
       key === 'shape' ||
-      key === 'fill_value'
+      key === 'fill_value' ||
+      key === 'target_shape'
     ) {
       arrays[key] = shape[0];
-      if (key === 'new_shape' || key === 'shape') {
+      if (key === 'new_shape' || key === 'shape' || key === 'target_shape') {
         arrays[key] = shape;
       }
+      continue;
+    }
+
+    // Handle indices array
+    if (key === 'indices') {
+      arrays[key] = shape;
       continue;
     }
 
@@ -238,6 +245,27 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
   // Slicing
   else if (operation === 'slice') {
     return arrays['a'].slice('0:100', '0:100');
+  }
+
+  // Array manipulation
+  else if (operation === 'swapaxes') {
+    return arrays['a'].swapaxes(0, 1);
+  } else if (operation === 'concatenate') {
+    return np.concatenate([arrays['a'], arrays['b']], 0);
+  } else if (operation === 'stack') {
+    return np.stack([arrays['a'], arrays['b']], 0);
+  } else if (operation === 'vstack') {
+    return np.vstack([arrays['a'], arrays['b']]);
+  } else if (operation === 'hstack') {
+    return np.hstack([arrays['a'], arrays['b']]);
+  } else if (operation === 'tile') {
+    return np.tile(arrays['a'], [2, 2]);
+  } else if (operation === 'repeat') {
+    return arrays['a'].repeat(2);
+  } else if (operation === 'broadcast_to') {
+    return np.broadcast_to(arrays['a'], arrays['target_shape']);
+  } else if (operation === 'take') {
+    return arrays['a'].take(arrays['indices']);
   }
 
   // IO operations

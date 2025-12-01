@@ -19,6 +19,7 @@ import * as reductionOps from '../ops/reduction';
 import * as shapeOps from '../ops/shape';
 import * as linalgOps from '../ops/linalg';
 import * as exponentialOps from '../ops/exponential';
+import * as advancedOps from '../ops/advanced';
 
 export class NDArray {
   // Internal storage
@@ -686,6 +687,62 @@ export class NDArray {
     const resultStorage = shapeOps.expandDims(this._storage, axis);
     const base = this._base ?? this;
     return NDArray._fromStorage(resultStorage, base);
+  }
+
+  /**
+   * Swap two axes of an array
+   * @param axis1 - First axis
+   * @param axis2 - Second axis
+   * @returns Array with swapped axes (always a view)
+   */
+  swapaxes(axis1: number, axis2: number): NDArray {
+    const resultStorage = shapeOps.swapaxes(this._storage, axis1, axis2);
+    const base = this._base ?? this;
+    return NDArray._fromStorage(resultStorage, base);
+  }
+
+  /**
+   * Move axes to new positions
+   * @param source - Original positions of axes to move
+   * @param destination - New positions for axes
+   * @returns Array with moved axes (always a view)
+   */
+  moveaxis(source: number | number[], destination: number | number[]): NDArray {
+    const resultStorage = shapeOps.moveaxis(this._storage, source, destination);
+    const base = this._base ?? this;
+    return NDArray._fromStorage(resultStorage, base);
+  }
+
+  /**
+   * Repeat elements of an array
+   * @param repeats - Number of repetitions for each element
+   * @param axis - Axis along which to repeat (if undefined, flattens first)
+   * @returns New array with repeated elements
+   */
+  repeat(repeats: number | number[], axis?: number): NDArray {
+    const resultStorage = shapeOps.repeat(this._storage, repeats, axis);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Take elements from array along an axis
+   * @param indices - Indices of elements to take
+   * @param axis - Axis along which to take (if undefined, flattens first)
+   * @returns New array with selected elements
+   */
+  take(indices: number[], axis?: number): NDArray {
+    const resultStorage = advancedOps.take(this._storage, indices, axis);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Put values at specified indices (modifies array in-place)
+   * @param indices - Indices at which to place values
+   * @param values - Values to put
+   */
+  put(indices: number[], values: NDArray | number | bigint): void {
+    const valuesStorage = values instanceof NDArray ? values._storage : values;
+    advancedOps.put(this._storage, indices, valuesStorage);
   }
 
   // Linear algebra operations
@@ -1632,4 +1689,271 @@ export function tensordot(
   axes: number | [number[], number[]] = 2
 ): NDArray | number | bigint {
   return a.tensordot(b, axes);
+}
+
+// ========================================
+// Array Manipulation Functions
+// ========================================
+
+/**
+ * Swap two axes of an array
+ *
+ * @param a - Input array
+ * @param axis1 - First axis
+ * @param axis2 - Second axis
+ * @returns View with axes swapped
+ */
+export function swapaxes(a: NDArray, axis1: number, axis2: number): NDArray {
+  return a.swapaxes(axis1, axis2);
+}
+
+/**
+ * Move axes to new positions
+ *
+ * @param a - Input array
+ * @param source - Original positions of axes to move
+ * @param destination - New positions for axes
+ * @returns View with axes moved
+ */
+export function moveaxis(
+  a: NDArray,
+  source: number | number[],
+  destination: number | number[]
+): NDArray {
+  return a.moveaxis(source, destination);
+}
+
+/**
+ * Concatenate arrays along an existing axis
+ *
+ * @param arrays - Arrays to concatenate
+ * @param axis - Axis along which to concatenate (default: 0)
+ * @returns Concatenated array
+ */
+export function concatenate(arrays: NDArray[], axis: number = 0): NDArray {
+  if (arrays.length === 0) {
+    throw new Error('need at least one array to concatenate');
+  }
+  const storages = arrays.map((a) => a.storage);
+  const resultStorage = shapeOps.concatenate(storages, axis);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Stack arrays along a new axis
+ *
+ * @param arrays - Arrays to stack (must have same shape)
+ * @param axis - Axis in the result array along which to stack (default: 0)
+ * @returns Stacked array
+ */
+export function stack(arrays: NDArray[], axis: number = 0): NDArray {
+  if (arrays.length === 0) {
+    throw new Error('need at least one array to stack');
+  }
+  const storages = arrays.map((a) => a.storage);
+  const resultStorage = shapeOps.stack(storages, axis);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Stack arrays vertically (row-wise)
+ *
+ * @param arrays - Arrays to stack
+ * @returns Vertically stacked array
+ */
+export function vstack(arrays: NDArray[]): NDArray {
+  if (arrays.length === 0) {
+    throw new Error('need at least one array to stack');
+  }
+  const storages = arrays.map((a) => a.storage);
+  const resultStorage = shapeOps.vstack(storages);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Stack arrays horizontally (column-wise)
+ *
+ * @param arrays - Arrays to stack
+ * @returns Horizontally stacked array
+ */
+export function hstack(arrays: NDArray[]): NDArray {
+  if (arrays.length === 0) {
+    throw new Error('need at least one array to stack');
+  }
+  const storages = arrays.map((a) => a.storage);
+  const resultStorage = shapeOps.hstack(storages);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Stack arrays depth-wise (along third axis)
+ *
+ * @param arrays - Arrays to stack
+ * @returns Depth-stacked array
+ */
+export function dstack(arrays: NDArray[]): NDArray {
+  if (arrays.length === 0) {
+    throw new Error('need at least one array to stack');
+  }
+  const storages = arrays.map((a) => a.storage);
+  const resultStorage = shapeOps.dstack(storages);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Split array into multiple sub-arrays
+ *
+ * @param a - Array to split
+ * @param indicesOrSections - Number of equal sections or indices where to split
+ * @param axis - Axis along which to split (default: 0)
+ * @returns List of sub-arrays
+ */
+export function split(
+  a: NDArray,
+  indicesOrSections: number | number[],
+  axis: number = 0
+): NDArray[] {
+  const storages = shapeOps.split(a.storage, indicesOrSections, axis);
+  return storages.map((s) => NDArray._fromStorage(s, a.base ?? a));
+}
+
+/**
+ * Split array into multiple sub-arrays (allows unequal splits)
+ *
+ * @param a - Array to split
+ * @param indicesOrSections - Number of sections or indices where to split
+ * @param axis - Axis along which to split (default: 0)
+ * @returns List of sub-arrays
+ */
+export function array_split(
+  a: NDArray,
+  indicesOrSections: number | number[],
+  axis: number = 0
+): NDArray[] {
+  const storages = shapeOps.arraySplit(a.storage, indicesOrSections, axis);
+  return storages.map((s) => NDArray._fromStorage(s, a.base ?? a));
+}
+
+/**
+ * Split array vertically (row-wise)
+ *
+ * @param a - Array to split
+ * @param indicesOrSections - Number of sections or indices where to split
+ * @returns List of sub-arrays
+ */
+export function vsplit(a: NDArray, indicesOrSections: number | number[]): NDArray[] {
+  const storages = shapeOps.vsplit(a.storage, indicesOrSections);
+  return storages.map((s) => NDArray._fromStorage(s, a.base ?? a));
+}
+
+/**
+ * Split array horizontally (column-wise)
+ *
+ * @param a - Array to split
+ * @param indicesOrSections - Number of sections or indices where to split
+ * @returns List of sub-arrays
+ */
+export function hsplit(a: NDArray, indicesOrSections: number | number[]): NDArray[] {
+  const storages = shapeOps.hsplit(a.storage, indicesOrSections);
+  return storages.map((s) => NDArray._fromStorage(s, a.base ?? a));
+}
+
+/**
+ * Tile array by repeating along each axis
+ *
+ * @param a - Input array
+ * @param reps - Number of repetitions along each axis
+ * @returns Tiled array
+ */
+export function tile(a: NDArray, reps: number | number[]): NDArray {
+  const resultStorage = shapeOps.tile(a.storage, reps);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Repeat elements of an array
+ *
+ * @param a - Input array
+ * @param repeats - Number of repetitions for each element
+ * @param axis - Axis along which to repeat (if undefined, flattens first)
+ * @returns Array with repeated elements
+ */
+export function repeat(a: NDArray, repeats: number | number[], axis?: number): NDArray {
+  return a.repeat(repeats, axis);
+}
+
+// ========================================
+// Advanced Functions
+// ========================================
+
+/**
+ * Broadcast an array to a given shape
+ *
+ * @param a - Input array
+ * @param shape - Target shape
+ * @returns View broadcast to target shape
+ */
+export function broadcast_to(a: NDArray, shape: number[]): NDArray {
+  const resultStorage = advancedOps.broadcast_to(a.storage, shape);
+  return NDArray._fromStorage(resultStorage, a.base ?? a);
+}
+
+/**
+ * Broadcast arrays to a common shape
+ *
+ * @param arrays - Arrays to broadcast
+ * @returns Arrays broadcast to common shape
+ */
+export function broadcast_arrays(...arrays: NDArray[]): NDArray[] {
+  const storages = arrays.map((a) => a.storage);
+  const resultStorages = advancedOps.broadcast_arrays(storages);
+  return resultStorages.map((s, i) => NDArray._fromStorage(s, arrays[i]!.base ?? arrays[i]!));
+}
+
+/**
+ * Take elements from an array along an axis
+ *
+ * @param a - Input array
+ * @param indices - Indices of elements to take
+ * @param axis - Axis along which to take (if undefined, flattens first)
+ * @returns Array with selected elements
+ */
+export function take(a: NDArray, indices: number[], axis?: number): NDArray {
+  return a.take(indices, axis);
+}
+
+/**
+ * Put values at specified indices (modifies array in-place)
+ *
+ * @param a - Target array
+ * @param indices - Indices at which to place values
+ * @param values - Values to put
+ */
+export function put(a: NDArray, indices: number[], values: NDArray | number | bigint): void {
+  a.put(indices, values);
+}
+
+/**
+ * Construct array from index array and choices
+ *
+ * @param a - Index array (integer indices into choices)
+ * @param choices - Arrays to choose from
+ * @returns Array constructed from choices
+ */
+export function choose(a: NDArray, choices: NDArray[]): NDArray {
+  const choiceStorages = choices.map((c) => c.storage);
+  const resultStorage = advancedOps.choose(a.storage, choiceStorages);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Check if two arrays are element-wise equal
+ *
+ * @param a - First array
+ * @param b - Second array
+ * @param equal_nan - Whether to consider NaN equal to NaN (default: false)
+ * @returns True if arrays are equal element-wise
+ */
+export function array_equal(a: NDArray, b: NDArray, equal_nan: boolean = false): boolean {
+  return advancedOps.array_equal(a.storage, b.storage, equal_nan);
 }
