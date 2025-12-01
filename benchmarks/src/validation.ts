@@ -101,11 +101,17 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
     const { shape, dtype = 'float64', fill = 'zeros', value } = config;
 
     // Handle scalar values
-    if (['n', 'axis', 'new_shape', 'shape', 'fill_value'].includes(key)) {
+    if (['n', 'axis', 'new_shape', 'shape', 'fill_value', 'target_shape'].includes(key)) {
       arrays[key] = shape[0];
-      if (key === 'new_shape' || key === 'shape') {
+      if (key === 'new_shape' || key === 'shape' || key === 'target_shape') {
         arrays[key] = shape;
       }
+      continue;
+    }
+
+    // Handle indices array
+    if (key === 'indices') {
+      arrays[key] = shape;
       continue;
     }
 
@@ -244,6 +250,28 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
       return arrays.a.flatten();
     case 'ravel':
       return arrays.a.ravel();
+
+    // Array manipulation
+    case 'swapaxes':
+      return np.swapaxes(arrays.a, 0, 1);
+    case 'concatenate':
+      return np.concatenate([arrays.a, arrays.b], 0);
+    case 'stack':
+      return np.stack([arrays.a, arrays.b], 0);
+    case 'vstack':
+      return np.vstack([arrays.a, arrays.b]);
+    case 'hstack':
+      return np.hstack([arrays.a, arrays.b]);
+    case 'tile':
+      return np.tile(arrays.a, [2, 2]);
+    case 'repeat':
+      return arrays.a.repeat(2);
+
+    // Advanced
+    case 'broadcast_to':
+      return np.broadcast_to(arrays.a, arrays.target_shape);
+    case 'take':
+      return arrays.a.take(arrays.indices);
 
     default:
       throw new Error(`Unknown operation: ${spec.operation}`);

@@ -88,25 +88,25 @@ All operations preserve dtype or follow NumPy promotion rules:
 
 ### Transpose
 - [x] `transpose(a, axes?)` - Permute dimensions _(implemented as NDArray.transpose() method)_
-- [ ] `swapaxes(a, axis1, axis2)` - Swap two axes
-- [ ] `moveaxis(a, source, destination)` - Move axes
+- [x] `swapaxes(a, axis1, axis2)` - Swap two axes _(returns a view)_
+- [x] `moveaxis(a, source, destination)` - Move axes _(returns a view)_
 
 ### Joining
-- [ ] `concatenate(arrays, axis?)` - Join arrays
-- [ ] `stack(arrays, axis?)` - Stack along new axis
-- [ ] `vstack(arrays)` - Stack vertically
-- [ ] `hstack(arrays)` - Stack horizontally
-- [ ] `dstack(arrays)` - Stack depth-wise
+- [x] `concatenate(arrays, axis?)` - Join arrays
+- [x] `stack(arrays, axis?)` - Stack along new axis
+- [x] `vstack(arrays)` - Stack vertically
+- [x] `hstack(arrays)` - Stack horizontally
+- [x] `dstack(arrays)` - Stack depth-wise
 
 ### Splitting
-- [ ] `split(a, indices_or_sections, axis?)` - Split into sub-arrays
-- [ ] `array_split(a, indices_or_sections, axis?)` - Split (unequal)
-- [ ] `vsplit(a, indices_or_sections)` - Split vertically
-- [ ] `hsplit(a, indices_or_sections)` - Split horizontally
+- [x] `split(a, indices_or_sections, axis?)` - Split into sub-arrays _(returns views)_
+- [x] `array_split(a, indices_or_sections, axis?)` - Split (unequal) _(returns views)_
+- [x] `vsplit(a, indices_or_sections)` - Split vertically _(returns views)_
+- [x] `hsplit(a, indices_or_sections)` - Split horizontally _(returns views)_
 
 ### Tiling
-- [ ] `tile(a, reps)` - Tile array
-- [ ] `repeat(a, repeats, axis?)` - Repeat elements
+- [x] `tile(a, reps)` - Tile array
+- [x] `repeat(a, repeats, axis?)` - Repeat elements
 
 ---
 
@@ -325,10 +325,16 @@ All operations preserve dtype or follow NumPy promotion rules:
 ## I/O
 
 ### NumPy Files
-- [ ] `load(file)` - Load array from .npy file
-- [ ] `save(file, arr)` - Save array to .npy file
-- [ ] `savez(file, *arrays, **kwds)` - Save multiple arrays (.npz)
-- [ ] `savez_compressed(file, *arrays, **kwds)` - Compressed .npz
+- [x] `load(file)` - Load array from .npy/.npz file _(supports v1/v2/v3 format, all dtypes)_
+- [x] `save(file, arr)` - Save array to .npy file _(writes v3 format)_
+- [x] `savez(file, *arrays, **kwds)` - Save multiple arrays (.npz) _(supports positional and named arrays)_
+- [x] `savez_compressed(file, *arrays, **kwds)` - Compressed .npz _(uses DEFLATE compression)_
+
+### In-Memory Parsing/Serialization (Browser-compatible)
+- [x] `parseNpy(buffer)` - Parse NPY bytes to NDArray
+- [x] `serializeNpy(arr)` - Serialize NDArray to NPY bytes
+- [x] `parseNpz(buffer)` / `parseNpzSync(buffer)` - Parse NPZ bytes
+- [x] `serializeNpz(arrays)` / `serializeNpzSync(arrays)` - Serialize to NPZ bytes
 
 ### Text Files
 - [ ] `loadtxt(fname, dtype?)` - Load from text
@@ -381,18 +387,18 @@ All operations preserve dtype or follow NumPy promotion rules:
 ## Advanced
 
 ### Broadcasting
-- [ ] `broadcast_to(array, shape)` - Broadcast to shape
-- [ ] `broadcast_arrays(*args)` - Broadcast multiple arrays
+- [x] `broadcast_to(array, shape)` - Broadcast to shape _(returns a view)_
+- [x] `broadcast_arrays(*args)` - Broadcast multiple arrays _(returns views)_
 
 ### Indexing
-- [ ] `take(a, indices, axis?)` - Take elements
-- [ ] `put(a, ind, v)` - Put values at indices
-- [ ] `choose(a, choices)` - Construct from index array
+- [x] `take(a, indices, axis?)` - Take elements
+- [x] `put(a, ind, v)` - Put values at indices _(modifies in-place)_
+- [x] `choose(a, choices)` - Construct from index array
 
 ### Testing
-- [ ] `allclose(a, b, rtol?, atol?)` - Arrays close
-- [ ] `isclose(a, b, rtol?, atol?)` - Element-wise close
-- [ ] `array_equal(a1, a2)` - Arrays equal
+- [x] `allclose(a, b, rtol?, atol?)` - Arrays close _(implemented as NDArray method)_
+- [x] `isclose(a, b, rtol?, atol?)` - Element-wise close _(implemented as NDArray method)_
+- [x] `array_equal(a1, a2, equal_nan?)` - Arrays equal
 
 ---
 

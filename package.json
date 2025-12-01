@@ -10,6 +10,9 @@
   "files": [
     "dist/**/*.js",
     "dist/**/*.cjs",
+    "dist/**/*.mjs",
+    "dist/**/*.cjs.map",
+    "dist/**/*.mjs.map",
     "dist/types/**/*.d.ts",
     "README.md",
     "LICENSE"
@@ -23,10 +26,18 @@
     },
     "./node": {
       "types": "./dist/types/node.d.ts",
-      "default": "./dist/numpy-ts.node.cjs"
+      "import": "./dist/numpy-ts.node-io.mjs",
+      "require": "./dist/numpy-ts.node-io.cjs",
+      "default": "./dist/numpy-ts.node-io.cjs"
+    },
+    "./io": {
+      "types": "./dist/types/io/index.d.ts",
+      "node": "./dist/numpy-ts.node.cjs",
+      "browser": "./dist/numpy-ts.browser.js",
+      "default": "./dist/numpy-ts.esm.js"
     },
     "./browser": {
-      "types": "./dist/types/browser.d.ts",
+      "types": "./dist/types/index.d.ts",
       "default": "./dist/numpy-ts.browser.js"
     }
   },
@@ -81,7 +92,7 @@
   "bugs": {
     "url": "https://github.com/dupontcyborg/numpy-ts/issues"
   },
-  "homepage": "https://github.com/dupontcyborg/numpy-ts#readme",
+  "homepage": "https://github.com/dupontcyborg/numpy-ts",
   "devDependencies": {
     "@types/node": "^24.9.1",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
