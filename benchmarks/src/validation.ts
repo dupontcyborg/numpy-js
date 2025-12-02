@@ -249,6 +249,30 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
     case 'any':
       return arrays.a.any();
 
+    // New reduction functions
+    case 'cumsum':
+      return arrays.a.cumsum();
+    case 'cumprod':
+      return arrays.a.cumprod();
+    case 'ptp':
+      return arrays.a.ptp();
+    case 'median':
+      return np.median(arrays.a);
+    case 'percentile':
+      return np.percentile(arrays.a, 50);
+    case 'quantile':
+      return np.quantile(arrays.a, 0.5);
+    case 'average':
+      return np.average(arrays.a);
+    case 'nansum':
+      return np.nansum(arrays.a);
+    case 'nanmean':
+      return np.nanmean(arrays.a);
+    case 'nanmin':
+      return np.nanmin(arrays.a);
+    case 'nanmax':
+      return np.nanmax(arrays.a);
+
     // Reshape
     case 'reshape':
       return arrays.a.reshape(...arrays.new_shape);

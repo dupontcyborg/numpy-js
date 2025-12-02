@@ -273,6 +273,30 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
     const axis = arrays['axis'];
     return arrays['a'].any(axis);
   }
+  // New reduction functions
+  else if (operation === 'cumsum') {
+    return arrays['a'].cumsum();
+  } else if (operation === 'cumprod') {
+    return arrays['a'].cumprod();
+  } else if (operation === 'ptp') {
+    return arrays['a'].ptp();
+  } else if (operation === 'median') {
+    return np.median(arrays['a']);
+  } else if (operation === 'percentile') {
+    return np.percentile(arrays['a'], 50);
+  } else if (operation === 'quantile') {
+    return np.quantile(arrays['a'], 0.5);
+  } else if (operation === 'average') {
+    return np.average(arrays['a']);
+  } else if (operation === 'nansum') {
+    return np.nansum(arrays['a']);
+  } else if (operation === 'nanmean') {
+    return np.nanmean(arrays['a']);
+  } else if (operation === 'nanmin') {
+    return np.nanmin(arrays['a']);
+  } else if (operation === 'nanmax') {
+    return np.nanmax(arrays['a']);
+  }
 
   // Reshape
   else if (operation === 'reshape') {
