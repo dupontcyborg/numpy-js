@@ -2121,7 +2121,7 @@ export function frombuffer(
   count: number = -1,
   offset: number = 0
 ): NDArray {
-  let arrayBuffer: ArrayBuffer;
+  let arrayBuffer: ArrayBufferLike;
   let byteOffset = offset;
 
   if (buffer instanceof ArrayBuffer) {
@@ -2147,7 +2147,7 @@ export function frombuffer(
   }
 
   // Create a view into the buffer
-  const data = new Constructor(arrayBuffer, byteOffset, numElements);
+  const data = new Constructor(arrayBuffer as ArrayBuffer, byteOffset, numElements);
   const storage = ArrayStorage.fromData(data as TypedArray, [numElements], dtype);
   return new NDArray(storage);
 }

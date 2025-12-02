@@ -465,21 +465,36 @@ function copyToOutput(
     return;
   }
 
+  // Optimized path for axis=1 (common for hstack): copy row by row
+  if (axis === 1 && ndim === 2 && source.isCContiguous) {
+    const rows = sourceShape[0]!;
+    const cols = sourceShape[1]!;
+    const outputCols = _outputShape[1]!;
+    const sourceData = source.data;
+    const sourceStart = source.offset;
+
+    for (let row = 0; row < rows; row++) {
+      const sourceRowStart = sourceStart + row * cols;
+      const outputRowStart = row * outputCols + axisOffset;
+      // @ts-expect-error - TypedArray.set() works with any typed array subarray
+      outputData.set(sourceData.subarray(sourceRowStart, sourceRowStart + cols), outputRowStart);
+    }
+    return;
+  }
+
   // Slow path: element-by-element copy using flat indices (iget)
-  // Still much faster than get(...indices) with spread operator
+  // Optimized to avoid array spread and pre-compute base offset
   const indices = new Array(ndim).fill(0);
+  const baseOutputOffset = axisOffset * outputStrides[axis]!;
 
   for (let i = 0; i < sourceSize; i++) {
     // Get value from source using flat index
     const value = source.iget(i);
 
-    // Compute output index
-    const outputIndices = [...indices];
-    outputIndices[axis] += axisOffset;
-
-    let outputIdx = 0;
+    // Compute output index more efficiently
+    let outputIdx = baseOutputOffset;
     for (let d = 0; d < ndim; d++) {
-      outputIdx += outputIndices[d]! * outputStrides[d]!;
+      outputIdx += indices[d]! * outputStrides[d]!;
     }
 
     // Write to output
@@ -974,24 +989,26 @@ export function flip(storage: ArrayStorage, axis?: number | number[]): ArrayStor
   const size = storage.size;
 
   // Determine which axes to flip
-  let axesToFlip: number[];
+  let axesToFlip: Set<number>;
   if (axis === undefined) {
     // Flip all axes
-    axesToFlip = Array.from({ length: ndim }, (_, i) => i);
+    axesToFlip = new Set(Array.from({ length: ndim }, (_, i) => i));
   } else if (typeof axis === 'number') {
     const normalizedAxis = axis < 0 ? ndim + axis : axis;
     if (normalizedAxis < 0 || normalizedAxis >= ndim) {
       throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
     }
-    axesToFlip = [normalizedAxis];
+    axesToFlip = new Set([normalizedAxis]);
   } else {
-    axesToFlip = axis.map((ax) => {
-      const normalized = ax < 0 ? ndim + ax : ax;
-      if (normalized < 0 || normalized >= ndim) {
-        throw new Error(`axis ${ax} is out of bounds for array of dimension ${ndim}`);
-      }
-      return normalized;
-    });
+    axesToFlip = new Set(
+      axis.map((ax) => {
+        const normalized = ax < 0 ? ndim + ax : ax;
+        if (normalized < 0 || normalized >= ndim) {
+          throw new Error(`axis ${ax} is out of bounds for array of dimension ${ndim}`);
+        }
+        return normalized;
+      })
+    );
   }
 
   // Create output array
@@ -1002,17 +1019,97 @@ export function flip(storage: ArrayStorage, axis?: number | number[]): ArrayStor
   const outputData = new Constructor(size);
   const isBigInt = isBigIntDType(dtype);
 
-  // Iterate through all output positions
+  // Fast path for 1D arrays
+  if (ndim === 1 && storage.isCContiguous) {
+    const sourceData = storage.data;
+    const start = storage.offset;
+    for (let i = 0; i < size; i++) {
+      if (isBigInt) {
+        (outputData as BigInt64Array | BigUint64Array)[i] = sourceData[
+          start + size - 1 - i
+        ] as bigint;
+      } else {
+        (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[i] = sourceData[
+          start + size - 1 - i
+        ] as number;
+      }
+    }
+    return ArrayStorage.fromData(outputData, [...shape], dtype);
+  }
+
+  // Fast path for 2D arrays
+  if (ndim === 2 && storage.isCContiguous) {
+    const rows = shape[0]!;
+    const cols = shape[1]!;
+    const sourceData = storage.data;
+    const start = storage.offset;
+
+    // Flipping both axes - reverse entire array
+    if (axesToFlip.size === 2) {
+      for (let i = 0; i < size; i++) {
+        if (isBigInt) {
+          (outputData as BigInt64Array | BigUint64Array)[i] = sourceData[
+            start + size - 1 - i
+          ] as bigint;
+        } else {
+          (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[i] = sourceData[
+            start + size - 1 - i
+          ] as number;
+        }
+      }
+      return ArrayStorage.fromData(outputData, [...shape], dtype);
+    }
+
+    if (axesToFlip.size === 1) {
+      if (axesToFlip.has(0)) {
+        // Flip rows: copy rows in reverse order
+        for (let r = 0; r < rows; r++) {
+          const sourceRowStart = start + (rows - 1 - r) * cols;
+          const outputRowStart = r * cols;
+          for (let c = 0; c < cols; c++) {
+            if (isBigInt) {
+              (outputData as BigInt64Array | BigUint64Array)[outputRowStart + c] = sourceData[
+                sourceRowStart + c
+              ] as bigint;
+            } else {
+              (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[
+                outputRowStart + c
+              ] = sourceData[sourceRowStart + c] as number;
+            }
+          }
+        }
+        return ArrayStorage.fromData(outputData, [...shape], dtype);
+      } else if (axesToFlip.has(1)) {
+        // Flip columns: reverse each row
+        for (let r = 0; r < rows; r++) {
+          const sourceRowStart = start + r * cols;
+          const outputRowStart = r * cols;
+          for (let c = 0; c < cols; c++) {
+            if (isBigInt) {
+              (outputData as BigInt64Array | BigUint64Array)[outputRowStart + c] = sourceData[
+                sourceRowStart + cols - 1 - c
+              ] as bigint;
+            } else {
+              (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[
+                outputRowStart + c
+              ] = sourceData[sourceRowStart + cols - 1 - c] as number;
+            }
+          }
+        }
+        return ArrayStorage.fromData(outputData, [...shape], dtype);
+      }
+    }
+  }
+
+  // General path: element-by-element copy
+  const sourceIndices = new Array(ndim);
   const outputIndices = new Array(ndim).fill(0);
 
   for (let i = 0; i < size; i++) {
     // Compute source indices by flipping the specified axes
-    const sourceIndices = outputIndices.map((idx, d) => {
-      if (axesToFlip.includes(d)) {
-        return shape[d]! - 1 - idx;
-      }
-      return idx;
-    });
+    for (let d = 0; d < ndim; d++) {
+      sourceIndices[d] = axesToFlip.has(d) ? shape[d]! - 1 - outputIndices[d]! : outputIndices[d];
+    }
 
     // Get value from source
     let sourceOffset = storage.offset;
@@ -1051,6 +1148,7 @@ export function rot90(
 ): ArrayStorage {
   const shape = storage.shape;
   const ndim = shape.length;
+  const dtype = storage.dtype;
 
   if (ndim < 2) {
     throw new Error('Input must be at least 2-D');
@@ -1075,15 +1173,86 @@ export function rot90(
     return storage.copy();
   }
 
-  let result = storage;
+  // Optimized: do the rotation in one pass instead of k iterations
+  // k=1: flip axis1, transpose
+  // k=2: flip both axes
+  // k=3: flip axis0, transpose
 
-  for (let i = 0; i < k; i++) {
-    // Each 90 degree rotation is: flip axis1, then transpose axis0 and axis1
-    result = flip(result, axis1);
-    result = swapaxes(result, axis0, axis1);
+  const Constructor = getTypedArrayConstructor(dtype);
+  if (!Constructor) {
+    throw new Error(`Cannot rotate array with dtype ${dtype}`);
   }
 
-  return result;
+  const outputShape = [...shape];
+  if (k === 1 || k === 3) {
+    // Swap dimensions for axis0 and axis1
+    [outputShape[axis0], outputShape[axis1]] = [outputShape[axis1]!, outputShape[axis0]!];
+  }
+
+  const outputSize = outputShape.reduce((a, b) => a * b, 1);
+  const outputData = new Constructor(outputSize);
+  const outputStrides = computeStrides(outputShape);
+  const isBigInt = isBigIntDType(dtype);
+
+  const indices = new Array(ndim).fill(0);
+  const sourceIndices = new Array(ndim);
+
+  for (let i = 0; i < storage.size; i++) {
+    // Transform indices based on k
+    for (let d = 0; d < ndim; d++) {
+      sourceIndices[d] = indices[d];
+    }
+
+    let outIdx0, outIdx1;
+    if (k === 1) {
+      // 90 degrees: flip axis1, then transpose
+      outIdx0 = shape[axis1]! - 1 - indices[axis1]!;
+      outIdx1 = indices[axis0];
+    } else if (k === 2) {
+      // 180 degrees: flip both axes
+      outIdx0 = shape[axis0]! - 1 - indices[axis0]!;
+      outIdx1 = shape[axis1]! - 1 - indices[axis1]!;
+      sourceIndices[axis0] = outIdx0;
+      sourceIndices[axis1] = outIdx1;
+    } else {
+      // k === 3, 270 degrees: flip axis0, then transpose
+      outIdx0 = indices[axis1];
+      outIdx1 = shape[axis0]! - 1 - indices[axis0]!;
+    }
+
+    if (k !== 2) {
+      sourceIndices[axis0] = outIdx0;
+      sourceIndices[axis1] = outIdx1;
+    }
+
+    // Compute output offset
+    let outputOffset = 0;
+    for (let d = 0; d < ndim; d++) {
+      outputOffset += sourceIndices[d]! * outputStrides[d]!;
+    }
+
+    // Get source value
+    const value = storage.iget(i);
+
+    // Write to output
+    if (isBigInt) {
+      (outputData as BigInt64Array | BigUint64Array)[outputOffset] = value as bigint;
+    } else {
+      (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[outputOffset] =
+        value as number;
+    }
+
+    // Increment indices
+    for (let d = ndim - 1; d >= 0; d--) {
+      indices[d]++;
+      if (indices[d]! < shape[d]!) {
+        break;
+      }
+      indices[d] = 0;
+    }
+  }
+
+  return ArrayStorage.fromData(outputData, outputShape, dtype);
 }
 
 /**
