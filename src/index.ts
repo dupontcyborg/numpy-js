@@ -84,6 +84,27 @@ export {
   choose,
   array_equal,
   array_equiv,
+  // Reduction functions
+  cumsum,
+  cumprod,
+  ptp,
+  median,
+  percentile,
+  quantile,
+  average,
+  // NaN-aware reduction functions
+  nansum,
+  nanprod,
+  nanmean,
+  nanvar,
+  nanstd,
+  nanmin,
+  nanmax,
+  nanargmin,
+  nanargmax,
+  nancumsum,
+  nancumprod,
+  nanmedian,
 } from './core/ndarray';
 
 // IO functions (environment-agnostic parsing/serialization)

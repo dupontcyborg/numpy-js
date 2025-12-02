@@ -875,3 +875,1131 @@ export function any(
 
   return result;
 }
+
+/**
+ * Return cumulative sum of elements along a given axis
+ */
+export function cumsum(storage: ArrayStorage, axis?: number): ArrayStorage {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    // Flatten and cumsum
+    const size = storage.size;
+    const resultData = new Float64Array(size);
+    let sum = 0;
+    for (let i = 0; i < size; i++) {
+      sum += Number(data[i]);
+      resultData[i] = sum;
+    }
+    return ArrayStorage.fromData(resultData, [size], 'float64');
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  // Create result with same shape
+  const resultData = new Float64Array(storage.size);
+  const axisSize = shape[normalizedAxis]!;
+
+  // Calculate strides
+  const strides: number[] = [];
+  let stride = 1;
+  for (let i = ndim - 1; i >= 0; i--) {
+    strides.unshift(stride);
+    stride *= shape[i]!;
+  }
+
+  // Perform cumsum along axis
+  const totalSize = storage.size;
+  const axisStride = strides[normalizedAxis]!;
+
+  for (let i = 0; i < totalSize; i++) {
+    // Determine position along axis
+    const axisPos = Math.floor(i / axisStride) % axisSize;
+
+    if (axisPos === 0) {
+      resultData[i] = Number(data[i]);
+    } else {
+      // Add previous element along axis
+      resultData[i] = resultData[i - axisStride]! + Number(data[i]);
+    }
+  }
+
+  return ArrayStorage.fromData(resultData, [...shape], 'float64');
+}
+
+/**
+ * Return cumulative product of elements along a given axis
+ */
+export function cumprod(storage: ArrayStorage, axis?: number): ArrayStorage {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    // Flatten and cumprod
+    const size = storage.size;
+    const resultData = new Float64Array(size);
+    let prod = 1;
+    for (let i = 0; i < size; i++) {
+      prod *= Number(data[i]);
+      resultData[i] = prod;
+    }
+    return ArrayStorage.fromData(resultData, [size], 'float64');
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  // Create result with same shape
+  const resultData = new Float64Array(storage.size);
+  const axisSize = shape[normalizedAxis]!;
+
+  // Calculate strides
+  const strides: number[] = [];
+  let stride = 1;
+  for (let i = ndim - 1; i >= 0; i--) {
+    strides.unshift(stride);
+    stride *= shape[i]!;
+  }
+
+  // Perform cumprod along axis
+  const totalSize = storage.size;
+  const axisStride = strides[normalizedAxis]!;
+
+  for (let i = 0; i < totalSize; i++) {
+    // Determine position along axis
+    const axisPos = Math.floor(i / axisStride) % axisSize;
+
+    if (axisPos === 0) {
+      resultData[i] = Number(data[i]);
+    } else {
+      // Multiply by previous element along axis
+      resultData[i] = resultData[i - axisStride]! * Number(data[i]);
+    }
+  }
+
+  return ArrayStorage.fromData(resultData, [...shape], 'float64');
+}
+
+/**
+ * Peak to peak (maximum - minimum) value along a given axis
+ */
+export function ptp(
+  storage: ArrayStorage,
+  axis?: number,
+  keepdims: boolean = false
+): ArrayStorage | number {
+  const maxResult = max(storage, axis, keepdims);
+  const minResult = min(storage, axis, keepdims);
+
+  if (typeof maxResult === 'number' && typeof minResult === 'number') {
+    return maxResult - minResult;
+  }
+
+  // Both are arrays, subtract element-wise
+  const maxStorage = maxResult as ArrayStorage;
+  const minStorage = minResult as ArrayStorage;
+  const maxData = maxStorage.data;
+  const minData = minStorage.data;
+  const resultData = new Float64Array(maxStorage.size);
+
+  for (let i = 0; i < maxStorage.size; i++) {
+    resultData[i] = Number(maxData[i]) - Number(minData[i]);
+  }
+
+  return ArrayStorage.fromData(resultData, [...maxStorage.shape], 'float64');
+}
+
+/**
+ * Compute the median along the specified axis
+ */
+export function median(
+  storage: ArrayStorage,
+  axis?: number,
+  keepdims: boolean = false
+): ArrayStorage | number {
+  return quantile(storage, 0.5, axis, keepdims);
+}
+
+/**
+ * Compute the q-th percentile of data along specified axis
+ */
+export function percentile(
+  storage: ArrayStorage,
+  q: number,
+  axis?: number,
+  keepdims: boolean = false
+): ArrayStorage | number {
+  return quantile(storage, q / 100, axis, keepdims);
+}
+
+/**
+ * Compute the q-th quantile of data along specified axis
+ */
+export function quantile(
+  storage: ArrayStorage,
+  q: number,
+  axis?: number,
+  keepdims: boolean = false
+): ArrayStorage | number {
+  if (q < 0 || q > 1) {
+    throw new Error('Quantile must be between 0 and 1');
+  }
+
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    // Compute quantile over all elements
+    const values: number[] = [];
+    for (let i = 0; i < storage.size; i++) {
+      values.push(Number(data[i]));
+    }
+    values.sort((a, b) => a - b);
+
+    const n = values.length;
+    const idx = q * (n - 1);
+    const lower = Math.floor(idx);
+    const upper = Math.ceil(idx);
+
+    if (lower === upper) {
+      return values[lower]!;
+    }
+
+    // Linear interpolation
+    const frac = idx - lower;
+    return values[lower]! * (1 - frac) + values[upper]! * frac;
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  // Compute output shape
+  const outputShape = Array.from(shape).filter((_, i) => i !== normalizedAxis);
+  if (outputShape.length === 0) {
+    return quantile(storage, q);
+  }
+
+  const outerSize = outputShape.reduce((a, b) => a * b, 1);
+  const axisSize = shape[normalizedAxis]!;
+  const resultData = new Float64Array(outerSize);
+
+  for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+    // Collect values along axis
+    const values: number[] = [];
+    for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+      const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
+      const linearIdx = multiIndexToLinear(inputIndices, shape);
+      values.push(Number(data[linearIdx]));
+    }
+    values.sort((a, b) => a - b);
+
+    const n = values.length;
+    const idx = q * (n - 1);
+    const lower = Math.floor(idx);
+    const upper = Math.ceil(idx);
+
+    if (lower === upper) {
+      resultData[outerIdx] = values[lower]!;
+    } else {
+      // Linear interpolation
+      const frac = idx - lower;
+      resultData[outerIdx] = values[lower]! * (1 - frac) + values[upper]! * frac;
+    }
+  }
+
+  const result = ArrayStorage.fromData(resultData, outputShape, 'float64');
+
+  if (keepdims) {
+    const keepdimsShape = [...shape];
+    keepdimsShape[normalizedAxis] = 1;
+    return ArrayStorage.fromData(resultData, keepdimsShape, 'float64');
+  }
+
+  return result;
+}
+
+/**
+ * Compute the weighted average along the specified axis
+ */
+export function average(
+  storage: ArrayStorage,
+  axis?: number,
+  weights?: ArrayStorage,
+  keepdims: boolean = false
+): ArrayStorage | number {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (weights === undefined) {
+    // Unweighted average is just mean
+    return mean(storage, axis, keepdims);
+  }
+
+  if (axis === undefined) {
+    // Compute weighted average over all elements
+    let sumWeightedValues = 0;
+    let sumWeights = 0;
+    const weightData = weights.data;
+
+    for (let i = 0; i < storage.size; i++) {
+      const w = Number(weightData[i % weights.size]);
+      sumWeightedValues += Number(data[i]) * w;
+      sumWeights += w;
+    }
+
+    return sumWeights === 0 ? NaN : sumWeightedValues / sumWeights;
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  // Compute output shape
+  const outputShape = Array.from(shape).filter((_, i) => i !== normalizedAxis);
+  if (outputShape.length === 0) {
+    return average(storage, undefined, weights);
+  }
+
+  const outerSize = outputShape.reduce((a, b) => a * b, 1);
+  const axisSize = shape[normalizedAxis]!;
+  const weightData = weights.data;
+  const resultData = new Float64Array(outerSize);
+
+  for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+    let sumWeightedValues = 0;
+    let sumWeights = 0;
+
+    for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+      const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
+      const linearIdx = multiIndexToLinear(inputIndices, shape);
+      const w = Number(weightData[axisIdx % weights.size]);
+      sumWeightedValues += Number(data[linearIdx]) * w;
+      sumWeights += w;
+    }
+
+    resultData[outerIdx] = sumWeights === 0 ? NaN : sumWeightedValues / sumWeights;
+  }
+
+  const result = ArrayStorage.fromData(resultData, outputShape, 'float64');
+
+  if (keepdims) {
+    const keepdimsShape = [...shape];
+    keepdimsShape[normalizedAxis] = 1;
+    return ArrayStorage.fromData(resultData, keepdimsShape, 'float64');
+  }
+
+  return result;
+}
+
+// ============================================================================
+// NaN-aware reduction functions
+// ============================================================================
+
+/**
+ * Return sum of elements, treating NaNs as zero
+ */
+export function nansum(
+  storage: ArrayStorage,
+  axis?: number,
+  keepdims: boolean = false
+): ArrayStorage | number {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    let total = 0;
+    for (let i = 0; i < storage.size; i++) {
+      const val = Number(data[i]);
+      if (!isNaN(val)) {
+        total += val;
+      }
+    }
+    return total;
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  const outputShape = Array.from(shape).filter((_, i) => i !== normalizedAxis);
+  if (outputShape.length === 0) {
+    return nansum(storage);
+  }
+
+  const outerSize = outputShape.reduce((a, b) => a * b, 1);
+  const axisSize = shape[normalizedAxis]!;
+  const resultData = new Float64Array(outerSize);
+
+  for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+    let total = 0;
+    for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+      const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
+      const linearIdx = multiIndexToLinear(inputIndices, shape);
+      const val = Number(data[linearIdx]);
+      if (!isNaN(val)) {
+        total += val;
+      }
+    }
+    resultData[outerIdx] = total;
+  }
+
+  const result = ArrayStorage.fromData(resultData, outputShape, 'float64');
+
+  if (keepdims) {
+    const keepdimsShape = [...shape];
+    keepdimsShape[normalizedAxis] = 1;
+    return ArrayStorage.fromData(resultData, keepdimsShape, 'float64');
+  }
+
+  return result;
+}
+
+/**
+ * Return product of elements, treating NaNs as one
+ */
+export function nanprod(
+  storage: ArrayStorage,
+  axis?: number,
+  keepdims: boolean = false
+): ArrayStorage | number {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    let total = 1;
+    for (let i = 0; i < storage.size; i++) {
+      const val = Number(data[i]);
+      if (!isNaN(val)) {
+        total *= val;
+      }
+    }
+    return total;
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  const outputShape = Array.from(shape).filter((_, i) => i !== normalizedAxis);
+  if (outputShape.length === 0) {
+    return nanprod(storage);
+  }
+
+  const outerSize = outputShape.reduce((a, b) => a * b, 1);
+  const axisSize = shape[normalizedAxis]!;
+  const resultData = new Float64Array(outerSize);
+
+  for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+    let total = 1;
+    for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+      const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
+      const linearIdx = multiIndexToLinear(inputIndices, shape);
+      const val = Number(data[linearIdx]);
+      if (!isNaN(val)) {
+        total *= val;
+      }
+    }
+    resultData[outerIdx] = total;
+  }
+
+  const result = ArrayStorage.fromData(resultData, outputShape, 'float64');
+
+  if (keepdims) {
+    const keepdimsShape = [...shape];
+    keepdimsShape[normalizedAxis] = 1;
+    return ArrayStorage.fromData(resultData, keepdimsShape, 'float64');
+  }
+
+  return result;
+}
+
+/**
+ * Compute mean ignoring NaN values
+ */
+export function nanmean(
+  storage: ArrayStorage,
+  axis?: number,
+  keepdims: boolean = false
+): ArrayStorage | number {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    let total = 0;
+    let count = 0;
+    for (let i = 0; i < storage.size; i++) {
+      const val = Number(data[i]);
+      if (!isNaN(val)) {
+        total += val;
+        count++;
+      }
+    }
+    return count === 0 ? NaN : total / count;
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  const outputShape = Array.from(shape).filter((_, i) => i !== normalizedAxis);
+  if (outputShape.length === 0) {
+    return nanmean(storage);
+  }
+
+  const outerSize = outputShape.reduce((a, b) => a * b, 1);
+  const axisSize = shape[normalizedAxis]!;
+  const resultData = new Float64Array(outerSize);
+
+  for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+    let total = 0;
+    let count = 0;
+    for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+      const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
+      const linearIdx = multiIndexToLinear(inputIndices, shape);
+      const val = Number(data[linearIdx]);
+      if (!isNaN(val)) {
+        total += val;
+        count++;
+      }
+    }
+    resultData[outerIdx] = count === 0 ? NaN : total / count;
+  }
+
+  const result = ArrayStorage.fromData(resultData, outputShape, 'float64');
+
+  if (keepdims) {
+    const keepdimsShape = [...shape];
+    keepdimsShape[normalizedAxis] = 1;
+    return ArrayStorage.fromData(resultData, keepdimsShape, 'float64');
+  }
+
+  return result;
+}
+
+/**
+ * Compute variance ignoring NaN values
+ */
+export function nanvar(
+  storage: ArrayStorage,
+  axis?: number,
+  ddof: number = 0,
+  keepdims: boolean = false
+): ArrayStorage | number {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    // First pass: compute mean
+    let total = 0;
+    let count = 0;
+    for (let i = 0; i < storage.size; i++) {
+      const val = Number(data[i]);
+      if (!isNaN(val)) {
+        total += val;
+        count++;
+      }
+    }
+    if (count - ddof <= 0) return NaN;
+    const meanVal = total / count;
+
+    // Second pass: compute sum of squared deviations
+    let sumSq = 0;
+    for (let i = 0; i < storage.size; i++) {
+      const val = Number(data[i]);
+      if (!isNaN(val)) {
+        sumSq += (val - meanVal) ** 2;
+      }
+    }
+    return sumSq / (count - ddof);
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  const outputShape = Array.from(shape).filter((_, i) => i !== normalizedAxis);
+  if (outputShape.length === 0) {
+    return nanvar(storage, undefined, ddof);
+  }
+
+  const outerSize = outputShape.reduce((a, b) => a * b, 1);
+  const axisSize = shape[normalizedAxis]!;
+  const resultData = new Float64Array(outerSize);
+
+  for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+    // First pass: compute mean
+    let total = 0;
+    let count = 0;
+    for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+      const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
+      const linearIdx = multiIndexToLinear(inputIndices, shape);
+      const val = Number(data[linearIdx]);
+      if (!isNaN(val)) {
+        total += val;
+        count++;
+      }
+    }
+
+    if (count - ddof <= 0) {
+      resultData[outerIdx] = NaN;
+      continue;
+    }
+
+    const meanVal = total / count;
+
+    // Second pass: compute sum of squared deviations
+    let sumSq = 0;
+    for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+      const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
+      const linearIdx = multiIndexToLinear(inputIndices, shape);
+      const val = Number(data[linearIdx]);
+      if (!isNaN(val)) {
+        sumSq += (val - meanVal) ** 2;
+      }
+    }
+    resultData[outerIdx] = sumSq / (count - ddof);
+  }
+
+  const result = ArrayStorage.fromData(resultData, outputShape, 'float64');
+
+  if (keepdims) {
+    const keepdimsShape = [...shape];
+    keepdimsShape[normalizedAxis] = 1;
+    return ArrayStorage.fromData(resultData, keepdimsShape, 'float64');
+  }
+
+  return result;
+}
+
+/**
+ * Compute standard deviation ignoring NaN values
+ */
+export function nanstd(
+  storage: ArrayStorage,
+  axis?: number,
+  ddof: number = 0,
+  keepdims: boolean = false
+): ArrayStorage | number {
+  const varResult = nanvar(storage, axis, ddof, keepdims);
+  if (typeof varResult === 'number') {
+    return Math.sqrt(varResult);
+  }
+  const varStorage = varResult as ArrayStorage;
+  const resultData = new Float64Array(varStorage.size);
+  for (let i = 0; i < varStorage.size; i++) {
+    resultData[i] = Math.sqrt(Number(varStorage.data[i]));
+  }
+  return ArrayStorage.fromData(resultData, [...varStorage.shape], 'float64');
+}
+
+/**
+ * Return minimum ignoring NaN values
+ */
+export function nanmin(
+  storage: ArrayStorage,
+  axis?: number,
+  keepdims: boolean = false
+): ArrayStorage | number {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    let minVal = Infinity;
+    for (let i = 0; i < storage.size; i++) {
+      const val = Number(data[i]);
+      if (!isNaN(val) && val < minVal) {
+        minVal = val;
+      }
+    }
+    return minVal === Infinity ? NaN : minVal;
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  const outputShape = Array.from(shape).filter((_, i) => i !== normalizedAxis);
+  if (outputShape.length === 0) {
+    return nanmin(storage);
+  }
+
+  const outerSize = outputShape.reduce((a, b) => a * b, 1);
+  const axisSize = shape[normalizedAxis]!;
+  const resultData = new Float64Array(outerSize);
+
+  for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+    let minVal = Infinity;
+    for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+      const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
+      const linearIdx = multiIndexToLinear(inputIndices, shape);
+      const val = Number(data[linearIdx]);
+      if (!isNaN(val) && val < minVal) {
+        minVal = val;
+      }
+    }
+    resultData[outerIdx] = minVal === Infinity ? NaN : minVal;
+  }
+
+  const result = ArrayStorage.fromData(resultData, outputShape, 'float64');
+
+  if (keepdims) {
+    const keepdimsShape = [...shape];
+    keepdimsShape[normalizedAxis] = 1;
+    return ArrayStorage.fromData(resultData, keepdimsShape, 'float64');
+  }
+
+  return result;
+}
+
+/**
+ * Return maximum ignoring NaN values
+ */
+export function nanmax(
+  storage: ArrayStorage,
+  axis?: number,
+  keepdims: boolean = false
+): ArrayStorage | number {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    let maxVal = -Infinity;
+    for (let i = 0; i < storage.size; i++) {
+      const val = Number(data[i]);
+      if (!isNaN(val) && val > maxVal) {
+        maxVal = val;
+      }
+    }
+    return maxVal === -Infinity ? NaN : maxVal;
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  const outputShape = Array.from(shape).filter((_, i) => i !== normalizedAxis);
+  if (outputShape.length === 0) {
+    return nanmax(storage);
+  }
+
+  const outerSize = outputShape.reduce((a, b) => a * b, 1);
+  const axisSize = shape[normalizedAxis]!;
+  const resultData = new Float64Array(outerSize);
+
+  for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+    let maxVal = -Infinity;
+    for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+      const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
+      const linearIdx = multiIndexToLinear(inputIndices, shape);
+      const val = Number(data[linearIdx]);
+      if (!isNaN(val) && val > maxVal) {
+        maxVal = val;
+      }
+    }
+    resultData[outerIdx] = maxVal === -Infinity ? NaN : maxVal;
+  }
+
+  const result = ArrayStorage.fromData(resultData, outputShape, 'float64');
+
+  if (keepdims) {
+    const keepdimsShape = [...shape];
+    keepdimsShape[normalizedAxis] = 1;
+    return ArrayStorage.fromData(resultData, keepdimsShape, 'float64');
+  }
+
+  return result;
+}
+
+/**
+ * Return indices of minimum value, ignoring NaNs
+ */
+export function nanargmin(storage: ArrayStorage, axis?: number): ArrayStorage | number {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    let minVal = Infinity;
+    let minIdx = -1;
+    for (let i = 0; i < storage.size; i++) {
+      const val = Number(data[i]);
+      if (!isNaN(val) && val < minVal) {
+        minVal = val;
+        minIdx = i;
+      }
+    }
+    return minIdx;
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  const outputShape = Array.from(shape).filter((_, i) => i !== normalizedAxis);
+  if (outputShape.length === 0) {
+    return nanargmin(storage);
+  }
+
+  const outerSize = outputShape.reduce((a, b) => a * b, 1);
+  const axisSize = shape[normalizedAxis]!;
+  const resultData = new Int32Array(outerSize);
+
+  for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+    let minVal = Infinity;
+    let minIdx = 0;
+    for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+      const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
+      const linearIdx = multiIndexToLinear(inputIndices, shape);
+      const val = Number(data[linearIdx]);
+      if (!isNaN(val) && val < minVal) {
+        minVal = val;
+        minIdx = axisIdx;
+      }
+    }
+    resultData[outerIdx] = minIdx;
+  }
+
+  return ArrayStorage.fromData(resultData, outputShape, 'int32');
+}
+
+/**
+ * Return indices of maximum value, ignoring NaNs
+ */
+export function nanargmax(storage: ArrayStorage, axis?: number): ArrayStorage | number {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    let maxVal = -Infinity;
+    let maxIdx = -1;
+    for (let i = 0; i < storage.size; i++) {
+      const val = Number(data[i]);
+      if (!isNaN(val) && val > maxVal) {
+        maxVal = val;
+        maxIdx = i;
+      }
+    }
+    return maxIdx;
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  const outputShape = Array.from(shape).filter((_, i) => i !== normalizedAxis);
+  if (outputShape.length === 0) {
+    return nanargmax(storage);
+  }
+
+  const outerSize = outputShape.reduce((a, b) => a * b, 1);
+  const axisSize = shape[normalizedAxis]!;
+  const resultData = new Int32Array(outerSize);
+
+  for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+    let maxVal = -Infinity;
+    let maxIdx = 0;
+    for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+      const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
+      const linearIdx = multiIndexToLinear(inputIndices, shape);
+      const val = Number(data[linearIdx]);
+      if (!isNaN(val) && val > maxVal) {
+        maxVal = val;
+        maxIdx = axisIdx;
+      }
+    }
+    resultData[outerIdx] = maxIdx;
+  }
+
+  return ArrayStorage.fromData(resultData, outputShape, 'int32');
+}
+
+/**
+ * Return cumulative sum, treating NaNs as zero
+ */
+export function nancumsum(storage: ArrayStorage, axis?: number): ArrayStorage {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    // Flatten and cumsum
+    const size = storage.size;
+    const resultData = new Float64Array(size);
+    let sum = 0;
+    for (let i = 0; i < size; i++) {
+      const val = Number(data[i]);
+      if (!isNaN(val)) {
+        sum += val;
+      }
+      resultData[i] = sum;
+    }
+    return ArrayStorage.fromData(resultData, [size], 'float64');
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  // Create result with same shape
+  const resultData = new Float64Array(storage.size);
+  const axisSize = shape[normalizedAxis]!;
+
+  // Calculate strides
+  const strides: number[] = [];
+  let stride = 1;
+  for (let i = ndim - 1; i >= 0; i--) {
+    strides.unshift(stride);
+    stride *= shape[i]!;
+  }
+
+  // Perform cumsum along axis
+  const totalSize = storage.size;
+  const axisStride = strides[normalizedAxis]!;
+
+  for (let i = 0; i < totalSize; i++) {
+    const val = Number(data[i]);
+    const axisPos = Math.floor(i / axisStride) % axisSize;
+
+    if (axisPos === 0) {
+      resultData[i] = isNaN(val) ? 0 : val;
+    } else {
+      resultData[i] = resultData[i - axisStride]! + (isNaN(val) ? 0 : val);
+    }
+  }
+
+  return ArrayStorage.fromData(resultData, [...shape], 'float64');
+}
+
+/**
+ * Return cumulative product, treating NaNs as one
+ */
+export function nancumprod(storage: ArrayStorage, axis?: number): ArrayStorage {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    // Flatten and cumprod
+    const size = storage.size;
+    const resultData = new Float64Array(size);
+    let prod = 1;
+    for (let i = 0; i < size; i++) {
+      const val = Number(data[i]);
+      if (!isNaN(val)) {
+        prod *= val;
+      }
+      resultData[i] = prod;
+    }
+    return ArrayStorage.fromData(resultData, [size], 'float64');
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  // Create result with same shape
+  const resultData = new Float64Array(storage.size);
+  const axisSize = shape[normalizedAxis]!;
+
+  // Calculate strides
+  const strides: number[] = [];
+  let stride = 1;
+  for (let i = ndim - 1; i >= 0; i--) {
+    strides.unshift(stride);
+    stride *= shape[i]!;
+  }
+
+  // Perform cumprod along axis
+  const totalSize = storage.size;
+  const axisStride = strides[normalizedAxis]!;
+
+  for (let i = 0; i < totalSize; i++) {
+    const val = Number(data[i]);
+    const axisPos = Math.floor(i / axisStride) % axisSize;
+
+    if (axisPos === 0) {
+      resultData[i] = isNaN(val) ? 1 : val;
+    } else {
+      resultData[i] = resultData[i - axisStride]! * (isNaN(val) ? 1 : val);
+    }
+  }
+
+  return ArrayStorage.fromData(resultData, [...shape], 'float64');
+}
+
+/**
+ * Compute median ignoring NaN values
+ */
+export function nanmedian(
+  storage: ArrayStorage,
+  axis?: number,
+  keepdims: boolean = false
+): ArrayStorage | number {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const data = storage.data;
+
+  if (axis === undefined) {
+    // Collect non-NaN values
+    const values: number[] = [];
+    for (let i = 0; i < storage.size; i++) {
+      const val = Number(data[i]);
+      if (!isNaN(val)) {
+        values.push(val);
+      }
+    }
+
+    if (values.length === 0) return NaN;
+
+    values.sort((a, b) => a - b);
+    const n = values.length;
+    const mid = Math.floor(n / 2);
+
+    if (n % 2 === 0) {
+      return (values[mid - 1]! + values[mid]!) / 2;
+    }
+    return values[mid]!;
+  }
+
+  // Normalize axis
+  let normalizedAxis = axis;
+  if (normalizedAxis < 0) {
+    normalizedAxis = ndim + normalizedAxis;
+  }
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  const outputShape = Array.from(shape).filter((_, i) => i !== normalizedAxis);
+  if (outputShape.length === 0) {
+    return nanmedian(storage);
+  }
+
+  const outerSize = outputShape.reduce((a, b) => a * b, 1);
+  const axisSize = shape[normalizedAxis]!;
+  const resultData = new Float64Array(outerSize);
+
+  for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
+    // Collect non-NaN values along axis
+    const values: number[] = [];
+    for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
+      const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
+      const linearIdx = multiIndexToLinear(inputIndices, shape);
+      const val = Number(data[linearIdx]);
+      if (!isNaN(val)) {
+        values.push(val);
+      }
+    }
+
+    if (values.length === 0) {
+      resultData[outerIdx] = NaN;
+      continue;
+    }
+
+    values.sort((a, b) => a - b);
+    const n = values.length;
+    const mid = Math.floor(n / 2);
+
+    if (n % 2 === 0) {
+      resultData[outerIdx] = (values[mid - 1]! + values[mid]!) / 2;
+    } else {
+      resultData[outerIdx] = values[mid]!;
+    }
+  }
+
+  const result = ArrayStorage.fromData(resultData, outputShape, 'float64');
+
+  if (keepdims) {
+    const keepdimsShape = [...shape];
+    keepdimsShape[normalizedAxis] = 1;
+    return ArrayStorage.fromData(resultData, keepdimsShape, 'float64');
+  }
+
+  return result;
+}
