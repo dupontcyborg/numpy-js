@@ -251,6 +251,21 @@ def update_readme(analysis):
     total_numpy = analysis['numpy_total']
     coverage = analysis['overall_coverage']
 
+    # Update the badge
+    # Determine color: green if >=90%, yellow if >=50%, red otherwise
+    if coverage >= 90:
+        color = 'brightgreen'
+    elif coverage >= 50:
+        color = 'yellow'
+    else:
+        color = 'red'
+
+    # Update badge with proper URL encoding for percentage sign
+    coverage_int = int(round(coverage))
+    old_badge_pattern = r'!\[numpy api coverage\]\(https://img\.shields\.io/badge/numpy_api_coverage-\d+%20%25-\w+\)'
+    new_badge = f'![numpy api coverage](https://img.shields.io/badge/numpy_api_coverage-{coverage_int}%20%25-{color})'
+    content = re.sub(old_badge_pattern, new_badge, content)
+
     # Update the intro paragraph
     old_pattern = r'A faithful NumPy.*?more\.'
     new_intro = (

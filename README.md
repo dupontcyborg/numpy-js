@@ -3,7 +3,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 [![npm version](https://img.shields.io/npm/v/numpy-ts)](https://www.npmjs.com/package/numpy-ts)
 ![bundle size](https://img.shields.io/bundlephobia/minzip/numpy-ts)
-![Under Construction](https://img.shields.io/badge/Under%20Construction-red)
+![numpy api coverage](https://img.shields.io/badge/numpy_api_coverage-52%20%25-yellow)
 
 ```
 ███╗   ██╗██╗   ██╗███╗   ███╗██████╗ ██╗   ██╗  ████████╗███████╗
@@ -18,7 +18,7 @@ Complete NumPy implementation for TypeScript and JavaScript
 
 **⚠️ Under active development** — API may change before v1.0
 
-A faithful NumPy 2.0+ implementation for TypeScript/JavaScript, validated against Python NumPy. **166 of 333 NumPy functions (49.8% complete)** covering array creation, manipulation, linear algebra, reductions, and more.
+A faithful NumPy 2.0+ implementation for TypeScript/JavaScript, validated against Python NumPy. **173 of 333 NumPy functions (52.0% complete)** covering array creation, manipulation, linear algebra, reductions, and more.
 
 ```bash
 npm install numpy-ts
@@ -64,6 +64,7 @@ Progress toward complete NumPy API compatibility:
 
 | Category | Complete | Total | Status |
 |----------|----------|-------|--------|
+| **Arithmetic** | 19/19 | 100% | ✅ |
 | **Array Creation** | 32/32 | 100% | ✅ |
 | **Array Manipulation** | 35/35 | 100% | ✅ |
 | **Broadcasting** | 3/3 | 100% | ✅ |
@@ -71,8 +72,6 @@ Progress toward complete NumPy API compatibility:
 | **Hyperbolic** | 6/6 | 100% | ✅ |
 | **Linear Algebra** | 9/9 | 100% | ✅ |
 | **Trigonometric** | 12/12 | 100% | ✅ |
-| **Linear Algebra** | 8/9 | 89% | 🟡 |
-| **Arithmetic** | 13/19 | 68% | 🟡 |
 | **Reductions** | 11/30 | 37% | 🔴 |
 | **Indexing** | 3/20 | 15% | 🔴 |
 | **Bit Operations** | 0/9 | 0% | 🔴 |
@@ -90,7 +89,7 @@ Progress toward complete NumPy API compatibility:
 | **Sorting** | 0/6 | 0% | 🔴 |
 | **Statistics** | 0/9 | 0% | 🔴 |
 
-**Overall: 166/333 functions (49.8% complete)**
+**Overall: 173/333 functions (52.0% complete)**
 
 See the complete [API Reference](docs/API-REFERENCE.md) for detailed function list.
 
@@ -240,7 +239,7 @@ arr.sum();  // Type: number
 
 | Feature | numpy-ts | numjs | ndarray | TensorFlow.js |
 |---------|----------|-------|---------|---------------|
-| NumPy API Coverage | 166/333 (50%) | ~20% | Different | ML-focused |
+| NumPy API Coverage | 173/333 (52%) | ~20% | Different | ML-focused |
 | TypeScript Native | ✅ Full | Partial | ❌ No | ✅ Yes |
 | NumPy Validated | ✅ 1365+ tests | Mostly | ❌ No | ❌ No |
 | .npy/.npz Files | ✅ v1/v2/v3 | ❌ No | ❌ No | ❌ No |
