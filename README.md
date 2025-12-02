@@ -69,6 +69,7 @@ Progress toward complete NumPy API compatibility:
 | **Broadcasting** | 3/3 | 100% | ✅ |
 | **Comparison** | 10/10 | 100% | ✅ |
 | **Hyperbolic** | 6/6 | 100% | ✅ |
+| **Linear Algebra** | 9/9 | 100% | ✅ |
 | **Trigonometric** | 12/12 | 100% | ✅ |
 | **Linear Algebra** | 8/9 | 89% | 🟡 |
 | **Arithmetic** | 13/19 | 68% | 🟡 |

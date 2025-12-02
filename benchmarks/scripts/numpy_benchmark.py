@@ -45,6 +45,11 @@ def setup_arrays(setup: Dict[str, Any], operation: str = None) -> Dict[str, np.n
             arrays[key] = shape
             continue
 
+        # Handle string values (like einsum subscripts)
+        if key == "subscripts":
+            arrays[key] = spec.get("value")
+            continue
+
         # Check 'value' first to avoid default fill creating zeros
         if "value" in spec:
             arrays[key] = np.full(shape, spec["value"], dtype=dtype)
@@ -127,6 +132,13 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         return np.reciprocal(arrays["a"])
     elif operation == "positive":
         return np.positive(arrays["a"])
+    elif operation == "cbrt":
+        return np.cbrt(arrays["a"])
+    elif operation == "fabs":
+        return np.fabs(arrays["a"])
+    elif operation == "divmod":
+        q, r = np.divmod(arrays["a"], arrays["b"])
+        return q  # Just return quotient for benchmarking
 
     # Mathematical operations
     elif operation == "sqrt":
@@ -180,6 +192,8 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         return np.diagonal(arrays["a"])
     elif operation == "kron":
         return np.kron(arrays["a"], arrays["b"])
+    elif operation == "einsum":
+        return np.einsum(arrays["subscripts"], arrays["a"], arrays["b"])
     elif operation == "deg2rad":
         return np.deg2rad(arrays["a"])
     elif operation == "rad2deg":

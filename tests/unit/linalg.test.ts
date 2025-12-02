@@ -3,7 +3,18 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { array, dot, trace, transpose, inner, outer, tensordot, diagonal, kron } from '../../src';
+import {
+  array,
+  dot,
+  trace,
+  transpose,
+  inner,
+  outer,
+  tensordot,
+  diagonal,
+  kron,
+  einsum,
+} from '../../src';
 
 describe('Linear Algebra Operations', () => {
   describe('dot()', () => {
@@ -658,6 +669,205 @@ describe('Linear Algebra Operations', () => {
       const b = array([3, 4], 'int32');
       const result = kron(a, b);
       expect(result.dtype).toBe('int32');
+    });
+  });
+
+  describe('einsum()', () => {
+    describe('basic operations', () => {
+      it('computes matrix multiplication (ij,jk->ik)', () => {
+        const a = array([
+          [1, 2],
+          [3, 4],
+        ]);
+        const b = array([
+          [5, 6],
+          [7, 8],
+        ]);
+        const result = einsum('ij,jk->ik', a, b) as any;
+
+        expect(result.shape).toEqual([2, 2]);
+        expect(result.toArray()).toEqual([
+          [19, 22],
+          [43, 50],
+        ]);
+      });
+
+      it('computes inner product (i,i->)', () => {
+        const a = array([1, 2, 3]);
+        const b = array([4, 5, 6]);
+        const result = einsum('i,i->', a, b);
+
+        expect(result).toBe(32); // 1*4 + 2*5 + 3*6
+      });
+
+      it('computes trace (ii->)', () => {
+        const a = array([
+          [1, 2, 3],
+          [4, 5, 6],
+          [7, 8, 9],
+        ]);
+        const result = einsum('ii->', a);
+
+        expect(result).toBe(15); // 1 + 5 + 9
+      });
+
+      it('computes transpose (ij->ji)', () => {
+        const a = array([
+          [1, 2, 3],
+          [4, 5, 6],
+        ]);
+        const result = einsum('ij->ji', a) as any;
+
+        expect(result.shape).toEqual([3, 2]);
+        expect(result.toArray()).toEqual([
+          [1, 4],
+          [2, 5],
+          [3, 6],
+        ]);
+      });
+
+      it('computes sum over axis (ij->j)', () => {
+        const a = array([
+          [1, 2, 3],
+          [4, 5, 6],
+        ]);
+        const result = einsum('ij->j', a) as any;
+
+        expect(result.shape).toEqual([3]);
+        expect(result.toArray()).toEqual([5, 7, 9]); // column sums
+      });
+
+      it('computes sum over all elements (ij->)', () => {
+        const a = array([
+          [1, 2],
+          [3, 4],
+        ]);
+        const result = einsum('ij->', a);
+
+        expect(result).toBe(10);
+      });
+    });
+
+    describe('outer product', () => {
+      it('computes outer product (i,j->ij)', () => {
+        const a = array([1, 2, 3]);
+        const b = array([4, 5]);
+        const result = einsum('i,j->ij', a, b) as any;
+
+        expect(result.shape).toEqual([3, 2]);
+        expect(result.toArray()).toEqual([
+          [4, 5],
+          [8, 10],
+          [12, 15],
+        ]);
+      });
+    });
+
+    describe('element-wise operations', () => {
+      it('computes element-wise product with sum (ij,ij->)', () => {
+        const a = array([
+          [1, 2],
+          [3, 4],
+        ]);
+        const b = array([
+          [5, 6],
+          [7, 8],
+        ]);
+        const result = einsum('ij,ij->', a, b);
+
+        expect(result).toBe(1 * 5 + 2 * 6 + 3 * 7 + 4 * 8); // 70
+      });
+
+      it('computes element-wise product keeping shape (ij,ij->ij)', () => {
+        const a = array([
+          [1, 2],
+          [3, 4],
+        ]);
+        const b = array([
+          [5, 6],
+          [7, 8],
+        ]);
+        const result = einsum('ij,ij->ij', a, b) as any;
+
+        expect(result.shape).toEqual([2, 2]);
+        expect(result.toArray()).toEqual([
+          [5, 12],
+          [21, 32],
+        ]);
+      });
+    });
+
+    describe('batch operations', () => {
+      it('computes batched matrix-vector product (ijk,ik->ij)', () => {
+        // Batch of 2 matrices (2x3), each multiplied by corresponding vector (3,)
+        const a = array([
+          [
+            [1, 2, 3],
+            [4, 5, 6],
+          ],
+          [
+            [7, 8, 9],
+            [10, 11, 12],
+          ],
+        ]); // Shape: (2, 2, 3)
+        const b = array([
+          [1, 0, 0],
+          [0, 1, 0],
+        ]); // Shape: (2, 3)
+        const result = einsum('ijk,ik->ij', a, b) as any;
+
+        expect(result.shape).toEqual([2, 2]);
+        // First batch: [[1,2,3],[4,5,6]] @ [1,0,0] = [1, 4]
+        // Second batch: [[7,8,9],[10,11,12]] @ [0,1,0] = [8, 11]
+        expect(result.toArray()).toEqual([
+          [1, 4],
+          [8, 11],
+        ]);
+      });
+    });
+
+    describe('implicit output', () => {
+      it('infers output for matrix multiply', () => {
+        const a = array([
+          [1, 2],
+          [3, 4],
+        ]);
+        const b = array([
+          [5, 6],
+          [7, 8],
+        ]);
+        // 'ij,jk' should infer output 'ik' (j is summed out)
+        const result = einsum('ij,jk', a, b) as any;
+
+        expect(result.shape).toEqual([2, 2]);
+        expect(result.toArray()).toEqual([
+          [19, 22],
+          [43, 50],
+        ]);
+      });
+    });
+
+    describe('error handling', () => {
+      it('throws on mismatched operand count', () => {
+        const a = array([1, 2, 3]);
+        expect(() => einsum('i,j->', a)).toThrow('expected 2 operands');
+      });
+
+      it('throws on dimension mismatch in subscripts', () => {
+        const a = array([1, 2, 3]); // 1D
+        expect(() => einsum('ij->i', a)).toThrow('has 1 dimensions but subscript');
+      });
+
+      it('throws on size mismatch for same index', () => {
+        const a = array([1, 2, 3]);
+        const b = array([1, 2]); // Different size
+        expect(() => einsum('i,i->', a, b)).toThrow('size mismatch');
+      });
+
+      it('throws on unknown output index', () => {
+        const a = array([1, 2, 3]);
+        expect(() => einsum('i->j', a)).toThrow('unknown index');
+      });
     });
   });
 });
