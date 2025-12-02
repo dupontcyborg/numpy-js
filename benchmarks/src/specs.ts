@@ -288,6 +288,40 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       iterations,
       warmup,
     });
+
+    specs.push({
+      name: `cbrt [${sizes.medium.join('x')}]`,
+      category: 'arithmetic',
+      operation: 'cbrt',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: 1 },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `fabs [${sizes.medium.join('x')}]`,
+      category: 'arithmetic',
+      operation: 'fabs',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: -100 },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `divmod [${sizes.medium.join('x')}] % scalar`,
+      category: 'arithmetic',
+      operation: 'divmod',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+        b: { shape: [1], value: 7 },
+      },
+      iterations,
+      warmup,
+    });
   }
 
   // ========================================
@@ -1130,6 +1164,111 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       setup: {
         a: { shape: kronSize, fill: 'arange' },
         b: { shape: kronSize, fill: 'ones' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // New array creation benchmarks
+    specs.push({
+      name: `diag [${sizes.medium[0]}]`,
+      category: 'creation',
+      operation: 'diag',
+      setup: {
+        a: { shape: [sizes.medium[0]!], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `tri [${sizes.medium.join('x')}]`,
+      category: 'creation',
+      operation: 'tri',
+      setup: {
+        shape: { shape: sizes.medium },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `tril [${sizes.medium.join('x')}]`,
+      category: 'creation',
+      operation: 'tril',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `triu [${sizes.medium.join('x')}]`,
+      category: 'creation',
+      operation: 'triu',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // New array manipulation benchmarks
+    specs.push({
+      name: `flip [${sizes.medium.join('x')}]`,
+      category: 'manipulation',
+      operation: 'flip',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `rot90 [${sizes.medium.join('x')}]`,
+      category: 'manipulation',
+      operation: 'rot90',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `roll [${sizes.medium.join('x')}] shift=10`,
+      category: 'manipulation',
+      operation: 'roll',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `pad [${sizes.medium.join('x')}] width=2`,
+      category: 'manipulation',
+      operation: 'pad',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // einsum - matrix multiplication
+    const einsumSize = [50, 50] as [number, number];
+    specs.push({
+      name: `einsum matmul [${einsumSize.join('x')}]`,
+      category: 'linalg',
+      operation: 'einsum',
+      setup: {
+        subscripts: { shape: [], value: 'ij,jk->ik' },
+        a: { shape: einsumSize, fill: 'arange' },
+        b: { shape: einsumSize, fill: 'ones' },
       },
       iterations,
       warmup,

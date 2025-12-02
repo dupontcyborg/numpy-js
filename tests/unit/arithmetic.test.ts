@@ -87,6 +87,213 @@ describe('Arithmetic Operations', () => {
   });
 });
 
+describe('cbrt', () => {
+  it('computes cube root of positive numbers', () => {
+    const arr = array([1, 8, 27, 64]);
+    const result = arr.cbrt();
+    expect(result.toArray()).toEqual([1, 2, 3, 4]);
+  });
+
+  it('computes cube root of negative numbers', () => {
+    const arr = array([-1, -8, -27]);
+    const result = arr.cbrt();
+    expect(result.toArray()[0]).toBeCloseTo(-1, 10);
+    expect(result.toArray()[1]).toBeCloseTo(-2, 10);
+    expect(result.toArray()[2]).toBeCloseTo(-3, 10);
+  });
+
+  it('computes cube root of 2D arrays', () => {
+    const arr = array([
+      [8, 27],
+      [64, 125],
+    ]);
+    const result = arr.cbrt();
+    expect((result.toArray() as number[][])[0]![0]).toBeCloseTo(2, 10);
+    expect((result.toArray() as number[][])[0]![1]).toBeCloseTo(3, 10);
+    expect((result.toArray() as number[][])[1]![0]).toBeCloseTo(4, 10);
+    expect((result.toArray() as number[][])[1]![1]).toBeCloseTo(5, 10);
+  });
+
+  it('promotes integers to float64', () => {
+    const arr = array([8], 'int32');
+    const result = arr.cbrt();
+    expect(result.dtype).toBe('float64');
+  });
+});
+
+describe('fabs', () => {
+  it('computes absolute value of positive numbers', () => {
+    const arr = array([1, 2, 3]);
+    const result = arr.fabs();
+    expect(result.toArray()).toEqual([1, 2, 3]);
+  });
+
+  it('computes absolute value of negative numbers', () => {
+    const arr = array([-1, -2, -3]);
+    const result = arr.fabs();
+    expect(result.toArray()).toEqual([1, 2, 3]);
+  });
+
+  it('computes absolute value of mixed numbers', () => {
+    const arr = array([-1.5, 0, 2.5, -3.5]);
+    const result = arr.fabs();
+    expect(result.toArray()).toEqual([1.5, 0, 2.5, 3.5]);
+  });
+
+  it('returns float dtype', () => {
+    const arr = array([-1, 2, -3], 'int32');
+    const result = arr.fabs();
+    expect(result.dtype).toBe('float64');
+  });
+
+  it('preserves float32', () => {
+    const arr = array([-1, 2, -3], 'float32');
+    const result = arr.fabs();
+    expect(result.dtype).toBe('float32');
+  });
+});
+
+describe('divmod', () => {
+  it('computes quotient and remainder with scalar', () => {
+    const arr = array([10, 20, 30]);
+    const [quotient, remainder] = arr.divmod(7);
+    expect(quotient.toArray()).toEqual([1, 2, 4]);
+    expect(remainder.toArray()).toEqual([3, 6, 2]);
+  });
+
+  it('computes quotient and remainder with array', () => {
+    const a = array([10, 20, 30]);
+    const b = array([3, 4, 7]);
+    const [quotient, remainder] = a.divmod(b);
+    expect(quotient.toArray()).toEqual([3, 5, 4]);
+    expect(remainder.toArray()).toEqual([1, 0, 2]);
+  });
+
+  it('handles negative dividend', () => {
+    const arr = array([-10, -20, -30]);
+    const [quotient, remainder] = arr.divmod(7);
+    // Floor division: -10 // 7 = -2, -10 % 7 = 4 (NumPy behavior)
+    expect(quotient.toArray()).toEqual([-2, -3, -5]);
+    expect(remainder.toArray()).toEqual([4, 1, 5]);
+  });
+
+  it('works with 2D arrays', () => {
+    const arr = array([
+      [10, 20],
+      [15, 25],
+    ]);
+    const [quotient, remainder] = arr.divmod(7);
+    expect(quotient.toArray()).toEqual([
+      [1, 2],
+      [2, 3],
+    ]);
+    expect(remainder.toArray()).toEqual([
+      [3, 6],
+      [1, 4],
+    ]);
+  });
+});
+
+describe('square', () => {
+  it('computes square of positive numbers', () => {
+    const arr = array([1, 2, 3, 4]);
+    const result = arr.square();
+    expect(result.toArray()).toEqual([1, 4, 9, 16]);
+  });
+
+  it('computes square of negative numbers', () => {
+    const arr = array([-1, -2, -3]);
+    const result = arr.square();
+    expect(result.toArray()).toEqual([1, 4, 9]);
+  });
+
+  it('computes square of floats', () => {
+    const arr = array([1.5, 2.5]);
+    const result = arr.square();
+    expect(result.toArray()[0]).toBeCloseTo(2.25, 10);
+    expect(result.toArray()[1]).toBeCloseTo(6.25, 10);
+  });
+
+  it('preserves dtype', () => {
+    const arr = array([2, 3], 'int32');
+    const result = arr.square();
+    expect(result.dtype).toBe('int32');
+    expect(result.toArray()).toEqual([4, 9]);
+  });
+
+  it('works with 2D arrays', () => {
+    const arr = array([
+      [1, 2],
+      [3, 4],
+    ]);
+    const result = arr.square();
+    expect(result.toArray()).toEqual([
+      [1, 4],
+      [9, 16],
+    ]);
+  });
+});
+
+describe('remainder', () => {
+  it('computes remainder with scalar (same as mod)', () => {
+    const arr = array([10, 20, 30]);
+    const result = arr.remainder(7);
+    expect(result.toArray()).toEqual([3, 6, 2]);
+  });
+
+  it('computes remainder with array', () => {
+    const a = array([10, 20, 30]);
+    const b = array([3, 4, 7]);
+    const result = a.remainder(b);
+    expect(result.toArray()).toEqual([1, 0, 2]);
+  });
+
+  it('handles negative dividend (floor modulo)', () => {
+    const arr = array([-10, -20, -30]);
+    const result = arr.remainder(7);
+    expect(result.toArray()).toEqual([4, 1, 5]);
+  });
+});
+
+describe('heaviside', () => {
+  it('computes heaviside with scalar x2', () => {
+    const arr = array([-2, -1, 0, 1, 2]);
+    const result = arr.heaviside(0.5);
+    expect(result.toArray()).toEqual([0, 0, 0.5, 1, 1]);
+  });
+
+  it('handles all negative values', () => {
+    const arr = array([-3, -2, -1]);
+    const result = arr.heaviside(0.5);
+    expect(result.toArray()).toEqual([0, 0, 0]);
+  });
+
+  it('handles all positive values', () => {
+    const arr = array([1, 2, 3]);
+    const result = arr.heaviside(0.5);
+    expect(result.toArray()).toEqual([1, 1, 1]);
+  });
+
+  it('handles zero values with different x2', () => {
+    const arr = array([0, 0, 0]);
+    const result = arr.heaviside(0.75);
+    expect(result.toArray()).toEqual([0.75, 0.75, 0.75]);
+  });
+
+  it('works with array x2 (same shape)', () => {
+    const arr = array([-1, 0, 1]);
+    const x2 = array([0.1, 0.5, 0.9]);
+    const result = arr.heaviside(x2);
+    expect(result.toArray()).toEqual([0, 0.5, 1]);
+  });
+
+  it('returns float dtype', () => {
+    const arr = array([-1, 0, 1], 'int32');
+    const result = arr.heaviside(0.5);
+    expect(result.dtype).toBe('float64');
+  });
+});
+
 describe('Reduction Operations', () => {
   describe('sum', () => {
     it('sums all elements in 1D array', () => {

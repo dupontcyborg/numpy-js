@@ -979,6 +979,69 @@ export class NDArray {
     return NDArray._fromStorage(result);
   }
 
+  // Additional arithmetic operations
+
+  /**
+   * Element-wise cube root
+   * Promotes integer types to float64
+   * @returns New array with cube root values
+   */
+  cbrt(): NDArray {
+    const resultStorage = arithmeticOps.cbrt(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Element-wise absolute value (always returns float)
+   * @returns New array with absolute values as float
+   */
+  fabs(): NDArray {
+    const resultStorage = arithmeticOps.fabs(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Returns both quotient and remainder (floor divide and modulo)
+   * @param divisor - Array or scalar divisor
+   * @returns Tuple of [quotient, remainder] arrays
+   */
+  divmod(divisor: NDArray | number): [NDArray, NDArray] {
+    const divisorStorage = typeof divisor === 'number' ? divisor : divisor._storage;
+    const [quotientStorage, remainderStorage] = arithmeticOps.divmod(this._storage, divisorStorage);
+    return [NDArray._fromStorage(quotientStorage), NDArray._fromStorage(remainderStorage)];
+  }
+
+  /**
+   * Element-wise square (x**2)
+   * @returns New array with squared values
+   */
+  square(): NDArray {
+    const resultStorage = arithmeticOps.square(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Element-wise remainder (same as mod)
+   * @param divisor - Array or scalar divisor
+   * @returns New array with remainder values
+   */
+  remainder(divisor: NDArray | number): NDArray {
+    const divisorStorage = typeof divisor === 'number' ? divisor : divisor._storage;
+    const resultStorage = arithmeticOps.remainder(this._storage, divisorStorage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Heaviside step function
+   * @param x2 - Value to use when this array element is 0
+   * @returns New array with heaviside values
+   */
+  heaviside(x2: NDArray | number): NDArray {
+    const x2Storage = typeof x2 === 'number' ? x2 : x2._storage;
+    const resultStorage = arithmeticOps.heaviside(this._storage, x2Storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
   // Slicing
   /**
    * Slice the array using NumPy-style string syntax
@@ -1684,6 +1747,528 @@ export function full_like(
   return full(Array.from(a.shape), fill_value, dtype ?? (a.dtype as DType));
 }
 
+/**
+ * Convert input to an ndarray (alias for asarray for compatibility)
+ * In numpy-ts, this behaves the same as asarray since we don't have subclasses
+ * @param a - Input data
+ * @param dtype - Data type (optional)
+ * @returns NDArray
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function asanyarray(a: NDArray | any, dtype?: DType): NDArray {
+  return asarray(a, dtype);
+}
+
+/**
+ * Return a contiguous array (ndim >= 1) in memory (C order)
+ * Since our arrays are already C-contiguous in memory, this either
+ * returns the input unchanged or creates a contiguous copy
+ * @param a - Input data
+ * @param dtype - Data type (optional)
+ * @returns Contiguous array in C order
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function ascontiguousarray(a: NDArray | any, dtype?: DType): NDArray {
+  const arr = asarray(a, dtype);
+  if (arr.flags.C_CONTIGUOUS) {
+    return arr;
+  }
+  return arr.copy();
+}
+
+/**
+ * Return an array laid out in Fortran order in memory
+ * Note: numpy-ts uses C-order internally, so this creates a copy
+ * that is equivalent to the Fortran-ordered layout
+ * @param a - Input data
+ * @param dtype - Data type (optional)
+ * @returns Array (copy in C order, as Fortran order is not supported)
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function asfortranarray(a: NDArray | any, dtype?: DType): NDArray {
+  const arr = asarray(a, dtype);
+  // We always return C-contiguous arrays, so just return a copy
+  return arr.copy();
+}
+
+/**
+ * Extract a diagonal or construct a diagonal array
+ * @param v - Input array (if 2D, extract diagonal; if 1D, construct diagonal matrix)
+ * @param k - Diagonal offset (default 0 is main diagonal, positive above, negative below)
+ * @returns Diagonal elements as 1D array, or 2D diagonal matrix
+ */
+export function diag(v: NDArray, k: number = 0): NDArray {
+  if (v.ndim === 1) {
+    // Construct diagonal matrix from 1D array
+    const n = v.size;
+    const size = n + Math.abs(k);
+    const result = zeros([size, size], v.dtype as DType);
+
+    for (let i = 0; i < n; i++) {
+      const row = k >= 0 ? i : i - k;
+      const col = k >= 0 ? i + k : i;
+      result.set([row, col], v.get([i]) as number);
+    }
+    return result;
+  } else if (v.ndim === 2) {
+    // Extract diagonal from 2D array
+    const [rows, cols] = v.shape;
+    let startRow: number, startCol: number, diagLength: number;
+
+    if (k >= 0) {
+      startRow = 0;
+      startCol = k;
+      diagLength = Math.min(rows!, cols! - k);
+    } else {
+      startRow = -k;
+      startCol = 0;
+      diagLength = Math.min(rows! + k, cols!);
+    }
+
+    if (diagLength <= 0) {
+      return zeros([0], v.dtype as DType);
+    }
+
+    const Constructor = getTypedArrayConstructor(v.dtype as DType);
+    const data = new Constructor!(diagLength);
+
+    for (let i = 0; i < diagLength; i++) {
+      const val = v.get([startRow + i, startCol + i]);
+      if (isBigIntDType(v.dtype as DType)) {
+        (data as BigInt64Array | BigUint64Array)[i] =
+          typeof val === 'bigint' ? val : BigInt(val as number);
+      } else {
+        (data as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[i] = val as number;
+      }
+    }
+
+    const storage = ArrayStorage.fromData(data, [diagLength], v.dtype as DType);
+    return new NDArray(storage);
+  } else {
+    throw new Error('Input must be 1-D or 2-D');
+  }
+}
+
+/**
+ * Create a 2-D array with the flattened input as a diagonal
+ * @param v - Input array (will be flattened)
+ * @param k - Diagonal offset (default 0)
+ * @returns 2D diagonal matrix
+ */
+export function diagflat(v: NDArray, k: number = 0): NDArray {
+  const flat = v.flatten();
+  return diag(flat, k);
+}
+
+/**
+ * Construct an array by executing a function over each coordinate
+ * @param fn - Function that takes coordinate indices and returns value
+ * @param shape - Shape of output array
+ * @param dtype - Data type (default: float64)
+ * @returns Array with values computed from function
+ */
+export function fromfunction(
+  fn: (...indices: number[]) => number | bigint | boolean,
+  shape: number[],
+  dtype: DType = DEFAULT_DTYPE
+): NDArray {
+  const size = shape.reduce((a, b) => a * b, 1);
+  const Constructor = getTypedArrayConstructor(dtype);
+  if (!Constructor) {
+    throw new Error(`Cannot create array with dtype ${dtype}`);
+  }
+  const data = new Constructor(size);
+  const ndim = shape.length;
+  const indices = new Array(ndim).fill(0);
+
+  for (let i = 0; i < size; i++) {
+    const value = fn(...indices);
+
+    if (isBigIntDType(dtype)) {
+      (data as BigInt64Array | BigUint64Array)[i] =
+        typeof value === 'bigint' ? value : BigInt(Number(value));
+    } else if (dtype === 'bool') {
+      (data as Uint8Array)[i] = value ? 1 : 0;
+    } else {
+      (data as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[i] = Number(value);
+    }
+
+    // Increment indices
+    for (let d = ndim - 1; d >= 0; d--) {
+      indices[d]++;
+      if (indices[d]! < shape[d]!) {
+        break;
+      }
+      indices[d] = 0;
+    }
+  }
+
+  const storage = ArrayStorage.fromData(data, shape, dtype);
+  return new NDArray(storage);
+}
+
+/**
+ * Return coordinate matrices from coordinate vectors
+ * @param arrays - 1D coordinate arrays
+ * @param indexing - 'xy' (Cartesian, default) or 'ij' (matrix indexing)
+ * @returns Array of coordinate grids
+ */
+export function meshgrid(...args: (NDArray | { indexing?: 'xy' | 'ij' })[]): NDArray[] {
+  // Parse arguments - last arg might be options
+  let arrays: NDArray[] = [];
+  let indexing: 'xy' | 'ij' = 'xy';
+
+  for (const arg of args) {
+    if (arg instanceof NDArray) {
+      arrays.push(arg);
+    } else if (typeof arg === 'object' && 'indexing' in arg) {
+      indexing = arg.indexing || 'xy';
+    }
+  }
+
+  if (arrays.length === 0) {
+    return [];
+  }
+
+  if (arrays.length === 1) {
+    return [arrays[0]!.copy()];
+  }
+
+  // Get sizes
+  const sizes = arrays.map((a) => a.size);
+
+  // For 'xy' indexing, swap first two dimensions
+  if (indexing === 'xy' && arrays.length >= 2) {
+    arrays = [arrays[1]!, arrays[0]!, ...arrays.slice(2)];
+    [sizes[0], sizes[1]] = [sizes[1]!, sizes[0]!];
+  }
+
+  // Output shape is the combination of all input sizes
+  const outputShape = sizes;
+  const ndim = outputShape.length;
+
+  const results: NDArray[] = [];
+
+  for (let i = 0; i < arrays.length; i++) {
+    const inputArr = arrays[i]!;
+    const inputSize = inputArr.size;
+
+    // Build the shape for broadcasting this array
+    const broadcastShape: number[] = new Array(ndim).fill(1);
+    broadcastShape[i] = inputSize;
+
+    // Reshape and broadcast
+    const reshaped = inputArr.reshape(...broadcastShape);
+    const resultStorage = advancedOps.broadcast_to(reshaped.storage, outputShape);
+    const result = NDArray._fromStorage(resultStorage.copy()); // copy to make contiguous
+    results.push(result);
+  }
+
+  // For 'xy' indexing, swap back the first two results
+  if (indexing === 'xy' && results.length >= 2) {
+    [results[0], results[1]] = [results[1]!, results[0]!];
+  }
+
+  return results;
+}
+
+/**
+ * An array with ones at and below the given diagonal and zeros elsewhere
+ * @param N - Number of rows
+ * @param M - Number of columns (default: N)
+ * @param k - Diagonal offset (default 0)
+ * @param dtype - Data type (default: float64)
+ * @returns Triangular array
+ */
+export function tri(N: number, M?: number, k: number = 0, dtype: DType = DEFAULT_DTYPE): NDArray {
+  const cols = M ?? N;
+  const result = zeros([N, cols], dtype);
+
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j <= i + k && j < cols; j++) {
+      if (j >= 0) {
+        result.set([i, j], 1);
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Lower triangle of an array
+ * @param m - Input array
+ * @param k - Diagonal above which to zero elements (default 0)
+ * @returns Copy with upper triangle zeroed
+ */
+export function tril(m: NDArray, k: number = 0): NDArray {
+  if (m.ndim < 2) {
+    throw new Error('Input must have at least 2 dimensions');
+  }
+
+  const result = m.copy();
+  const shape = result.shape;
+  const rows = shape[shape.length - 2]!;
+  const cols = shape[shape.length - 1]!;
+
+  // Handle multi-dimensional arrays
+  const outerSize = shape.slice(0, -2).reduce((a, b) => a * b, 1);
+
+  for (let outer = 0; outer < outerSize; outer++) {
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < cols; j++) {
+        if (j > i + k) {
+          // Build the indices array
+          const indices: number[] = [];
+          let temp = outer;
+          for (let d = shape.length - 3; d >= 0; d--) {
+            indices.unshift(temp % shape[d]!);
+            temp = Math.floor(temp / shape[d]!);
+          }
+          indices.push(i, j);
+          result.set(indices, 0);
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Upper triangle of an array
+ * @param m - Input array
+ * @param k - Diagonal below which to zero elements (default 0)
+ * @returns Copy with lower triangle zeroed
+ */
+export function triu(m: NDArray, k: number = 0): NDArray {
+  if (m.ndim < 2) {
+    throw new Error('Input must have at least 2 dimensions');
+  }
+
+  const result = m.copy();
+  const shape = result.shape;
+  const rows = shape[shape.length - 2]!;
+  const cols = shape[shape.length - 1]!;
+
+  // Handle multi-dimensional arrays
+  const outerSize = shape.slice(0, -2).reduce((a, b) => a * b, 1);
+
+  for (let outer = 0; outer < outerSize; outer++) {
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < cols; j++) {
+        if (j < i + k) {
+          // Build the indices array
+          const indices: number[] = [];
+          let temp = outer;
+          for (let d = shape.length - 3; d >= 0; d--) {
+            indices.unshift(temp % shape[d]!);
+            temp = Math.floor(temp / shape[d]!);
+          }
+          indices.push(i, j);
+          result.set(indices, 0);
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Generate a Vandermonde matrix
+ * @param x - Input 1D array
+ * @param N - Number of columns (default: length of x)
+ * @param increasing - Order of powers (default: false, highest powers first)
+ * @returns Vandermonde matrix
+ */
+export function vander(x: NDArray, N?: number, increasing: boolean = false): NDArray {
+  if (x.ndim !== 1) {
+    throw new Error('Input must be 1-D');
+  }
+
+  const len = x.size;
+  const cols = N ?? len;
+
+  if (cols < 0) {
+    throw new Error('N must be non-negative');
+  }
+
+  const result = zeros([len, cols], x.dtype as DType);
+
+  for (let i = 0; i < len; i++) {
+    const val = x.get([i]) as number;
+    for (let j = 0; j < cols; j++) {
+      const power = increasing ? j : cols - 1 - j;
+      result.set([i, j], Math.pow(val, power));
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Interpret a buffer as a 1-dimensional array
+ * @param buffer - Buffer-like object (ArrayBuffer, TypedArray, or DataView)
+ * @param dtype - Data type (default: float64)
+ * @param count - Number of items to read (-1 means all)
+ * @param offset - Start reading from this byte offset
+ * @returns NDArray from buffer data
+ */
+export function frombuffer(
+  buffer: ArrayBuffer | ArrayBufferView,
+  dtype: DType = DEFAULT_DTYPE,
+  count: number = -1,
+  offset: number = 0
+): NDArray {
+  let arrayBuffer: ArrayBufferLike;
+  let byteOffset = offset;
+
+  if (buffer instanceof ArrayBuffer) {
+    arrayBuffer = buffer;
+  } else {
+    // It's a TypedArray or DataView
+    arrayBuffer = buffer.buffer;
+    byteOffset += buffer.byteOffset;
+  }
+
+  const bytesPerElement = getBytesPerElement(dtype);
+  const availableBytes = arrayBuffer.byteLength - byteOffset;
+  const maxElements = Math.floor(availableBytes / bytesPerElement);
+  const numElements = count < 0 ? maxElements : Math.min(count, maxElements);
+
+  if (numElements <= 0) {
+    return array([], dtype);
+  }
+
+  const Constructor = getTypedArrayConstructor(dtype);
+  if (!Constructor) {
+    throw new Error(`Unsupported dtype: ${dtype}`);
+  }
+
+  // Create a view into the buffer
+  const data = new Constructor(arrayBuffer as ArrayBuffer, byteOffset, numElements);
+  const storage = ArrayStorage.fromData(data as TypedArray, [numElements], dtype);
+  return new NDArray(storage);
+}
+
+/**
+ * Construct an array by executing a function over each coordinate.
+ * Note: This is a JS implementation - fromfile for actual files isn't directly applicable in browser JS.
+ * This function creates an array from an iterable or callable.
+ * @param file - In JS context, this is an iterable yielding values
+ * @param dtype - Data type
+ * @param count - Number of items to read (-1 means all)
+ * @returns NDArray from the iterable
+ */
+export function fromfile(
+  file: Iterable<number | bigint>,
+  dtype: DType = DEFAULT_DTYPE,
+  count: number = -1
+): NDArray {
+  // In JavaScript, we interpret this as reading from an iterable
+  const values: Array<number | bigint> = [];
+  let i = 0;
+
+  for (const val of file) {
+    if (count >= 0 && i >= count) break;
+    values.push(val);
+    i++;
+  }
+
+  return array(values, dtype);
+}
+
+/**
+ * Create a new 1-dimensional array from an iterable object
+ * @param iter - Iterable object
+ * @param dtype - Data type
+ * @param count - Number of items to read (-1 means all)
+ * @returns NDArray from the iterable
+ */
+export function fromiter(
+  iter: Iterable<number | bigint>,
+  dtype: DType = DEFAULT_DTYPE,
+  count: number = -1
+): NDArray {
+  const values: Array<number | bigint> = [];
+  let i = 0;
+
+  for (const val of iter) {
+    if (count >= 0 && i >= count) break;
+    values.push(val);
+    i++;
+  }
+
+  return array(values, dtype);
+}
+
+/**
+ * Create a new 1-dimensional array from text string
+ * @param string - Input string containing numbers separated by whitespace or separator
+ * @param dtype - Data type (default: float64)
+ * @param count - Number of items to read (-1 means all)
+ * @param sep - Separator between values (default: any whitespace)
+ * @returns NDArray from parsed string
+ */
+export function fromstring(
+  string: string,
+  dtype: DType = DEFAULT_DTYPE,
+  count: number = -1,
+  sep: string = ''
+): NDArray {
+  // Split the string by separator (or whitespace if sep is empty)
+  let parts: string[];
+  if (sep === '') {
+    parts = string.trim().split(/\s+/);
+  } else {
+    parts = string.split(sep);
+  }
+
+  // Parse values
+  const values: Array<number | bigint> = [];
+  let i = 0;
+  for (const part of parts) {
+    if (count >= 0 && i >= count) break;
+    const trimmed = part.trim();
+    if (trimmed === '') continue;
+
+    if (isBigIntDType(dtype)) {
+      values.push(BigInt(trimmed));
+    } else {
+      values.push(parseFloat(trimmed));
+    }
+    i++;
+  }
+
+  return array(values, dtype);
+}
+
+/**
+ * Helper to get bytes per element for a dtype
+ */
+function getBytesPerElement(dtype: DType): number {
+  switch (dtype) {
+    case 'int8':
+    case 'uint8':
+    case 'bool':
+      return 1;
+    case 'int16':
+    case 'uint16':
+      return 2;
+    case 'int32':
+    case 'uint32':
+    case 'float32':
+      return 4;
+    case 'int64':
+    case 'uint64':
+    case 'float64':
+      return 8;
+    default:
+      return 8;
+  }
+}
+
 // Mathematical functions (standalone)
 
 /**
@@ -2247,6 +2832,560 @@ export function repeat(a: NDArray, repeats: number | number[], axis?: number): N
   return a.repeat(repeats, axis);
 }
 
+/**
+ * Return a contiguous flattened array
+ *
+ * @param a - Input array
+ * @returns Flattened 1-D array (view if possible)
+ */
+export function ravel(a: NDArray): NDArray {
+  return a.ravel();
+}
+
+/**
+ * Reshape array to new shape
+ *
+ * @param a - Input array
+ * @param newShape - New shape
+ * @returns Reshaped array (view if possible)
+ */
+export function reshape(a: NDArray, newShape: number[]): NDArray {
+  return a.reshape(...newShape);
+}
+
+/**
+ * Remove axes of length 1
+ *
+ * @param a - Input array
+ * @param axis - Axis to squeeze (optional, squeezes all if not specified)
+ * @returns Squeezed array (view)
+ */
+export function squeeze(a: NDArray, axis?: number): NDArray {
+  return a.squeeze(axis);
+}
+
+/**
+ * Expand the shape of an array by inserting a new axis
+ *
+ * @param a - Input array
+ * @param axis - Position where new axis should be inserted
+ * @returns Array with expanded shape (view)
+ */
+export function expand_dims(a: NDArray, axis: number): NDArray {
+  return a.expand_dims(axis);
+}
+
+/**
+ * Reverse the order of elements along the given axis
+ *
+ * @param m - Input array
+ * @param axis - Axis or axes to flip (flips all if undefined)
+ * @returns Flipped array
+ */
+export function flip(m: NDArray, axis?: number | number[]): NDArray {
+  const resultStorage = shapeOps.flip(m.storage, axis);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Flip array in the left/right direction (reverse along axis 1)
+ *
+ * @param m - Input array (must be at least 2-D)
+ * @returns Flipped array
+ */
+export function fliplr(m: NDArray): NDArray {
+  if (m.ndim < 2) {
+    throw new Error('Input must be at least 2-D');
+  }
+  return flip(m, 1);
+}
+
+/**
+ * Flip array in the up/down direction (reverse along axis 0)
+ *
+ * @param m - Input array (must be at least 2-D)
+ * @returns Flipped array
+ */
+export function flipud(m: NDArray): NDArray {
+  if (m.ndim < 2) {
+    throw new Error('Input must be at least 2-D');
+  }
+  return flip(m, 0);
+}
+
+/**
+ * Rotate array by 90 degrees
+ *
+ * @param m - Input array
+ * @param k - Number of times to rotate (default 1)
+ * @param axes - The axes to rotate in (default [0, 1])
+ * @returns Rotated array
+ */
+export function rot90(m: NDArray, k: number = 1, axes: [number, number] = [0, 1]): NDArray {
+  const resultStorage = shapeOps.rot90(m.storage, k, axes);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Roll array elements along a given axis
+ *
+ * @param a - Input array
+ * @param shift - Number of positions to shift
+ * @param axis - Axis along which to roll (rolls flattened array if undefined)
+ * @returns Rolled array
+ */
+export function roll(a: NDArray, shift: number | number[], axis?: number | number[]): NDArray {
+  const resultStorage = shapeOps.roll(a.storage, shift, axis);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Roll the specified axis backwards until it lies in a given position
+ *
+ * @param a - Input array
+ * @param axis - The axis to roll backwards
+ * @param start - Position to roll to (default 0)
+ * @returns Array with rolled axis (view)
+ */
+export function rollaxis(a: NDArray, axis: number, start: number = 0): NDArray {
+  const resultStorage = shapeOps.rollaxis(a.storage, axis, start);
+  return NDArray._fromStorage(resultStorage, a.base ?? a);
+}
+
+/**
+ * Convert inputs to arrays with at least 1 dimension
+ *
+ * @param arrays - Input arrays
+ * @returns Arrays with at least 1 dimension
+ */
+export function atleast_1d(...arrays: NDArray[]): NDArray | NDArray[] {
+  const storages = arrays.map((a) => a.storage);
+  const resultStorages = shapeOps.atleast1d(storages);
+  const results = resultStorages.map((s, i) => {
+    if (s === storages[i]) {
+      return arrays[i]!;
+    }
+    return NDArray._fromStorage(s);
+  });
+  return results.length === 1 ? results[0]! : results;
+}
+
+/**
+ * Convert inputs to arrays with at least 2 dimensions
+ *
+ * @param arrays - Input arrays
+ * @returns Arrays with at least 2 dimensions
+ */
+export function atleast_2d(...arrays: NDArray[]): NDArray | NDArray[] {
+  const storages = arrays.map((a) => a.storage);
+  const resultStorages = shapeOps.atleast2d(storages);
+  const results = resultStorages.map((s, i) => {
+    if (s === storages[i]) {
+      return arrays[i]!;
+    }
+    return NDArray._fromStorage(s);
+  });
+  return results.length === 1 ? results[0]! : results;
+}
+
+/**
+ * Convert inputs to arrays with at least 3 dimensions
+ *
+ * @param arrays - Input arrays
+ * @returns Arrays with at least 3 dimensions
+ */
+export function atleast_3d(...arrays: NDArray[]): NDArray | NDArray[] {
+  const storages = arrays.map((a) => a.storage);
+  const resultStorages = shapeOps.atleast3d(storages);
+  const results = resultStorages.map((s, i) => {
+    if (s === storages[i]) {
+      return arrays[i]!;
+    }
+    return NDArray._fromStorage(s);
+  });
+  return results.length === 1 ? results[0]! : results;
+}
+
+/**
+ * Split array along third axis (depth)
+ *
+ * @param ary - Input array (must be at least 3-D)
+ * @param indices_or_sections - Number of sections or indices where to split
+ * @returns List of sub-arrays
+ */
+export function dsplit(ary: NDArray, indices_or_sections: number | number[]): NDArray[] {
+  const storages = shapeOps.dsplit(ary.storage, indices_or_sections);
+  return storages.map((s) => NDArray._fromStorage(s, ary.base ?? ary));
+}
+
+/**
+ * Stack 1-D arrays as columns into a 2-D array
+ *
+ * @param arrays - 1-D arrays to stack
+ * @returns 2-D array with inputs as columns
+ */
+export function column_stack(arrays: NDArray[]): NDArray {
+  if (arrays.length === 0) {
+    throw new Error('need at least one array to stack');
+  }
+  const storages = arrays.map((a) => a.storage);
+  const resultStorage = shapeOps.columnStack(storages);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Stack arrays in sequence vertically (alias for vstack)
+ *
+ * @param arrays - Arrays to stack
+ * @returns Vertically stacked array
+ */
+export function row_stack(arrays: NDArray[]): NDArray {
+  return vstack(arrays);
+}
+
+/**
+ * Return a new array with the given shape (repeating data if needed)
+ *
+ * @param a - Input array
+ * @param new_shape - New shape
+ * @returns Resized array
+ */
+export function resize(a: NDArray, new_shape: number[]): NDArray {
+  const resultStorage = shapeOps.resize(a.storage, new_shape);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Append values to the end of an array
+ *
+ * @param arr - Input array
+ * @param values - Values to append
+ * @param axis - Axis along which to append (flattens if undefined)
+ * @returns Array with values appended
+ */
+export function append(
+  arr: NDArray,
+  values: NDArray | ArrayLike<number | bigint> | number,
+  axis?: number
+): NDArray {
+  // Convert values to NDArray if needed
+  const valArray = values instanceof NDArray ? values : array(values as any, arr.dtype as DType);
+
+  if (axis === undefined) {
+    // Flatten both and concatenate
+    const flatArr = arr.flatten();
+    const flatValues = valArray.flatten();
+    return concatenate([flatArr, flatValues]);
+  }
+
+  // Concatenate along specified axis
+  return concatenate([arr, valArray], axis);
+}
+
+/**
+ * Return a new array with sub-arrays along an axis deleted
+ *
+ * @param arr - Input array
+ * @param obj - Indices to delete
+ * @param axis - Axis along which to delete (flattens if undefined)
+ * @returns Array with elements deleted
+ */
+
+export function delete_(arr: NDArray, obj: number | number[], axis?: number): NDArray {
+  const dtype = arr.dtype as DType;
+
+  if (axis === undefined) {
+    // Delete from flattened array
+    const flat = arr.flatten();
+    const indices = Array.isArray(obj) ? obj : [obj];
+    const normalizedIndices = indices.map((i) => (i < 0 ? flat.size + i : i));
+    const keepIndices: number[] = [];
+
+    for (let i = 0; i < flat.size; i++) {
+      if (!normalizedIndices.includes(i)) {
+        keepIndices.push(i);
+      }
+    }
+
+    const Constructor = getTypedArrayConstructor(dtype);
+    const data = new Constructor!(keepIndices.length);
+
+    for (let i = 0; i < keepIndices.length; i++) {
+      const val = flat.get([keepIndices[i]!]);
+      if (isBigIntDType(dtype)) {
+        (data as BigInt64Array | BigUint64Array)[i] =
+          typeof val === 'bigint' ? val : BigInt(val as number);
+      } else {
+        (data as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[i] = val as number;
+      }
+    }
+
+    const storage = ArrayStorage.fromData(data, [keepIndices.length], dtype);
+    return new NDArray(storage);
+  }
+
+  // Delete along specified axis
+  const shape = arr.shape;
+  const ndim = shape.length;
+  const normalizedAxis = axis < 0 ? ndim + axis : axis;
+
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  const axisSize = shape[normalizedAxis]!;
+  const indices = Array.isArray(obj) ? obj : [obj];
+  const normalizedIndices = new Set(indices.map((i) => (i < 0 ? axisSize + i : i)));
+
+  // Build slices to keep
+  const keepRanges: [number, number][] = [];
+  let start = 0;
+
+  for (let i = 0; i <= axisSize; i++) {
+    if (normalizedIndices.has(i) || i === axisSize) {
+      if (i > start) {
+        keepRanges.push([start, i]);
+      }
+      start = i + 1;
+    }
+  }
+
+  if (keepRanges.length === 0) {
+    // Delete all elements along this axis
+    const newShape = [...shape];
+    newShape[normalizedAxis] = 0;
+    return zeros(newShape, dtype);
+  }
+
+  // Split and concatenate the kept parts
+  const parts: NDArray[] = [];
+  for (const [rangeStart, rangeEnd] of keepRanges) {
+    // Create a slice for this range
+    const slices: string[] = shape.map(() => ':');
+    slices[normalizedAxis] = `${rangeStart}:${rangeEnd}`;
+    parts.push(arr.slice(...slices));
+  }
+
+  return concatenate(parts, normalizedAxis);
+}
+
+/**
+ * Insert values along the given axis before the given indices
+ *
+ * @param arr - Input array
+ * @param obj - Index before which to insert
+ * @param values - Values to insert
+ * @param axis - Axis along which to insert (flattens if undefined)
+ * @returns Array with values inserted
+ */
+export function insert(
+  arr: NDArray,
+  obj: number,
+  values: NDArray | ArrayLike<number | bigint> | number,
+  axis?: number
+): NDArray {
+  // Convert values to NDArray if needed
+  const valArray = values instanceof NDArray ? values : array(values as any, arr.dtype as DType);
+
+  if (axis === undefined) {
+    // Insert into flattened array
+    const flat = arr.flatten();
+    const flatValues = valArray.flatten();
+    const idx = obj < 0 ? flat.size + obj : obj;
+
+    if (idx < 0 || idx > flat.size) {
+      throw new Error(`index ${obj} is out of bounds for array of size ${flat.size}`);
+    }
+
+    const before = idx > 0 ? flat.slice(`0:${idx}`) : null;
+    const after = idx < flat.size ? flat.slice(`${idx}:`) : null;
+
+    const parts: NDArray[] = [];
+    if (before) parts.push(before);
+    parts.push(flatValues);
+    if (after) parts.push(after);
+
+    return concatenate(parts);
+  }
+
+  // Insert along specified axis
+  const shape = arr.shape;
+  const ndim = shape.length;
+  const normalizedAxis = axis < 0 ? ndim + axis : axis;
+
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  const axisSize = shape[normalizedAxis]!;
+  const idx = obj < 0 ? axisSize + obj : obj;
+
+  if (idx < 0 || idx > axisSize) {
+    throw new Error(`index ${obj} is out of bounds for axis ${axis} with size ${axisSize}`);
+  }
+
+  const parts: NDArray[] = [];
+
+  if (idx > 0) {
+    const slices: string[] = shape.map(() => ':');
+    slices[normalizedAxis] = `0:${idx}`;
+    parts.push(arr.slice(...slices));
+  }
+
+  parts.push(valArray);
+
+  if (idx < axisSize) {
+    const slices: string[] = shape.map(() => ':');
+    slices[normalizedAxis] = `${idx}:`;
+    parts.push(arr.slice(...slices));
+  }
+
+  return concatenate(parts, normalizedAxis);
+}
+
+/**
+ * Pad an array
+ *
+ * @param array - Input array
+ * @param pad_width - Number of values padded to edges of each axis
+ * @param mode - Padding mode ('constant', 'edge', 'reflect', 'symmetric', 'wrap')
+ * @param constant_values - Value for constant padding (default 0)
+ * @returns Padded array
+ */
+export function pad(
+  arr: NDArray,
+  pad_width: number | [number, number] | Array<[number, number]>,
+  mode: 'constant' | 'edge' | 'reflect' | 'symmetric' | 'wrap' = 'constant',
+  constant_values: number = 0
+): NDArray {
+  const shape = arr.shape;
+  const ndim = shape.length;
+  const dtype = arr.dtype as DType;
+
+  // Normalize pad_width to [[before, after], ...] for each axis
+  let padWidths: Array<[number, number]>;
+  if (typeof pad_width === 'number') {
+    padWidths = shape.map(() => [pad_width, pad_width] as [number, number]);
+  } else if (Array.isArray(pad_width) && typeof pad_width[0] === 'number') {
+    // Single [before, after] pair for all axes
+    padWidths = shape.map(() => pad_width as [number, number]);
+  } else {
+    padWidths = pad_width as Array<[number, number]>;
+  }
+
+  if (padWidths.length !== ndim) {
+    throw new Error(`pad_width must have ${ndim} elements`);
+  }
+
+  // Calculate new shape
+  const newShape = shape.map((s, i) => s + padWidths[i]![0] + padWidths[i]![1]);
+  const newSize = newShape.reduce((a, b) => a * b, 1);
+
+  const Constructor = getTypedArrayConstructor(dtype);
+  const outputData = new Constructor!(newSize);
+  const isBigInt = isBigIntDType(dtype);
+
+  // Initialize with constant value for constant mode
+  if (mode === 'constant') {
+    if (isBigInt) {
+      (outputData as BigInt64Array | BigUint64Array).fill(BigInt(constant_values));
+    } else {
+      (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>).fill(constant_values);
+    }
+  }
+
+  // Copy original data to center
+  const outputIndices = new Array(ndim).fill(0);
+
+  for (let i = 0; i < newSize; i++) {
+    // Check if this position is in the original data region
+    let inOriginal = true;
+    const sourceIndices: number[] = [];
+
+    for (let d = 0; d < ndim; d++) {
+      const [padBefore] = padWidths[d]!;
+      const srcIdx = outputIndices[d]! - padBefore;
+      if (srcIdx < 0 || srcIdx >= shape[d]!) {
+        inOriginal = false;
+        break;
+      }
+      sourceIndices.push(srcIdx);
+    }
+
+    let value: number | bigint;
+
+    if (inOriginal) {
+      // Get from original array
+      value = arr.get(sourceIndices) as number | bigint;
+    } else if (mode === 'constant') {
+      // Already filled with constant
+      // Increment indices and continue
+      for (let d = ndim - 1; d >= 0; d--) {
+        outputIndices[d]++;
+        if (outputIndices[d]! < newShape[d]!) break;
+        outputIndices[d] = 0;
+      }
+      continue;
+    } else {
+      // Calculate source index based on mode
+      const mappedIndices: number[] = [];
+      for (let d = 0; d < ndim; d++) {
+        const [padBefore] = padWidths[d]!;
+        let srcIdx = outputIndices[d]! - padBefore;
+        const axisSize = shape[d]!;
+
+        if (srcIdx < 0) {
+          if (mode === 'edge') {
+            srcIdx = 0;
+          } else if (mode === 'reflect') {
+            srcIdx = -srcIdx;
+            if (srcIdx >= axisSize) srcIdx = axisSize - 1;
+          } else if (mode === 'symmetric') {
+            srcIdx = -srcIdx - 1;
+            if (srcIdx >= axisSize) srcIdx = axisSize - 1;
+            if (srcIdx < 0) srcIdx = 0;
+          } else if (mode === 'wrap') {
+            srcIdx = ((srcIdx % axisSize) + axisSize) % axisSize;
+          }
+        } else if (srcIdx >= axisSize) {
+          if (mode === 'edge') {
+            srcIdx = axisSize - 1;
+          } else if (mode === 'reflect') {
+            srcIdx = 2 * axisSize - srcIdx - 2;
+            if (srcIdx < 0) srcIdx = 0;
+          } else if (mode === 'symmetric') {
+            srcIdx = 2 * axisSize - srcIdx - 1;
+            if (srcIdx < 0) srcIdx = 0;
+          } else if (mode === 'wrap') {
+            srcIdx = srcIdx % axisSize;
+          }
+        }
+
+        mappedIndices.push(Math.max(0, Math.min(axisSize - 1, srcIdx)));
+      }
+      value = arr.get(mappedIndices) as number | bigint;
+    }
+
+    // Write to output
+    if (isBigInt) {
+      (outputData as BigInt64Array | BigUint64Array)[i] =
+        typeof value === 'bigint' ? value : BigInt(Number(value));
+    } else {
+      (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[i] = Number(value);
+    }
+
+    // Increment indices
+    for (let d = ndim - 1; d >= 0; d--) {
+      outputIndices[d]++;
+      if (outputIndices[d]! < newShape[d]!) break;
+      outputIndices[d] = 0;
+    }
+  }
+
+  const storage = ArrayStorage.fromData(outputData, newShape, dtype);
+  return new NDArray(storage);
+}
+
 // ========================================
 // Advanced Functions
 // ========================================
@@ -2604,4 +3743,105 @@ export function nancumprod(a: NDArray, axis?: number): NDArray {
 export function nanmedian(a: NDArray, axis?: number, keepdims: boolean = false): NDArray | number {
   const result = reductionOps.nanmedian(a.storage, axis, keepdims);
   return typeof result === 'number' ? result : NDArray._fromStorage(result);
+}
+
+// ========================================
+// Arithmetic Functions (Additional)
+// ========================================
+
+/**
+ * Element-wise cube root
+ *
+ * @param x - Input array
+ * @returns Array with cube root of each element
+ */
+export function cbrt(x: NDArray): NDArray {
+  return x.cbrt();
+}
+
+/**
+ * Element-wise absolute value (always returns float)
+ *
+ * @param x - Input array
+ * @returns Array with absolute values as float
+ */
+export function fabs(x: NDArray): NDArray {
+  return x.fabs();
+}
+
+/**
+ * Returns both quotient and remainder (floor divide and modulo)
+ *
+ * @param x - Dividend array
+ * @param y - Divisor (array or scalar)
+ * @returns Tuple of [quotient, remainder] arrays
+ */
+export function divmod(x: NDArray, y: NDArray | number): [NDArray, NDArray] {
+  return x.divmod(y);
+}
+
+/**
+ * Element-wise square (x**2)
+ *
+ * @param x - Input array
+ * @returns Array with squared values
+ */
+export function square(x: NDArray): NDArray {
+  return x.square();
+}
+
+/**
+ * Element-wise remainder (same as mod)
+ *
+ * @param x - Dividend array
+ * @param y - Divisor (array or scalar)
+ * @returns Array with remainder values
+ */
+export function remainder(x: NDArray, y: NDArray | number): NDArray {
+  return x.remainder(y);
+}
+
+/**
+ * Heaviside step function
+ *
+ * @param x1 - Input array
+ * @param x2 - Value to use when x1 is 0
+ * @returns Array with heaviside values (0 if x1 < 0, x2 if x1 == 0, 1 if x1 > 0)
+ */
+export function heaviside(x1: NDArray, x2: NDArray | number): NDArray {
+  return x1.heaviside(x2);
+}
+
+// ========================================
+// Linear Algebra Functions (Additional)
+// ========================================
+
+/**
+ * Einstein summation convention
+ *
+ * Performs tensor contractions and reductions using Einstein notation.
+ *
+ * @param subscripts - Einstein summation subscripts (e.g., 'ij,jk->ik')
+ * @param operands - Input arrays
+ * @returns Result of the Einstein summation
+ *
+ * @example
+ * // Matrix multiplication
+ * einsum('ij,jk->ik', a, b)
+ *
+ * @example
+ * // Inner product
+ * einsum('i,i->', a, b)
+ *
+ * @example
+ * // Trace
+ * einsum('ii->', a)
+ */
+export function einsum(subscripts: string, ...operands: NDArray[]): NDArray | number | bigint {
+  const storages = operands.map((op) => op.storage);
+  const result = linalgOps.einsum(subscripts, ...storages);
+  if (typeof result === 'number' || typeof result === 'bigint') {
+    return result;
+  }
+  return NDArray._fromStorage(result);
 }

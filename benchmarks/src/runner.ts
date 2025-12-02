@@ -60,6 +60,12 @@ function setupArrays(setup: BenchmarkSetup, operation?: string): Record<string, 
       continue;
     }
 
+    // Handle string values (like einsum subscripts)
+    if (key === 'subscripts') {
+      arrays[key] = spec.value;
+      continue;
+    }
+
     // Handle indices array
     if (key === 'indices') {
       arrays[key] = shape;
@@ -162,6 +168,12 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
     return arrays['a'].reciprocal();
   } else if (operation === 'positive') {
     return arrays['a'].positive();
+  } else if (operation === 'cbrt') {
+    return arrays['a'].cbrt();
+  } else if (operation === 'fabs') {
+    return arrays['a'].fabs();
+  } else if (operation === 'divmod') {
+    return arrays['a'].divmod(arrays['b']);
   }
 
   // Mathematical operations
@@ -219,6 +231,8 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
     return np.diagonal(arrays['a']);
   } else if (operation === 'kron') {
     return np.kron(arrays['a'], arrays['b']);
+  } else if (operation === 'einsum') {
+    return np.einsum(arrays['subscripts'], arrays['a'], arrays['b']);
   } else if (operation === 'deg2rad') {
     return np.deg2rad(arrays['a']);
   } else if (operation === 'rad2deg') {
@@ -295,6 +309,25 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
     return np.broadcast_to(arrays['a'], arrays['target_shape']);
   } else if (operation === 'take') {
     return arrays['a'].take(arrays['indices']);
+  } else if (operation === 'flip') {
+    return np.flip(arrays['a']);
+  } else if (operation === 'rot90') {
+    return np.rot90(arrays['a']);
+  } else if (operation === 'roll') {
+    return np.roll(arrays['a'], 10);
+  } else if (operation === 'pad') {
+    return np.pad(arrays['a'], 2);
+  }
+
+  // New creation functions
+  else if (operation === 'diag') {
+    return np.diag(arrays['a']);
+  } else if (operation === 'tri') {
+    return np.tri(arrays['shape'][0], arrays['shape'][1]);
+  } else if (operation === 'tril') {
+    return np.tril(arrays['a']);
+  } else if (operation === 'triu') {
+    return np.triu(arrays['a']);
   }
 
   // IO operations

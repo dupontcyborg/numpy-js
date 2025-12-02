@@ -45,6 +45,11 @@ def setup_arrays(setup: Dict[str, Any], operation: str = None) -> Dict[str, np.n
             arrays[key] = shape
             continue
 
+        # Handle string values (like einsum subscripts)
+        if key == "subscripts":
+            arrays[key] = spec.get("value")
+            continue
+
         # Check 'value' first to avoid default fill creating zeros
         if "value" in spec:
             arrays[key] = np.full(shape, spec["value"], dtype=dtype)
@@ -127,6 +132,13 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         return np.reciprocal(arrays["a"])
     elif operation == "positive":
         return np.positive(arrays["a"])
+    elif operation == "cbrt":
+        return np.cbrt(arrays["a"])
+    elif operation == "fabs":
+        return np.fabs(arrays["a"])
+    elif operation == "divmod":
+        q, r = np.divmod(arrays["a"], arrays["b"])
+        return q  # Just return quotient for benchmarking
 
     # Mathematical operations
     elif operation == "sqrt":
@@ -180,6 +192,8 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         return np.diagonal(arrays["a"])
     elif operation == "kron":
         return np.kron(arrays["a"], arrays["b"])
+    elif operation == "einsum":
+        return np.einsum(arrays["subscripts"], arrays["a"], arrays["b"])
     elif operation == "deg2rad":
         return np.deg2rad(arrays["a"])
     elif operation == "rad2deg":
@@ -255,6 +269,26 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         return np.broadcast_to(arrays["a"], arrays["target_shape"])
     elif operation == "take":
         return np.take(arrays["a"], arrays["indices"])
+
+    # New creation functions
+    elif operation == "diag":
+        return np.diag(arrays["a"])
+    elif operation == "tri":
+        return np.tri(arrays["shape"][0], arrays["shape"][1])
+    elif operation == "tril":
+        return np.tril(arrays["a"])
+    elif operation == "triu":
+        return np.triu(arrays["a"])
+
+    # New manipulation functions
+    elif operation == "flip":
+        return np.flip(arrays["a"])
+    elif operation == "rot90":
+        return np.rot90(arrays["a"])
+    elif operation == "roll":
+        return np.roll(arrays["a"], 10)
+    elif operation == "pad":
+        return np.pad(arrays["a"], 2)
 
     # IO operations (NPY/NPZ)
     elif operation == "serializeNpy":

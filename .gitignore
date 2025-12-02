@@ -38,3 +38,6 @@ docs/archive/
 
 # Script outputs
 scripts/*.json
+
+# Python
+*__pycache__*

@@ -3,7 +3,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 [![npm version](https://img.shields.io/npm/v/numpy-ts)](https://www.npmjs.com/package/numpy-ts)
 ![bundle size](https://img.shields.io/bundlephobia/minzip/numpy-ts)
-![Under Construction](https://img.shields.io/badge/Under%20Construction-red)
+![numpy api coverage](https://img.shields.io/badge/numpy_api_coverage-52%20%25-yellow)
 
 ```
 ███╗   ██╗██╗   ██╗███╗   ███╗██████╗ ██╗   ██╗  ████████╗███████╗
@@ -64,6 +64,9 @@ Progress toward complete NumPy API compatibility:
 
 | Category | Complete | Total | Status |
 |----------|----------|-------|--------|
+| **Arithmetic** | 19/19 | 100% | ✅ |
+| **Array Creation** | 32/32 | 100% | ✅ |
+| **Array Manipulation** | 35/35 | 100% | ✅ |
 | **Broadcasting** | 3/3 | 100% | ✅ |
 | **Comparison** | 10/10 | 100% | ✅ |
 | **Hyperbolic** | 6/6 | 100% | ✅ |
