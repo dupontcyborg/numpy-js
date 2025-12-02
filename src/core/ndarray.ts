@@ -3000,16 +3000,23 @@ export function resize(a: NDArray, new_shape: number[]): NDArray {
  * @param axis - Axis along which to append (flattens if undefined)
  * @returns Array with values appended
  */
-export function append(arr: NDArray, values: NDArray, axis?: number): NDArray {
+export function append(
+  arr: NDArray,
+  values: NDArray | ArrayLike<number | bigint> | number,
+  axis?: number
+): NDArray {
+  // Convert values to NDArray if needed
+  const valArray = values instanceof NDArray ? values : array(values as any, arr.dtype as DType);
+
   if (axis === undefined) {
     // Flatten both and concatenate
     const flatArr = arr.flatten();
-    const flatValues = values.flatten();
+    const flatValues = valArray.flatten();
     return concatenate([flatArr, flatValues]);
   }
 
   // Concatenate along specified axis
-  return concatenate([arr, values], axis);
+  return concatenate([arr, valArray], axis);
 }
 
 /**
@@ -3108,11 +3115,19 @@ export function delete_(arr: NDArray, obj: number | number[], axis?: number): ND
  * @param axis - Axis along which to insert (flattens if undefined)
  * @returns Array with values inserted
  */
-export function insert(arr: NDArray, obj: number, values: NDArray, axis?: number): NDArray {
+export function insert(
+  arr: NDArray,
+  obj: number,
+  values: NDArray | ArrayLike<number | bigint> | number,
+  axis?: number
+): NDArray {
+  // Convert values to NDArray if needed
+  const valArray = values instanceof NDArray ? values : array(values as any, arr.dtype as DType);
+
   if (axis === undefined) {
     // Insert into flattened array
     const flat = arr.flatten();
-    const flatValues = values.flatten();
+    const flatValues = valArray.flatten();
     const idx = obj < 0 ? flat.size + obj : obj;
 
     if (idx < 0 || idx > flat.size) {
@@ -3154,7 +3169,7 @@ export function insert(arr: NDArray, obj: number, values: NDArray, axis?: number
     parts.push(arr.slice(...slices));
   }
 
-  parts.push(values);
+  parts.push(valArray);
 
   if (idx < axisSize) {
     const slices: string[] = shape.map(() => ':');
