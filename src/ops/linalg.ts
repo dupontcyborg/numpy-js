@@ -1112,6 +1112,94 @@ export function einsum(
     }
   }
 
+  // ========================================
+  // FAST PATHS: Detect common patterns and delegate to optimized implementations
+  // ========================================
+
+  // Pattern: Matrix multiplication "ij,jk->ik" or similar
+  if (operands.length === 2 && operandSubscripts.length === 2) {
+    const [sub1, sub2] = operandSubscripts;
+    const [op1, op2] = operands;
+
+    // Check for matmul pattern: two 2D arrays, one shared index
+    if (
+      sub1!.length === 2 &&
+      sub2!.length === 2 &&
+      outputSubscript.length === 2 &&
+      op1!.ndim === 2 &&
+      op2!.ndim === 2
+    ) {
+      const [i1, j1] = [sub1![0]!, sub1![1]!];
+      const [i2, j2] = [sub2![0]!, sub2![1]!];
+      const [o1, o2] = [outputSubscript[0]!, outputSubscript[1]!];
+
+      // Pattern: "ij,jk->ik" (standard matmul)
+      if (i1 === o1 && j2 === o2 && j1 === i2 && sumIndices.length === 1 && sumIndices[0] === j1) {
+        return matmul(op1!, op2!);
+      }
+
+      // Pattern: "ik,kj->ij" (matmul with different index names)
+      if (i1 === o1 && j2 === o2 && j1 === i2 && sumIndices.length === 1 && sumIndices[0] === j1) {
+        return matmul(op1!, op2!);
+      }
+
+      // Pattern: "ji,jk->ik" (transpose A then multiply)
+      if (j1 === o1 && j2 === o2 && i1 === i2 && sumIndices.length === 1 && sumIndices[0] === i1) {
+        const op1T = transpose(op1!);
+        return matmul(op1T, op2!);
+      }
+
+      // Pattern: "ij,kj->ik" (transpose B then multiply)
+      if (i1 === o1 && i2 === o2 && j1 === j2 && sumIndices.length === 1 && sumIndices[0] === j1) {
+        const op2T = transpose(op2!);
+        return matmul(op1!, op2T);
+      }
+    }
+
+    // Check for dot product pattern: two 1D arrays "i,i->" or "i,i->scalar"
+    if (
+      sub1!.length === 1 &&
+      sub2!.length === 1 &&
+      sub1 === sub2 &&
+      outputSubscript.length === 0 &&
+      op1!.ndim === 1 &&
+      op2!.ndim === 1
+    ) {
+      return computeEinsumScalar(operands, operandSubscripts, sumIndices, indexDims);
+    }
+
+    // Check for outer product pattern: "i,j->ij"
+    if (
+      sub1 &&
+      sub2 &&
+      sub1.length === 1 &&
+      sub2.length === 1 &&
+      outputSubscript.length === 2 &&
+      outputSubscript === sub1 + sub2 &&
+      sumIndices.length === 0 &&
+      op1!.ndim === 1 &&
+      op2!.ndim === 1
+    ) {
+      return outer(op1!, op2!);
+    }
+  }
+
+  // Pattern: Single operand trace "ii->"
+  if (operands.length === 1 && operandSubscripts[0]!.length === 2 && outputSubscript.length === 0) {
+    const sub = operandSubscripts[0]!;
+    if (sub[0] === sub[1]) {
+      // This is a trace operation
+      const op = operands[0]!;
+      if (op.ndim === 2) {
+        return computeEinsumScalar(operands, operandSubscripts, sumIndices, indexDims);
+      }
+    }
+  }
+
+  // ========================================
+  // END FAST PATHS - Fall through to generic implementation
+  // ========================================
+
   // Build output shape
   const outputShape = Array.from(outputSubscript).map((idx) => indexDims.get(idx)!);
 
