@@ -234,6 +234,30 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         axis = arrays.get("axis")
         return arrays["a"].any(axis=axis)
 
+    # New reduction functions
+    elif operation == "cumsum":
+        return arrays["a"].cumsum()
+    elif operation == "cumprod":
+        return arrays["a"].cumprod()
+    elif operation == "ptp":
+        return np.ptp(arrays["a"])
+    elif operation == "median":
+        return np.median(arrays["a"])
+    elif operation == "percentile":
+        return np.percentile(arrays["a"], 50)
+    elif operation == "quantile":
+        return np.quantile(arrays["a"], 0.5)
+    elif operation == "average":
+        return np.average(arrays["a"])
+    elif operation == "nansum":
+        return np.nansum(arrays["a"])
+    elif operation == "nanmean":
+        return np.nanmean(arrays["a"])
+    elif operation == "nanmin":
+        return np.nanmin(arrays["a"])
+    elif operation == "nanmax":
+        return np.nanmax(arrays["a"])
+
     # Reshape
     elif operation == "reshape":
         return arrays["a"].reshape(arrays["new_shape"])

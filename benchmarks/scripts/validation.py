@@ -195,6 +195,30 @@ def run_operation(spec):
     elif operation == "any":
         result = arrays["a"].any()
 
+    # New reduction functions
+    elif operation == "cumsum":
+        result = arrays["a"].cumsum()
+    elif operation == "cumprod":
+        result = arrays["a"].cumprod()
+    elif operation == "ptp":
+        result = np.ptp(arrays["a"])
+    elif operation == "median":
+        result = np.median(arrays["a"])
+    elif operation == "percentile":
+        result = np.percentile(arrays["a"], 50)
+    elif operation == "quantile":
+        result = np.quantile(arrays["a"], 0.5)
+    elif operation == "average":
+        result = np.average(arrays["a"])
+    elif operation == "nansum":
+        result = np.nansum(arrays["a"])
+    elif operation == "nanmean":
+        result = np.nanmean(arrays["a"])
+    elif operation == "nanmin":
+        result = np.nanmin(arrays["a"])
+    elif operation == "nanmax":
+        result = np.nanmax(arrays["a"])
+
     # Reshape
     elif operation == "reshape":
         result = arrays["a"].reshape(*arrays["new_shape"])

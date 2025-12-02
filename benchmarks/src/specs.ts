@@ -764,6 +764,129 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       iterations,
       warmup,
     });
+
+    // New reduction functions
+    specs.push({
+      name: `cumsum [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'cumsum',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `cumprod [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'cumprod',
+      setup: {
+        a: { shape: sizes.medium, fill: 'ones' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `ptp [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'ptp',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `median [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'median',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `percentile [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'percentile',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `quantile [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'quantile',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `average [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'average',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // NaN-aware reduction functions
+    specs.push({
+      name: `nansum [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'nansum',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `nanmean [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'nanmean',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `nanmin [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'nanmin',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `nanmax [${sizes.medium.join('x')}]`,
+      category: 'reductions',
+      operation: 'nanmax',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
   }
 
   // ========================================
