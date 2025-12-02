@@ -7,7 +7,7 @@
 
 import { ArrayStorage, computeStrides } from '../core/storage';
 import { getTypedArrayConstructor, isBigIntDType, type TypedArray } from '../core/dtype';
-import { computeBroadcastShape, broadcastTo } from '../core/broadcasting';
+import { computeBroadcastShape, broadcastTo, broadcastShapes } from '../core/broadcasting';
 
 /**
  * Broadcast an array to a given shape
@@ -68,6 +68,12 @@ export function broadcast_arrays(storages: ArrayStorage[]): ArrayStorage[] {
   // Broadcast each array to the target shape
   return storages.map((s) => broadcastTo(s, targetShape));
 }
+
+/**
+ * Compute the broadcast shape for multiple shapes
+ * Re-export from core/broadcasting for convenience
+ */
+export { broadcastShapes as broadcast_shapes };
 
 /**
  * Take elements from an array along an axis

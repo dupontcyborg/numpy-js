@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { array } from '../../src/core/ndarray';
+import { array, array_equal, array_equiv } from '../../src/core/ndarray';
 
 describe('Comparison Operations', () => {
   describe('greater()', () => {
@@ -411,6 +411,134 @@ describe('Comparison Operations', () => {
         const b = array([1.00001]);
         expect(a.allclose(b, 1e-4, 1e-8)).toBe(true);
       });
+    });
+  });
+
+  describe('array_equal', () => {
+    it('returns true for identical arrays', () => {
+      const a = array([1, 2, 3]);
+      const b = array([1, 2, 3]);
+      expect(array_equal(a, b)).toBe(true);
+    });
+
+    it('returns false for different arrays', () => {
+      const a = array([1, 2, 3]);
+      const b = array([1, 2, 4]);
+      expect(array_equal(a, b)).toBe(false);
+    });
+
+    it('requires same shapes (no broadcasting)', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([1, 2]);
+      expect(array_equal(a, b)).toBe(false);
+    });
+
+    it('works with 2D arrays', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      expect(array_equal(a, b)).toBe(true);
+    });
+  });
+
+  describe('array_equiv', () => {
+    it('returns true for identical arrays', () => {
+      const a = array([1, 2, 3]);
+      const b = array([1, 2, 3]);
+      expect(array_equiv(a, b)).toBe(true);
+    });
+
+    it('returns false for different arrays', () => {
+      const a = array([1, 2, 3]);
+      const b = array([1, 2, 4]);
+      expect(array_equiv(a, b)).toBe(false);
+    });
+
+    it('broadcasts arrays before comparing', () => {
+      const a = array([
+        [1, 2],
+        [1, 2],
+      ]);
+      const b = array([1, 2]);
+      expect(array_equiv(a, b)).toBe(true);
+    });
+
+    it('broadcasts with size-1 dimensions', () => {
+      const a = array([[1], [2], [3]]);
+      const b = array([
+        [1, 1, 1],
+        [2, 2, 2],
+        [3, 3, 3],
+      ]);
+      expect(array_equiv(a, b)).toBe(true);
+    });
+
+    it('broadcasts 2D with 1D', () => {
+      const a = array([
+        [5, 5, 5],
+        [5, 5, 5],
+      ]);
+      const b = array([5, 5, 5]);
+      expect(array_equiv(a, b)).toBe(true);
+    });
+
+    it('returns false when broadcast values differ', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([1, 2]);
+      expect(array_equiv(a, b)).toBe(false);
+    });
+
+    it('returns false for incompatible broadcast shapes', () => {
+      const a = array([1, 2, 3]);
+      const b = array([1, 2, 3, 4]);
+      expect(array_equiv(a, b)).toBe(false);
+    });
+
+    it('works with scalars (0D)', () => {
+      const a = array([5, 5, 5]);
+      const b = array(5);
+      expect(array_equiv(a, b)).toBe(true);
+    });
+
+    it('broadcasts complex multi-dimensional arrays', () => {
+      const a = array([[[1, 2]], [[3, 4]]]);
+      const b = array([1, 2]);
+      expect(array_equiv(a, b)).toBe(false); // Different values
+
+      // c has shape (2, 1, 2), d has shape (2)
+      // They broadcast to (2, 1, 2) and all values are 5, so they ARE equivalent
+      const c = array([[[5, 5]], [[5, 5]]]);
+      const d = array([5, 5]);
+      expect(array_equiv(c, d)).toBe(true);
+    });
+
+    it('handles different dtypes correctly', () => {
+      const a = array([1, 2, 3], 'int32');
+      const b = array([1.0, 2.0, 3.0], 'float64');
+      expect(array_equiv(a, b)).toBe(true);
+    });
+
+    it('returns true for same-shape arrays (no actual broadcasting)', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      expect(array_equiv(a, b)).toBe(true);
     });
   });
 });

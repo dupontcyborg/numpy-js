@@ -35,6 +35,8 @@ export {
   reciprocal,
   dot,
   trace,
+  diagonal,
+  kron,
   transpose,
   inner,
   outer,
@@ -50,6 +52,8 @@ export {
   hypot,
   degrees,
   radians,
+  deg2rad,
+  rad2deg,
   // Hyperbolic functions
   sinh,
   cosh,
@@ -74,10 +78,12 @@ export {
   // Advanced
   broadcast_to,
   broadcast_arrays,
+  broadcast_shapes,
   take,
   put,
   choose,
   array_equal,
+  array_equiv,
 } from './core/ndarray';
 
 // IO functions (environment-agnostic parsing/serialization)

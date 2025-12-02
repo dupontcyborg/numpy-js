@@ -161,6 +161,36 @@ export function broadcastArrays(storages: ArrayStorage[]): ArrayStorage[] {
 }
 
 /**
+ * Compute the broadcast shape for multiple shapes without creating arrays.
+ * Returns the resulting shape if all shapes are broadcast-compatible.
+ *
+ * This is the NumPy-compatible function for computing broadcast shape.
+ *
+ * @param shapes - Variable number of shapes to broadcast
+ * @returns The broadcast output shape
+ * @throws Error if shapes are not broadcast-compatible
+ *
+ * @example
+ * ```typescript
+ * broadcastShapes([3, 4], [4]);      // [3, 4]
+ * broadcastShapes([3, 4], [3, 1]);   // [3, 4]
+ * broadcastShapes([3, 4], [5]);      // Error
+ * ```
+ */
+export function broadcastShapes(...shapes: readonly number[][]): number[] {
+  const result = computeBroadcastShape(shapes);
+
+  if (result === null) {
+    const shapeStrs = shapes.map((s) => `(${s.join(',')})`).join(' ');
+    throw new Error(
+      `shape mismatch: objects cannot be broadcast to a single shape. Mismatch is between ${shapeStrs}`
+    );
+  }
+
+  return result;
+}
+
+/**
  * Generate a descriptive error message for broadcasting failures
  *
  * @param shapes - The incompatible shapes

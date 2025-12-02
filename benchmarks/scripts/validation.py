@@ -147,6 +147,14 @@ def run_operation(spec):
         result = np.trace(arrays["a"])
     elif operation == "transpose":
         result = arrays["a"].T
+    elif operation == "diagonal":
+        result = np.diagonal(arrays["a"])
+    elif operation == "kron":
+        result = np.kron(arrays["a"], arrays["b"])
+    elif operation == "deg2rad":
+        result = np.deg2rad(arrays["a"])
+    elif operation == "rad2deg":
+        result = np.rad2deg(arrays["a"])
 
     # Reductions
     elif operation == "sum":

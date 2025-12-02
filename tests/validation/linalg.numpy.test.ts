@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { array, dot, trace, transpose, inner, outer, tensordot } from '../../src';
+import { array, dot, trace, transpose, inner, outer, tensordot, diagonal, kron } from '../../src';
 import { runNumPy, arraysClose, checkNumPyAvailable } from './numpy-oracle';
 
 describe('NumPy Validation: Linear Algebra', () => {
@@ -670,6 +670,149 @@ result = np.tensordot(a, b, axes=([2], [2]))
 a = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
 b = np.array([[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
 result = np.tensordot(a, b, axes=([1, 2], [0, 1]))
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+  });
+
+  describe('diagonal()', () => {
+    it('matches NumPy diagonal for 2D array', () => {
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const jsResult = diagonal(a);
+
+      const pyResult = runNumPy(`
+a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+result = np.diagonal(a)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy diagonal with positive offset', () => {
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const jsResult = diagonal(a, 1);
+
+      const pyResult = runNumPy(`
+a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+result = np.diagonal(a, 1)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy diagonal with negative offset', () => {
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const jsResult = diagonal(a, -1);
+
+      const pyResult = runNumPy(`
+a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+result = np.diagonal(a, -1)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy diagonal for non-square matrix', () => {
+      const a = array([
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+      ]);
+      const jsResult = diagonal(a);
+
+      const pyResult = runNumPy(`
+a = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
+result = np.diagonal(a)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+  });
+
+  describe('kron()', () => {
+    it('matches NumPy kron for 1D vectors', () => {
+      const a = array([1, 2]);
+      const b = array([3, 4]);
+      const jsResult = kron(a, b);
+
+      const pyResult = runNumPy(`
+a = np.array([1, 2])
+b = np.array([3, 4])
+result = np.kron(a, b)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy kron for 2D matrices', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [5, 6],
+        [7, 8],
+      ]);
+      const jsResult = kron(a, b);
+
+      const pyResult = runNumPy(`
+a = np.array([[1, 2], [3, 4]])
+b = np.array([[5, 6], [7, 8]])
+result = np.kron(a, b)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy kron with identity matrix', () => {
+      const a = array([
+        [0, 1],
+        [1, 0],
+      ]);
+      const b = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const jsResult = kron(a, b);
+
+      const pyResult = runNumPy(`
+a = np.array([[0, 1], [1, 0]])
+b = np.array([[1, 2], [3, 4]])
+result = np.kron(a, b)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy kron with different dimensions', () => {
+      const a = array([[1, 2]]);
+      const b = array([3, 4, 5]);
+      const jsResult = kron(a, b);
+
+      const pyResult = runNumPy(`
+a = np.array([[1, 2]])
+b = np.array([3, 4, 5])
+result = np.kron(a, b)
       `);
 
       expect(jsResult.shape).toEqual(pyResult.shape);

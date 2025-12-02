@@ -215,8 +215,15 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
     return arrays['a'].trace();
   } else if (operation === 'transpose') {
     return arrays['a'].transpose();
+  } else if (operation === 'diagonal') {
+    return np.diagonal(arrays['a']);
+  } else if (operation === 'kron') {
+    return np.kron(arrays['a'], arrays['b']);
+  } else if (operation === 'deg2rad') {
+    return np.deg2rad(arrays['a']);
+  } else if (operation === 'rad2deg') {
+    return np.rad2deg(arrays['a']);
   }
-
   // Reductions
   else if (operation === 'sum') {
     const axis = arrays['axis'];

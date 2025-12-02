@@ -15,6 +15,8 @@ import {
   hypot,
   degrees,
   radians,
+  deg2rad,
+  rad2deg,
 } from '../../src/core/ndarray';
 import { runNumPy, arraysClose, checkNumPyAvailable } from './numpy-oracle';
 
@@ -405,6 +407,48 @@ result = np.degrees(np.radians(original))
       `);
 
       expect(arraysClose(jsBack.toArray(), pyResult.value)).toBe(true);
+    });
+  });
+
+  describe('deg2rad', () => {
+    it('matches NumPy np.deg2rad', () => {
+      const angles = array([0, 30, 45, 90, 180, 270, 360]);
+      const jsResult = deg2rad(angles);
+
+      const pyResult = runNumPy(`
+angles = np.array([0, 30, 45, 90, 180, 270, 360])
+result = np.deg2rad(angles)
+      `);
+
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('produces same result as radians()', () => {
+      const angles = array([0, 45, 90, 180]);
+      const result1 = deg2rad(angles);
+      const result2 = radians(angles);
+      expect(arraysClose(result1.toArray(), result2.toArray())).toBe(true);
+    });
+  });
+
+  describe('rad2deg', () => {
+    it('matches NumPy np.rad2deg', () => {
+      const radians_arr = array([0, Math.PI / 6, Math.PI / 4, Math.PI / 2, Math.PI]);
+      const jsResult = rad2deg(radians_arr);
+
+      const pyResult = runNumPy(`
+radians = np.array([0, np.pi/6, np.pi/4, np.pi/2, np.pi])
+result = np.rad2deg(radians)
+      `);
+
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('produces same result as degrees()', () => {
+      const radians_arr = array([0, Math.PI / 4, Math.PI / 2, Math.PI]);
+      const result1 = rad2deg(radians_arr);
+      const result2 = degrees(radians_arr);
+      expect(arraysClose(result1.toArray(), result2.toArray())).toBe(true);
     });
   });
 });

@@ -11,6 +11,8 @@ import {
   hypot,
   degrees,
   radians,
+  deg2rad,
+  rad2deg,
 } from '../../src/core/ndarray';
 
 describe('Trigonometric Operations', () => {
@@ -325,6 +327,75 @@ describe('Trigonometric Operations', () => {
       const original = array([0, 30, 45, 90, 180, 270, 360]);
       const asRadians = radians(original);
       const backToDegrees = degrees(asRadians);
+      const resultArr = backToDegrees.toArray() as number[];
+      const originalArr = original.toArray() as number[];
+      for (let i = 0; i < resultArr.length; i++) {
+        expect(Math.abs(resultArr[i]! - originalArr[i]!)).toBeLessThan(1e-10);
+      }
+    });
+  });
+
+  describe('deg2rad', () => {
+    it('converts degrees to radians (alias for radians)', () => {
+      const arr = array([0, 30, 45, 90, 180]);
+      const result = deg2rad(arr);
+      const expected = [0, Math.PI / 6, Math.PI / 4, Math.PI / 2, Math.PI];
+      const resultArr = result.toArray() as number[];
+      for (let i = 0; i < expected.length; i++) {
+        expect(Math.abs(resultArr[i]! - expected[i]!)).toBeLessThan(1e-10);
+      }
+    });
+
+    it('produces same result as radians', () => {
+      const arr = array([0, 45, 90, 180]);
+      const result1 = deg2rad(arr);
+      const result2 = radians(arr);
+      const arr1 = result1.toArray() as number[];
+      const arr2 = result2.toArray() as number[];
+      for (let i = 0; i < arr1.length; i++) {
+        expect(arr1[i]).toBe(arr2[i]);
+      }
+    });
+
+    it('promotes integer arrays to float64', () => {
+      const arr = array([0, 90, 180], 'int32');
+      const result = deg2rad(arr);
+      expect(result.dtype).toBe('float64');
+    });
+  });
+
+  describe('rad2deg', () => {
+    it('converts radians to degrees (alias for degrees)', () => {
+      const arr = array([0, Math.PI / 6, Math.PI / 4, Math.PI / 2, Math.PI]);
+      const result = rad2deg(arr);
+      const expected = [0, 30, 45, 90, 180];
+      const resultArr = result.toArray() as number[];
+      for (let i = 0; i < expected.length; i++) {
+        expect(Math.abs(resultArr[i]! - expected[i]!)).toBeLessThan(1e-10);
+      }
+    });
+
+    it('produces same result as degrees', () => {
+      const arr = array([0, Math.PI / 4, Math.PI / 2, Math.PI]);
+      const result1 = rad2deg(arr);
+      const result2 = degrees(arr);
+      const arr1 = result1.toArray() as number[];
+      const arr2 = result2.toArray() as number[];
+      for (let i = 0; i < arr1.length; i++) {
+        expect(arr1[i]).toBe(arr2[i]);
+      }
+    });
+
+    it('promotes integer arrays to float64', () => {
+      const arr = array([0, 1, 2], 'int32');
+      const result = rad2deg(arr);
+      expect(result.dtype).toBe('float64');
+    });
+
+    it('roundtrip with deg2rad', () => {
+      const original = array([0, 30, 45, 90, 180, 270, 360]);
+      const asRadians = deg2rad(original);
+      const backToDegrees = rad2deg(asRadians);
       const resultArr = backToDegrees.toArray() as number[];
       const originalArr = original.toArray() as number[];
       for (let i = 0; i < resultArr.length; i++) {

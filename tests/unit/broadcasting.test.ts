@@ -9,7 +9,7 @@ import {
   broadcastArrays,
   broadcastErrorMessage,
 } from '../../src/core/broadcasting';
-import { array, zeros, ones } from '../../src/core/ndarray';
+import { array, zeros, ones, broadcast_shapes } from '../../src/core/ndarray';
 
 describe('Broadcasting utilities', () => {
   describe('computeBroadcastShape', () => {
@@ -237,6 +237,52 @@ describe('Broadcasting utilities', () => {
       expect(message).toBe(
         'operands could not be broadcast together for subtract with shapes (3,4) (4) (5,1)'
       );
+    });
+  });
+
+  describe('broadcast_shapes', () => {
+    it('returns shape for single array', () => {
+      expect(broadcast_shapes([3, 4])).toEqual([3, 4]);
+    });
+
+    it('broadcasts two compatible shapes', () => {
+      expect(broadcast_shapes([3, 4], [4])).toEqual([3, 4]);
+      expect(broadcast_shapes([4], [3, 4])).toEqual([3, 4]);
+    });
+
+    it('broadcasts with size 1 dimensions', () => {
+      expect(broadcast_shapes([3, 1], [1, 4])).toEqual([3, 4]);
+      expect(broadcast_shapes([8, 1, 6, 1], [7, 1, 5])).toEqual([8, 7, 6, 5]);
+    });
+
+    it('broadcasts multiple shapes', () => {
+      expect(broadcast_shapes([6, 7], [5, 6, 1], [7], [5, 1, 7])).toEqual([5, 6, 7]);
+    });
+
+    it('broadcasts scalar (empty shape) with any shape', () => {
+      expect(broadcast_shapes([], [3, 4])).toEqual([3, 4]);
+      expect(broadcast_shapes([3, 4], [])).toEqual([3, 4]);
+    });
+
+    it('throws error for incompatible shapes', () => {
+      expect(() => broadcast_shapes([3], [4])).toThrow(/shape mismatch/);
+      expect(() => broadcast_shapes([3, 4], [3, 5])).toThrow(/shape mismatch/);
+      expect(() => broadcast_shapes([2, 1], [8, 4, 3])).toThrow(/shape mismatch/);
+    });
+
+    it('throws descriptive error message', () => {
+      expect(() => broadcast_shapes([3, 4], [5, 6])).toThrow(
+        /shape mismatch: objects cannot be broadcast to a single shape/
+      );
+    });
+
+    it('handles edge case: size 0 dimensions', () => {
+      expect(broadcast_shapes([8, 1, 1, 6, 1], [0])).toEqual([8, 1, 1, 6, 0]);
+      expect(broadcast_shapes([8, 0, 1, 6, 1], [6, 5])).toEqual([8, 0, 1, 6, 5]);
+    });
+
+    it('works with many shapes at once', () => {
+      expect(broadcast_shapes([256, 256, 3], [3], [1])).toEqual([256, 256, 3]);
     });
   });
 });

@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { array } from '../../src/core/ndarray';
+import { array, array_equiv } from '../../src/core/ndarray';
 import { runNumPy, arraysClose, checkNumPyAvailable, getPythonInfo } from './numpy-oracle';
 
 describe('NumPy Validation: Comparison Operations', () => {
@@ -480,6 +480,70 @@ a = np.array([[1.0, 2.0], [3.0, 4.0]])
 b = np.array([[1.0, 2.0], [3.0, 4.0]])
 result = np.allclose(a, b)
 `);
+
+      expect(result).toBe(npResult.value);
+    });
+  });
+
+  describe('array_equiv()', () => {
+    it('matches NumPy array_equiv with broadcasting', () => {
+      const a = array([
+        [1, 2],
+        [1, 2],
+      ]);
+      const b = array([1, 2]);
+      const result = array_equiv(a, b);
+
+      const npResult = runNumPy(`
+a = np.array([[1, 2], [1, 2]])
+b = np.array([1, 2])
+result = np.array_equiv(a, b)
+      `);
+
+      expect(result).toBe(npResult.value);
+    });
+
+    it('matches NumPy array_equiv for non-equivalent arrays', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([1, 2]);
+      const result = array_equiv(a, b);
+
+      const npResult = runNumPy(`
+a = np.array([[1, 2], [3, 4]])
+b = np.array([1, 2])
+result = np.array_equiv(a, b)
+      `);
+
+      expect(result).toBe(npResult.value);
+    });
+
+    it('matches NumPy array_equiv with scalars', () => {
+      const a = array([5, 5, 5]);
+      const b = array(5);
+      const result = array_equiv(a, b);
+
+      const npResult = runNumPy(`
+a = np.array([5, 5, 5])
+b = np.array(5)
+result = np.array_equiv(a, b)
+      `);
+
+      expect(result).toBe(npResult.value);
+    });
+
+    it('matches NumPy array_equiv for incompatible shapes', () => {
+      const a = array([1, 2, 3]);
+      const b = array([1, 2, 3, 4]);
+      const result = array_equiv(a, b);
+
+      const npResult = runNumPy(`
+a = np.array([1, 2, 3])
+b = np.array([1, 2, 3, 4])
+result = np.array_equiv(a, b)
+      `);
 
       expect(result).toBe(npResult.value);
     });
