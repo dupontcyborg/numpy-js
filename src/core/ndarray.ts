@@ -3272,7 +3272,10 @@ export function append(
   axis?: number
 ): NDArray {
   // Convert values to NDArray if needed
-  const valArray = values instanceof NDArray ? values : array(values as any, arr.dtype as DType);
+  const valArray =
+    values instanceof NDArray
+      ? values
+      : array(values as ArrayLike<number | bigint> | number, arr.dtype as DType);
 
   if (axis === undefined) {
     // Flatten both and concatenate
@@ -3388,7 +3391,10 @@ export function insert(
   axis?: number
 ): NDArray {
   // Convert values to NDArray if needed
-  const valArray = values instanceof NDArray ? values : array(values as any, arr.dtype as DType);
+  const valArray =
+    values instanceof NDArray
+      ? values
+      : array(values as ArrayLike<number | bigint> | number, arr.dtype as DType);
 
   if (axis === undefined) {
     // Insert into flattened array
