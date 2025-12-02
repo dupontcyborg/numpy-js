@@ -6,17 +6,17 @@
 ![Under Construction](https://img.shields.io/badge/Under%20Construction-red)
 
 ```
-                                        _            
- _ __  _   _ _ __ ___  _ __  _   _ ____| |_ ___ 
-| '_ \| | | | '_ ` _ \| '_ \| | | |____| __/ __)
-| | | | |_| | | | | | | |_) | |_| |    | |_\__ \
-|_| |_|\__,_|_| |_| |_| .__/ \__, |     \__(___/              
-                      |_|    (___/                
+███╗   ██╗██╗   ██╗███╗   ███╗██████╗ ██╗   ██╗  ████████╗███████╗
+████╗  ██║██║   ██║████╗ ████║██╔══██╗╚██╗ ██╔╝  ╚══██╔══╝██╔════╝
+██╔██╗ ██║██║   ██║██╔████╔██║██████╔╝ ╚████╔╝█████╗██║   ███████╗
+██║╚██╗██║██║   ██║██║╚██╔╝██║██╔═══╝   ╚██╔╝ ╚════╝██║   ╚════██║
+██║ ╚████║╚██████╔╝██║ ╚═╝ ██║██║        ██║        ██║   ███████║
+╚═╝  ╚═══╝ ╚═════╝ ╚═╝     ╚═╝╚═╝        ╚═╝        ╚═╝   ╚══════╝
 ```
 
 Complete NumPy implementation for TypeScript and JavaScript
 
-> **⚠️ Under active development** — API may change before v1.0
+**⚠️ Under active development** — API may change before v1.0
 
 A faithful NumPy 2.0+ implementation for TypeScript/JavaScript, validated against Python NumPy. **128 of 333 NumPy functions (38.4% complete)** covering array creation, manipulation, linear algebra, reductions, and more.
 
@@ -144,20 +144,20 @@ console.log(arr.flags.C_CONTIGUOUS); // true - row-major layout
 ## Architecture
 
 ```
-┌───────────────────────────────────┐
-│  NumPy-Compatible API             │
-│  Broadcasting, DType Promotion    │
-└─────────────────┬─────────────────┘
-                  │
-┌─────────────────┴─────────────────┐
-│  NDArray (Views & Memory Mgmt)    │
-│  Strided Arrays, Base Tracking    │
-└─────────────────┬─────────────────┘
-                  │- - - - - - - - - - - - - - - - - - - ┐  
-┌─────────────────┴─────────────────┐  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ┴ ─ ─ ─ ─ ─ ─ ─ ─ ┐
-│  TypeScript / JavaScript Core     │  │  WASM Compute Engine (Future)     │
-│  Computational Engine             │  │  Optimized BLAS / arithmetic      │
-└───────────────────────────────────┘  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+┌─────────────────────────────────┐
+│  NumPy-Compatible API           │
+│  Broadcasting, DType Promotion  │
+└───────────────┬─────────────────┘
+                │
+┌───────────────┴─────────────────┐
+│  NDArray (Views & Memory Mgmt)  │
+│  Strided Arrays, Base Tracking  │
+└───────────────┬─────────────────┘
+                │- - - - - - - - - - - - - - - - - - ┐  
+┌───────────────┴─────────────────┐  ┌ ─ ─ ─ ─ ─ ─ ─ ┴ ─ ─ ─ ─ ─ ─ ─ ─┐
+│  TypeScript / JavaScript Core   │  │  WASM Compute Engine (Future)  │
+│  Computational Engine           │  │  Optimized BLAS / arithmetic   │
+└─────────────────────────────────┘  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┘
 ```
 
 Pure TypeScript implementation built from scratch for correctness and NumPy compatibility.
