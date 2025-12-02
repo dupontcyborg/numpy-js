@@ -1,6 +1,6 @@
 {
   "name": "numpy-ts",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Complete NumPy implementation for TypeScript and JavaScript (under construction)",
   "main": "dist/numpy-ts.node.cjs",
   "browser": "dist/numpy-ts.browser.js",
@@ -113,7 +113,6 @@
     "lint-staged": "^16.2.6",
     "playwright": "^1.56.1",
     "prettier": "^3.1.1",
-    "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
     "typescript": "^5.3.3",
     "vitest": "^4.0.3"
