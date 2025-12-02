@@ -225,6 +225,26 @@ def run_operation(spec):
     elif operation == "take":
         result = np.take(arrays["a"], arrays["indices"])
 
+    # New creation functions
+    elif operation == "diag":
+        result = np.diag(arrays["a"])
+    elif operation == "tri":
+        result = np.tri(arrays["shape"][0], arrays["shape"][1])
+    elif operation == "tril":
+        result = np.tril(arrays["a"])
+    elif operation == "triu":
+        result = np.triu(arrays["a"])
+
+    # New manipulation functions
+    elif operation == "flip":
+        result = np.flip(arrays["a"])
+    elif operation == "rot90":
+        result = np.rot90(arrays["a"])
+    elif operation == "roll":
+        result = np.roll(arrays["a"], 10)
+    elif operation == "pad":
+        result = np.pad(arrays["a"], 2)
+
     else:
         raise ValueError(f"Unknown operation: {operation}")
 

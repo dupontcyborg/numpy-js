@@ -17,6 +17,21 @@ import {
   empty_like,
   full_like,
   array,
+  asanyarray,
+  ascontiguousarray,
+  asfortranarray,
+  diag,
+  diagflat,
+  frombuffer,
+  fromfile,
+  fromfunction,
+  fromiter,
+  fromstring,
+  meshgrid,
+  tri,
+  tril,
+  triu,
+  vander,
 } from '../../src/core/ndarray';
 
 describe('Array Creation Functions', () => {
@@ -541,6 +556,408 @@ describe('Array Creation Functions', () => {
         [-1.5, -1.5],
         [-1.5, -1.5],
       ]);
+    });
+  });
+
+  // ========================================
+  // New Creation Functions
+  // ========================================
+
+  describe('asanyarray', () => {
+    it('returns same array if already NDArray', () => {
+      const arr = array([1, 2, 3]);
+      const result = asanyarray(arr);
+      expect(result).toBe(arr);
+    });
+
+    it('converts nested array to NDArray', () => {
+      const result = asanyarray([
+        [1, 2],
+        [3, 4],
+      ]);
+      expect(result.shape).toEqual([2, 2]);
+      expect(result.toArray()).toEqual([
+        [1, 2],
+        [3, 4],
+      ]);
+    });
+  });
+
+  describe('ascontiguousarray', () => {
+    it('returns same array if already contiguous', () => {
+      const arr = array([1, 2, 3, 4]);
+      const result = ascontiguousarray(arr);
+      expect(result.toArray()).toEqual([1, 2, 3, 4]);
+    });
+
+    it('converts nested array to contiguous', () => {
+      const result = ascontiguousarray([
+        [1, 2],
+        [3, 4],
+      ]);
+      expect(result.shape).toEqual([2, 2]);
+      expect(result.flags.C_CONTIGUOUS).toBe(true);
+    });
+  });
+
+  describe('asfortranarray', () => {
+    it('creates array from input', () => {
+      const result = asfortranarray([
+        [1, 2],
+        [3, 4],
+      ]);
+      expect(result.shape).toEqual([2, 2]);
+      expect(result.toArray()).toEqual([
+        [1, 2],
+        [3, 4],
+      ]);
+    });
+  });
+
+  describe('diag', () => {
+    it('creates diagonal matrix from 1D array', () => {
+      const arr = array([1, 2, 3]);
+      const result = diag(arr);
+      expect(result.shape).toEqual([3, 3]);
+      expect(result.toArray()).toEqual([
+        [1, 0, 0],
+        [0, 2, 0],
+        [0, 0, 3],
+      ]);
+    });
+
+    it('creates diagonal matrix with offset', () => {
+      const arr = array([1, 2]);
+      const result = diag(arr, 1);
+      expect(result.shape).toEqual([3, 3]);
+      expect(result.toArray()).toEqual([
+        [0, 1, 0],
+        [0, 0, 2],
+        [0, 0, 0],
+      ]);
+    });
+
+    it('creates diagonal matrix with negative offset', () => {
+      const arr = array([1, 2]);
+      const result = diag(arr, -1);
+      expect(result.shape).toEqual([3, 3]);
+      expect(result.toArray()).toEqual([
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 2, 0],
+      ]);
+    });
+
+    it('extracts diagonal from 2D array', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const result = diag(arr);
+      expect(result.shape).toEqual([3]);
+      expect(result.toArray()).toEqual([1, 5, 9]);
+    });
+
+    it('extracts diagonal with offset', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const result = diag(arr, 1);
+      expect(result.toArray()).toEqual([2, 6]);
+    });
+  });
+
+  describe('diagflat', () => {
+    it('creates diagonal matrix from flat input', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = diagflat(arr);
+      expect(result.shape).toEqual([4, 4]);
+      expect(result.get([0, 0])).toBe(1);
+      expect(result.get([1, 1])).toBe(2);
+      expect(result.get([2, 2])).toBe(3);
+      expect(result.get([3, 3])).toBe(4);
+    });
+  });
+
+  describe('fromfunction', () => {
+    it('creates array from coordinate function', () => {
+      const result = fromfunction((i, j) => i + j, [3, 3]);
+      expect(result.shape).toEqual([3, 3]);
+      expect(result.toArray()).toEqual([
+        [0, 1, 2],
+        [1, 2, 3],
+        [2, 3, 4],
+      ]);
+    });
+
+    it('creates array from single index function', () => {
+      const result = fromfunction((i) => i * 2, [5]);
+      expect(result.toArray()).toEqual([0, 2, 4, 6, 8]);
+    });
+  });
+
+  describe('meshgrid', () => {
+    it('creates 2D coordinate grids from 1D arrays', () => {
+      const x = array([1, 2, 3]);
+      const y = array([4, 5]);
+      const [X, Y] = meshgrid(x, y);
+      expect(X.shape).toEqual([2, 3]);
+      expect(Y.shape).toEqual([2, 3]);
+      expect(X.toArray()).toEqual([
+        [1, 2, 3],
+        [1, 2, 3],
+      ]);
+      expect(Y.toArray()).toEqual([
+        [4, 4, 4],
+        [5, 5, 5],
+      ]);
+    });
+
+    it('creates meshgrid with ij indexing', () => {
+      const x = array([1, 2]);
+      const y = array([3, 4, 5]);
+      const [X, Y] = meshgrid(x, y, { indexing: 'ij' });
+      expect(X.shape).toEqual([2, 3]);
+      expect(Y.shape).toEqual([2, 3]);
+    });
+  });
+
+  describe('tri', () => {
+    it('creates lower triangular matrix', () => {
+      const result = tri(3);
+      expect(result.toArray()).toEqual([
+        [1, 0, 0],
+        [1, 1, 0],
+        [1, 1, 1],
+      ]);
+    });
+
+    it('creates rectangular lower triangular matrix', () => {
+      const result = tri(3, 4);
+      expect(result.toArray()).toEqual([
+        [1, 0, 0, 0],
+        [1, 1, 0, 0],
+        [1, 1, 1, 0],
+      ]);
+    });
+
+    it('creates with diagonal offset', () => {
+      const result = tri(3, 3, 1);
+      expect(result.toArray()).toEqual([
+        [1, 1, 0],
+        [1, 1, 1],
+        [1, 1, 1],
+      ]);
+    });
+  });
+
+  describe('tril', () => {
+    it('extracts lower triangle', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const result = tril(arr);
+      expect(result.toArray()).toEqual([
+        [1, 0, 0],
+        [4, 5, 0],
+        [7, 8, 9],
+      ]);
+    });
+
+    it('extracts lower triangle with offset', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const result = tril(arr, 1);
+      expect(result.toArray()).toEqual([
+        [1, 2, 0],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+    });
+  });
+
+  describe('triu', () => {
+    it('extracts upper triangle', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const result = triu(arr);
+      expect(result.toArray()).toEqual([
+        [1, 2, 3],
+        [0, 5, 6],
+        [0, 0, 9],
+      ]);
+    });
+
+    it('extracts upper triangle with offset', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const result = triu(arr, 1);
+      expect(result.toArray()).toEqual([
+        [0, 2, 3],
+        [0, 0, 6],
+        [0, 0, 0],
+      ]);
+    });
+  });
+
+  describe('vander', () => {
+    it('creates Vandermonde matrix', () => {
+      const x = array([1, 2, 3]);
+      const result = vander(x);
+      expect(result.toArray()).toEqual([
+        [1, 1, 1],
+        [4, 2, 1],
+        [9, 3, 1],
+      ]);
+    });
+
+    it('creates Vandermonde matrix with N columns', () => {
+      const x = array([1, 2, 3]);
+      const result = vander(x, 4);
+      expect(result.toArray()).toEqual([
+        [1, 1, 1, 1],
+        [8, 4, 2, 1],
+        [27, 9, 3, 1],
+      ]);
+    });
+
+    it('creates Vandermonde matrix with increasing powers', () => {
+      const x = array([1, 2, 3]);
+      const result = vander(x, 3, true);
+      expect(result.toArray()).toEqual([
+        [1, 1, 1],
+        [1, 2, 4],
+        [1, 3, 9],
+      ]);
+    });
+  });
+
+  describe('frombuffer', () => {
+    it('creates array from ArrayBuffer', () => {
+      const buffer = new Float64Array([1, 2, 3, 4]).buffer;
+      const result = frombuffer(buffer, 'float64');
+      expect(result.shape).toEqual([4]);
+      expect(result.toArray()).toEqual([1, 2, 3, 4]);
+    });
+
+    it('creates array with count limit', () => {
+      const buffer = new Float64Array([1, 2, 3, 4, 5]).buffer;
+      const result = frombuffer(buffer, 'float64', 3);
+      expect(result.shape).toEqual([3]);
+      expect(result.toArray()).toEqual([1, 2, 3]);
+    });
+
+    it('creates array with offset', () => {
+      const buffer = new Float64Array([1, 2, 3, 4]).buffer;
+      const result = frombuffer(buffer, 'float64', -1, 16); // Skip first 2 elements (16 bytes)
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()).toEqual([3, 4]);
+    });
+
+    it('creates int32 array from buffer', () => {
+      const buffer = new Int32Array([10, 20, 30]).buffer;
+      const result = frombuffer(buffer, 'int32');
+      expect(result.dtype).toBe('int32');
+      expect(result.toArray()).toEqual([10, 20, 30]);
+    });
+  });
+
+  describe('fromfile', () => {
+    it('creates array from iterable', () => {
+      const iterable = [1, 2, 3, 4, 5];
+      const result = fromfile(iterable, 'float64');
+      expect(result.shape).toEqual([5]);
+      expect(result.toArray()).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('creates array with count limit', () => {
+      const iterable = [1, 2, 3, 4, 5];
+      const result = fromfile(iterable, 'float64', 3);
+      expect(result.shape).toEqual([3]);
+      expect(result.toArray()).toEqual([1, 2, 3]);
+    });
+
+    it('creates int32 array', () => {
+      const result = fromfile([10, 20, 30], 'int32');
+      expect(result.dtype).toBe('int32');
+      expect(result.toArray()).toEqual([10, 20, 30]);
+    });
+  });
+
+  describe('fromiter', () => {
+    it('creates array from array', () => {
+      const result = fromiter([1, 2, 3, 4], 'float64');
+      expect(result.shape).toEqual([4]);
+      expect(result.toArray()).toEqual([1, 2, 3, 4]);
+    });
+
+    it('creates array from generator', () => {
+      function* gen() {
+        yield 1;
+        yield 2;
+        yield 3;
+      }
+      const result = fromiter(gen(), 'float64');
+      expect(result.shape).toEqual([3]);
+      expect(result.toArray()).toEqual([1, 2, 3]);
+    });
+
+    it('respects count limit', () => {
+      function* gen() {
+        for (let i = 0; i < 100; i++) yield i;
+      }
+      const result = fromiter(gen(), 'int32', 5);
+      expect(result.shape).toEqual([5]);
+      expect(result.toArray()).toEqual([0, 1, 2, 3, 4]);
+    });
+  });
+
+  describe('fromstring', () => {
+    it('creates array from whitespace-separated string', () => {
+      const result = fromstring('1 2 3 4 5', 'float64');
+      expect(result.shape).toEqual([5]);
+      expect(result.toArray()).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('creates array with custom separator', () => {
+      const result = fromstring('1,2,3,4', 'float64', -1, ',');
+      expect(result.shape).toEqual([4]);
+      expect(result.toArray()).toEqual([1, 2, 3, 4]);
+    });
+
+    it('respects count limit', () => {
+      const result = fromstring('1 2 3 4 5', 'float64', 3);
+      expect(result.shape).toEqual([3]);
+      expect(result.toArray()).toEqual([1, 2, 3]);
+    });
+
+    it('handles multiple whitespaces', () => {
+      const result = fromstring('  1   2   3  ', 'float64');
+      expect(result.shape).toEqual([3]);
+      expect(result.toArray()).toEqual([1, 2, 3]);
+    });
+
+    it('creates int32 array', () => {
+      const result = fromstring('10 20 30', 'int32');
+      expect(result.dtype).toBe('int32');
+      expect(result.toArray()).toEqual([10, 20, 30]);
     });
   });
 });
