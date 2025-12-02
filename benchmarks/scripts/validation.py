@@ -31,6 +31,11 @@ def setup_arrays(setup_config):
             arrays[key] = shape
             continue
 
+        # Handle string values (like einsum subscripts)
+        if key == "subscripts":
+            arrays[key] = value
+            continue
+
         # Map dtype names
         np_dtype = dtype
         if dtype == "bool":
@@ -101,6 +106,14 @@ def run_operation(spec):
         result = np.floor_divide(arrays["a"], divisor)
     elif operation == "reciprocal":
         result = np.reciprocal(arrays["a"])
+    elif operation == "cbrt":
+        result = np.cbrt(arrays["a"])
+    elif operation == "fabs":
+        result = np.fabs(arrays["a"])
+    elif operation == "divmod":
+        divisor = arrays.get("b") if "b" in arrays else arrays.get("scalar")
+        q, r = np.divmod(arrays["a"], divisor)
+        result = q  # Just return quotient for validation
 
     # Math
     elif operation == "sqrt":
@@ -151,6 +164,8 @@ def run_operation(spec):
         result = np.diagonal(arrays["a"])
     elif operation == "kron":
         result = np.kron(arrays["a"], arrays["b"])
+    elif operation == "einsum":
+        result = np.einsum(arrays["subscripts"], arrays["a"], arrays["b"])
     elif operation == "deg2rad":
         result = np.deg2rad(arrays["a"])
     elif operation == "rad2deg":

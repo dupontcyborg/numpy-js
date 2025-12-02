@@ -1016,6 +1016,270 @@ export function diagonal(
 }
 
 /**
+ * Einstein summation convention
+ *
+ * Performs tensor contractions and reductions using Einstein summation notation.
+ *
+ * Examples:
+ * - 'ij,jk->ik': matrix multiplication
+ * - 'i,i->': dot product (inner product)
+ * - 'ij->ji': transpose
+ * - 'ii->': trace
+ * - 'ij->j': sum over first axis
+ * - 'ijk,ikl->ijl': batched matrix multiplication
+ *
+ * @param subscripts - Einstein summation subscripts (e.g., 'ij,jk->ik')
+ * @param operands - Input arrays
+ * @returns Result of the Einstein summation
+ */
+export function einsum(
+  subscripts: string,
+  ...operands: ArrayStorage[]
+): ArrayStorage | number | bigint {
+  // Parse the subscripts
+  const arrowMatch = subscripts.indexOf('->');
+
+  let inputSubscripts: string;
+  let outputSubscript: string;
+
+  if (arrowMatch === -1) {
+    // Implicit output: collect unique indices not repeated
+    inputSubscripts = subscripts;
+    outputSubscript = inferOutputSubscript(inputSubscripts);
+  } else {
+    inputSubscripts = subscripts.slice(0, arrowMatch);
+    outputSubscript = subscripts.slice(arrowMatch + 2);
+  }
+
+  // Parse input subscripts into individual operand subscripts
+  const operandSubscripts = inputSubscripts.split(',').map((s) => s.trim());
+
+  if (operandSubscripts.length !== operands.length) {
+    throw new Error(
+      `einsum: expected ${operandSubscripts.length} operands, got ${operands.length}`
+    );
+  }
+
+  // Validate subscripts and build index dimension map
+  const indexDims = new Map<string, number>();
+
+  for (let i = 0; i < operands.length; i++) {
+    const sub = operandSubscripts[i]!;
+    const op = operands[i]!;
+
+    if (sub.length !== op.ndim) {
+      throw new Error(
+        `einsum: operand ${i} has ${op.ndim} dimensions but subscript '${sub}' has ${sub.length} indices`
+      );
+    }
+
+    for (let j = 0; j < sub.length; j++) {
+      const idx = sub[j]!;
+      const dim = op.shape[j]!;
+
+      if (indexDims.has(idx)) {
+        if (indexDims.get(idx) !== dim) {
+          throw new Error(
+            `einsum: size mismatch for index '${idx}': ${indexDims.get(idx)} vs ${dim}`
+          );
+        }
+      } else {
+        indexDims.set(idx, dim);
+      }
+    }
+  }
+
+  // Validate output subscript
+  for (const idx of outputSubscript) {
+    if (!indexDims.has(idx)) {
+      throw new Error(`einsum: output subscript contains unknown index '${idx}'`);
+    }
+  }
+
+  // Identify summation indices (in inputs but not in output)
+  const outputIndices = new Set(outputSubscript);
+  const allInputIndices = new Set<string>();
+  for (const sub of operandSubscripts) {
+    for (const idx of sub) {
+      allInputIndices.add(idx);
+    }
+  }
+
+  const sumIndices: string[] = [];
+  for (const idx of allInputIndices) {
+    if (!outputIndices.has(idx)) {
+      sumIndices.push(idx);
+    }
+  }
+
+  // Build output shape
+  const outputShape = Array.from(outputSubscript).map((idx) => indexDims.get(idx)!);
+
+  // Special case: scalar output
+  if (outputShape.length === 0) {
+    return computeEinsumScalar(operands, operandSubscripts, sumIndices, indexDims);
+  }
+
+  // Determine result dtype
+  let resultDtype = operands[0]!.dtype;
+  for (let i = 1; i < operands.length; i++) {
+    resultDtype = promoteDTypes(resultDtype, operands[i]!.dtype);
+  }
+
+  // Create output array
+  const result = ArrayStorage.zeros(outputShape, resultDtype);
+
+  // Compute output size
+  const outputSize = outputShape.reduce((a, b) => a * b, 1);
+
+  // Compute sum range
+  let sumSize = 1;
+  for (const idx of sumIndices) {
+    sumSize *= indexDims.get(idx)!;
+  }
+
+  // Iterate over all output positions
+  for (let outIdx = 0; outIdx < outputSize; outIdx++) {
+    // Convert flat index to multi-dimensional output index
+    const outMultiIdx = flatToMulti(outIdx, outputShape);
+
+    // Build index assignment for output indices
+    const indexValues = new Map<string, number>();
+    for (let i = 0; i < outputSubscript.length; i++) {
+      indexValues.set(outputSubscript[i]!, outMultiIdx[i]!);
+    }
+
+    // Sum over summation indices
+    let sum = 0;
+    for (let sumIdx = 0; sumIdx < sumSize; sumIdx++) {
+      // Assign values to summation indices
+      let temp = sumIdx;
+      for (let i = sumIndices.length - 1; i >= 0; i--) {
+        const idx = sumIndices[i]!;
+        const dim = indexDims.get(idx)!;
+        indexValues.set(idx, temp % dim);
+        temp = Math.floor(temp / dim);
+      }
+
+      // Compute product of all operand values
+      let product = 1;
+      for (let i = 0; i < operands.length; i++) {
+        const op = operands[i]!;
+        const sub = operandSubscripts[i]!;
+
+        // Build operand index
+        const opIdx: number[] = [];
+        for (const idx of sub) {
+          opIdx.push(indexValues.get(idx)!);
+        }
+
+        const val = op.get(...opIdx);
+        product *= Number(val);
+      }
+
+      sum += product;
+    }
+
+    result.set(outMultiIdx, sum);
+  }
+
+  return result;
+}
+
+/**
+ * Infer output subscript for implicit einsum notation
+ * @private
+ */
+function inferOutputSubscript(inputSubscripts: string): string {
+  // Count occurrences of each index
+  const counts = new Map<string, number>();
+  const operandSubscripts = inputSubscripts.split(',');
+
+  for (const sub of operandSubscripts) {
+    for (const idx of sub.trim()) {
+      counts.set(idx, (counts.get(idx) || 0) + 1);
+    }
+  }
+
+  // Output contains indices that appear exactly once, sorted alphabetically
+  const outputIndices: string[] = [];
+  for (const [idx, count] of counts) {
+    if (count === 1) {
+      outputIndices.push(idx);
+    }
+  }
+
+  return outputIndices.sort().join('');
+}
+
+/**
+ * Compute einsum result when output is a scalar
+ * @private
+ */
+function computeEinsumScalar(
+  operands: ArrayStorage[],
+  operandSubscripts: string[],
+  sumIndices: string[],
+  indexDims: Map<string, number>
+): number {
+  // All indices are summation indices
+  let sumSize = 1;
+  for (const idx of sumIndices) {
+    sumSize *= indexDims.get(idx)!;
+  }
+
+  let sum = 0;
+
+  for (let sumIdx = 0; sumIdx < sumSize; sumIdx++) {
+    // Assign values to summation indices
+    const indexValues = new Map<string, number>();
+    let temp = sumIdx;
+    for (let i = sumIndices.length - 1; i >= 0; i--) {
+      const idx = sumIndices[i]!;
+      const dim = indexDims.get(idx)!;
+      indexValues.set(idx, temp % dim);
+      temp = Math.floor(temp / dim);
+    }
+
+    // Compute product of all operand values
+    let product = 1;
+    for (let i = 0; i < operands.length; i++) {
+      const op = operands[i]!;
+      const sub = operandSubscripts[i]!;
+
+      // Build operand index
+      const opIdx: number[] = [];
+      for (const idx of sub) {
+        opIdx.push(indexValues.get(idx)!);
+      }
+
+      const val = op.get(...opIdx);
+      product *= Number(val);
+    }
+
+    sum += product;
+  }
+
+  return sum;
+}
+
+/**
+ * Convert flat index to multi-dimensional index
+ * @private
+ */
+function flatToMulti(flatIdx: number, shape: number[]): number[] {
+  const result: number[] = new Array(shape.length);
+  let temp = flatIdx;
+
+  for (let i = shape.length - 1; i >= 0; i--) {
+    result[i] = temp % shape[i]!;
+    temp = Math.floor(temp / shape[i]!);
+  }
+
+  return result;
+}
+
+/**
  * Kronecker product of two arrays.
  *
  * Computes the Kronecker product, a composite array made of blocks of the

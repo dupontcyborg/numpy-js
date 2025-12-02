@@ -288,6 +288,40 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       iterations,
       warmup,
     });
+
+    specs.push({
+      name: `cbrt [${sizes.medium.join('x')}]`,
+      category: 'arithmetic',
+      operation: 'cbrt',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: 1 },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `fabs [${sizes.medium.join('x')}]`,
+      category: 'arithmetic',
+      operation: 'fabs',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', value: -100 },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `divmod [${sizes.medium.join('x')}] % scalar`,
+      category: 'arithmetic',
+      operation: 'divmod',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+        b: { shape: [1], value: 7 },
+      },
+      iterations,
+      warmup,
+    });
   }
 
   // ========================================
@@ -1130,6 +1164,21 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       setup: {
         a: { shape: kronSize, fill: 'arange' },
         b: { shape: kronSize, fill: 'ones' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // einsum - matrix multiplication
+    const einsumSize = [50, 50] as [number, number];
+    specs.push({
+      name: `einsum matmul [${einsumSize.join('x')}]`,
+      category: 'linalg',
+      operation: 'einsum',
+      setup: {
+        subscripts: { shape: [], value: 'ij,jk->ik' },
+        a: { shape: einsumSize, fill: 'arange' },
+        b: { shape: einsumSize, fill: 'ones' },
       },
       iterations,
       warmup,
