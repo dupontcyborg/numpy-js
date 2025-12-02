@@ -979,6 +979,69 @@ export class NDArray {
     return NDArray._fromStorage(result);
   }
 
+  // Additional arithmetic operations
+
+  /**
+   * Element-wise cube root
+   * Promotes integer types to float64
+   * @returns New array with cube root values
+   */
+  cbrt(): NDArray {
+    const resultStorage = arithmeticOps.cbrt(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Element-wise absolute value (always returns float)
+   * @returns New array with absolute values as float
+   */
+  fabs(): NDArray {
+    const resultStorage = arithmeticOps.fabs(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Returns both quotient and remainder (floor divide and modulo)
+   * @param divisor - Array or scalar divisor
+   * @returns Tuple of [quotient, remainder] arrays
+   */
+  divmod(divisor: NDArray | number): [NDArray, NDArray] {
+    const divisorStorage = typeof divisor === 'number' ? divisor : divisor._storage;
+    const [quotientStorage, remainderStorage] = arithmeticOps.divmod(this._storage, divisorStorage);
+    return [NDArray._fromStorage(quotientStorage), NDArray._fromStorage(remainderStorage)];
+  }
+
+  /**
+   * Element-wise square (x**2)
+   * @returns New array with squared values
+   */
+  square(): NDArray {
+    const resultStorage = arithmeticOps.square(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Element-wise remainder (same as mod)
+   * @param divisor - Array or scalar divisor
+   * @returns New array with remainder values
+   */
+  remainder(divisor: NDArray | number): NDArray {
+    const divisorStorage = typeof divisor === 'number' ? divisor : divisor._storage;
+    const resultStorage = arithmeticOps.remainder(this._storage, divisorStorage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Heaviside step function
+   * @param x2 - Value to use when this array element is 0
+   * @returns New array with heaviside values
+   */
+  heaviside(x2: NDArray | number): NDArray {
+    const x2Storage = typeof x2 === 'number' ? x2 : x2._storage;
+    const resultStorage = arithmeticOps.heaviside(this._storage, x2Storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
   // Slicing
   /**
    * Slice the array using NumPy-style string syntax
@@ -2347,4 +2410,105 @@ export function array_equal(a: NDArray, b: NDArray, equal_nan: boolean = false):
  */
 export function array_equiv(a1: NDArray, a2: NDArray): boolean {
   return comparisonOps.arrayEquiv(a1.storage, a2.storage);
+}
+
+// ========================================
+// Arithmetic Functions (Additional)
+// ========================================
+
+/**
+ * Element-wise cube root
+ *
+ * @param x - Input array
+ * @returns Array with cube root of each element
+ */
+export function cbrt(x: NDArray): NDArray {
+  return x.cbrt();
+}
+
+/**
+ * Element-wise absolute value (always returns float)
+ *
+ * @param x - Input array
+ * @returns Array with absolute values as float
+ */
+export function fabs(x: NDArray): NDArray {
+  return x.fabs();
+}
+
+/**
+ * Returns both quotient and remainder (floor divide and modulo)
+ *
+ * @param x - Dividend array
+ * @param y - Divisor (array or scalar)
+ * @returns Tuple of [quotient, remainder] arrays
+ */
+export function divmod(x: NDArray, y: NDArray | number): [NDArray, NDArray] {
+  return x.divmod(y);
+}
+
+/**
+ * Element-wise square (x**2)
+ *
+ * @param x - Input array
+ * @returns Array with squared values
+ */
+export function square(x: NDArray): NDArray {
+  return x.square();
+}
+
+/**
+ * Element-wise remainder (same as mod)
+ *
+ * @param x - Dividend array
+ * @param y - Divisor (array or scalar)
+ * @returns Array with remainder values
+ */
+export function remainder(x: NDArray, y: NDArray | number): NDArray {
+  return x.remainder(y);
+}
+
+/**
+ * Heaviside step function
+ *
+ * @param x1 - Input array
+ * @param x2 - Value to use when x1 is 0
+ * @returns Array with heaviside values (0 if x1 < 0, x2 if x1 == 0, 1 if x1 > 0)
+ */
+export function heaviside(x1: NDArray, x2: NDArray | number): NDArray {
+  return x1.heaviside(x2);
+}
+
+// ========================================
+// Linear Algebra Functions (Additional)
+// ========================================
+
+/**
+ * Einstein summation convention
+ *
+ * Performs tensor contractions and reductions using Einstein notation.
+ *
+ * @param subscripts - Einstein summation subscripts (e.g., 'ij,jk->ik')
+ * @param operands - Input arrays
+ * @returns Result of the Einstein summation
+ *
+ * @example
+ * // Matrix multiplication
+ * einsum('ij,jk->ik', a, b)
+ *
+ * @example
+ * // Inner product
+ * einsum('i,i->', a, b)
+ *
+ * @example
+ * // Trace
+ * einsum('ii->', a)
+ */
+export function einsum(subscripts: string, ...operands: NDArray[]): NDArray | number | bigint {
+  const storages = operands.map((op) => op.storage);
+  const result = linalgOps.einsum(subscripts, ...storages);
+  if (typeof result === 'number' || typeof result === 'bigint') {
+    return result;
+  }
+  return NDArray._fromStorage(result);
 }

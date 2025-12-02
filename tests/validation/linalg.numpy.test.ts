@@ -3,7 +3,18 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { array, dot, trace, transpose, inner, outer, tensordot, diagonal, kron } from '../../src';
+import {
+  array,
+  dot,
+  trace,
+  transpose,
+  inner,
+  outer,
+  tensordot,
+  diagonal,
+  kron,
+  einsum,
+} from '../../src';
 import { runNumPy, arraysClose, checkNumPyAvailable } from './numpy-oracle';
 
 describe('NumPy Validation: Linear Algebra', () => {
@@ -813,6 +824,191 @@ result = np.kron(a, b)
 a = np.array([[1, 2]])
 b = np.array([3, 4, 5])
 result = np.kron(a, b)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+  });
+
+  describe('einsum()', () => {
+    it('matches NumPy for matrix multiplication (ij,jk->ik)', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [5, 6],
+        [7, 8],
+      ]);
+      const jsResult = einsum('ij,jk->ik', a, b) as any;
+
+      const pyResult = runNumPy(`
+a = np.array([[1, 2], [3, 4]])
+b = np.array([[5, 6], [7, 8]])
+result = np.einsum('ij,jk->ik', a, b)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for inner product (i,i->)', () => {
+      const a = array([1, 2, 3, 4, 5]);
+      const b = array([6, 7, 8, 9, 10]);
+      const jsResult = einsum('i,i->', a, b);
+
+      const pyResult = runNumPy(`
+a = np.array([1, 2, 3, 4, 5])
+b = np.array([6, 7, 8, 9, 10])
+result = np.einsum('i,i->', a, b)
+      `);
+
+      expect(jsResult).toBe(pyResult.value);
+    });
+
+    it('matches NumPy for trace (ii->)', () => {
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const jsResult = einsum('ii->', a);
+
+      const pyResult = runNumPy(`
+a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+result = np.einsum('ii->', a)
+      `);
+
+      expect(jsResult).toBe(pyResult.value);
+    });
+
+    it('matches NumPy for transpose (ij->ji)', () => {
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      const jsResult = einsum('ij->ji', a) as any;
+
+      const pyResult = runNumPy(`
+a = np.array([[1, 2, 3], [4, 5, 6]])
+result = np.einsum('ij->ji', a)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for sum over axis (ij->j)', () => {
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      const jsResult = einsum('ij->j', a) as any;
+
+      const pyResult = runNumPy(`
+a = np.array([[1, 2, 3], [4, 5, 6]])
+result = np.einsum('ij->j', a)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for outer product (i,j->ij)', () => {
+      const a = array([1, 2, 3]);
+      const b = array([4, 5]);
+      const jsResult = einsum('i,j->ij', a, b) as any;
+
+      const pyResult = runNumPy(`
+a = np.array([1, 2, 3])
+b = np.array([4, 5])
+result = np.einsum('i,j->ij', a, b)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for element-wise product with sum (ij,ij->)', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [5, 6],
+        [7, 8],
+      ]);
+      const jsResult = einsum('ij,ij->', a, b);
+
+      const pyResult = runNumPy(`
+a = np.array([[1, 2], [3, 4]])
+b = np.array([[5, 6], [7, 8]])
+result = np.einsum('ij,ij->', a, b)
+      `);
+
+      expect(jsResult).toBe(pyResult.value);
+    });
+
+    it('matches NumPy for batched matrix-vector product (ijk,ik->ij)', () => {
+      const a = array([
+        [
+          [1, 2, 3],
+          [4, 5, 6],
+        ],
+        [
+          [7, 8, 9],
+          [10, 11, 12],
+        ],
+      ]);
+      const b = array([
+        [1, 0, 0],
+        [0, 1, 0],
+      ]);
+      const jsResult = einsum('ijk,ik->ij', a, b) as any;
+
+      const pyResult = runNumPy(`
+a = np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]])
+b = np.array([[1, 0, 0], [0, 1, 0]])
+result = np.einsum('ijk,ik->ij', a, b)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for implicit output notation', () => {
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [5, 6],
+        [7, 8],
+      ]);
+      const jsResult = einsum('ij,jk', a, b) as any;
+
+      const pyResult = runNumPy(`
+a = np.array([[1, 2], [3, 4]])
+b = np.array([[5, 6], [7, 8]])
+result = np.einsum('ij,jk', a, b)
+      `);
+
+      expect(jsResult.shape).toEqual(pyResult.shape);
+      expect(arraysClose(jsResult.toArray(), pyResult.value)).toBe(true);
+    });
+
+    it('matches NumPy for diagonal extraction (ii->i)', () => {
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const jsResult = einsum('ii->i', a) as any;
+
+      const pyResult = runNumPy(`
+a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+result = np.einsum('ii->i', a)
       `);
 
       expect(jsResult.shape).toEqual(pyResult.shape);

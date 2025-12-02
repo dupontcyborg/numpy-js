@@ -115,6 +115,12 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
       continue;
     }
 
+    // Handle string values (like einsum subscripts)
+    if (key === 'subscripts') {
+      arrays[key] = config.value;
+      continue;
+    }
+
     // Create arrays
     if (value !== undefined) {
       arrays[key] = np.full(shape, value, dtype);
@@ -282,6 +288,20 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
       return np.deg2rad(arrays.a);
     case 'rad2deg':
       return np.rad2deg(arrays.a);
+
+    // Additional arithmetic
+    case 'cbrt':
+      return np.cbrt(arrays.a);
+    case 'fabs':
+      return np.fabs(arrays.a);
+    case 'divmod': {
+      const [quotient] = np.divmod(arrays.a, arrays.b);
+      return quotient; // Just return quotient for validation
+    }
+
+    // Additional linalg
+    case 'einsum':
+      return np.einsum(arrays.subscripts, arrays.a, arrays.b);
 
     default:
       throw new Error(`Unknown operation: ${spec.operation}`);

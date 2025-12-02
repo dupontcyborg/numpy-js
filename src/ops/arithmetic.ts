@@ -694,3 +694,186 @@ export function reciprocal(a: ArrayStorage): ArrayStorage {
 
   return result;
 }
+
+/**
+ * Cube root of each element
+ * NumPy behavior: Promotes integer types to float64
+ *
+ * @param a - Input array storage
+ * @returns Result storage with cube root values
+ */
+export function cbrt(a: ArrayStorage): ArrayStorage {
+  const dtype = a.dtype;
+  const shape = Array.from(a.shape);
+  const data = a.data;
+  const size = a.size;
+
+  // NumPy behavior: cbrt always promotes integers to float64
+  const isIntegerType = dtype !== 'float32' && dtype !== 'float64';
+  const resultDtype = isIntegerType ? 'float64' : dtype;
+
+  const result = ArrayStorage.zeros(shape, resultDtype);
+  const resultData = result.data;
+
+  // Handle all types uniformly - convert to number and apply Math.cbrt
+  for (let i = 0; i < size; i++) {
+    resultData[i] = Math.cbrt(Number(data[i]!));
+  }
+
+  return result;
+}
+
+/**
+ * Absolute value of each element, returning float
+ * NumPy behavior: fabs always returns floating point
+ *
+ * @param a - Input array storage
+ * @returns Result storage with absolute values as float
+ */
+export function fabs(a: ArrayStorage): ArrayStorage {
+  const dtype = a.dtype;
+  const shape = Array.from(a.shape);
+  const data = a.data;
+  const size = a.size;
+
+  // fabs always returns float64, except for float32 which stays float32
+  const resultDtype = dtype === 'float32' ? 'float32' : 'float64';
+
+  const result = ArrayStorage.zeros(shape, resultDtype);
+  const resultData = result.data;
+
+  // Handle all types uniformly
+  for (let i = 0; i < size; i++) {
+    resultData[i] = Math.abs(Number(data[i]!));
+  }
+
+  return result;
+}
+
+/**
+ * Returns both quotient and remainder (floor divide and modulo)
+ * NumPy behavior: divmod(a, b) = (floor_divide(a, b), mod(a, b))
+ *
+ * @param a - Dividend array storage
+ * @param b - Divisor (array storage or scalar)
+ * @returns Tuple of [quotient, remainder] storages
+ */
+export function divmod(a: ArrayStorage, b: ArrayStorage | number): [ArrayStorage, ArrayStorage] {
+  const quotient = floorDivide(a, b);
+  const remainder = mod(a, b);
+  return [quotient, remainder];
+}
+
+/**
+ * Element-wise square of each element
+ * NumPy behavior: x**2
+ *
+ * @param a - Input array storage
+ * @returns Result storage with squared values
+ */
+export function square(a: ArrayStorage): ArrayStorage {
+  const dtype = a.dtype;
+  const shape = Array.from(a.shape);
+  const data = a.data;
+  const size = a.size;
+
+  const result = ArrayStorage.zeros(shape, dtype);
+  const resultData = result.data;
+
+  if (isBigIntDType(dtype)) {
+    const bigData = data as BigInt64Array | BigUint64Array;
+    const bigResultData = resultData as BigInt64Array | BigUint64Array;
+    for (let i = 0; i < size; i++) {
+      bigResultData[i] = bigData[i]! * bigData[i]!;
+    }
+  } else {
+    for (let i = 0; i < size; i++) {
+      const val = Number(data[i]!);
+      resultData[i] = val * val;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Remainder of division (same as mod)
+ * NumPy behavior: Same as mod, alias for compatibility
+ *
+ * @param a - Dividend array storage
+ * @param b - Divisor (array storage or scalar)
+ * @returns Result storage with remainder values
+ */
+export function remainder(a: ArrayStorage, b: ArrayStorage | number): ArrayStorage {
+  return mod(a, b);
+}
+
+/**
+ * Heaviside step function
+ * NumPy behavior:
+ *   heaviside(x1, x2) = 0 if x1 < 0
+ *                     = x2 if x1 == 0
+ *                     = 1 if x1 > 0
+ *
+ * @param x1 - Input array storage
+ * @param x2 - Value to use when x1 == 0 (array storage or scalar)
+ * @returns Result storage with heaviside values
+ */
+export function heaviside(x1: ArrayStorage, x2: ArrayStorage | number): ArrayStorage {
+  const dtype = x1.dtype;
+  const shape = Array.from(x1.shape);
+  const size = x1.size;
+
+  // Result is always float64
+  const resultDtype = dtype === 'float32' ? 'float32' : 'float64';
+  const result = ArrayStorage.zeros(shape, resultDtype);
+  const resultData = result.data;
+
+  if (typeof x2 === 'number') {
+    // Scalar x2
+    for (let i = 0; i < size; i++) {
+      const val = Number(x1.data[i]!);
+      if (val < 0) {
+        resultData[i] = 0;
+      } else if (val === 0) {
+        resultData[i] = x2;
+      } else {
+        resultData[i] = 1;
+      }
+    }
+  } else {
+    // Array x2 - needs to broadcast
+    const x2Data = x2.data;
+    const x2Shape = x2.shape;
+
+    // Simple case: same shape
+    if (shape.every((d, i) => d === x2Shape[i])) {
+      for (let i = 0; i < size; i++) {
+        const val = Number(x1.data[i]!);
+        if (val < 0) {
+          resultData[i] = 0;
+        } else if (val === 0) {
+          resultData[i] = Number(x2Data[i]!);
+        } else {
+          resultData[i] = 1;
+        }
+      }
+    } else {
+      // Broadcasting case - use elementwiseBinaryOp approach
+      for (let i = 0; i < size; i++) {
+        const val = Number(x1.data[i]!);
+        // Simple broadcast: assume x2 is broadcastable to x1
+        const x2Idx = i % x2.size;
+        if (val < 0) {
+          resultData[i] = 0;
+        } else if (val === 0) {
+          resultData[i] = Number(x2Data[x2Idx]!);
+        } else {
+          resultData[i] = 1;
+        }
+      }
+    }
+  }
+
+  return result;
+}
