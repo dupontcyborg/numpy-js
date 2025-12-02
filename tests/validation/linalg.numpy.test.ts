@@ -679,7 +679,11 @@ result = np.tensordot(a, b, axes=([1, 2], [0, 1]))
 
   describe('diagonal()', () => {
     it('matches NumPy diagonal for 2D array', () => {
-      const a = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
       const jsResult = diagonal(a);
 
       const pyResult = runNumPy(`
@@ -692,7 +696,11 @@ result = np.diagonal(a)
     });
 
     it('matches NumPy diagonal with positive offset', () => {
-      const a = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
       const jsResult = diagonal(a, 1);
 
       const pyResult = runNumPy(`
@@ -705,7 +713,11 @@ result = np.diagonal(a, 1)
     });
 
     it('matches NumPy diagonal with negative offset', () => {
-      const a = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
       const jsResult = diagonal(a, -1);
 
       const pyResult = runNumPy(`
@@ -718,7 +730,10 @@ result = np.diagonal(a, -1)
     });
 
     it('matches NumPy diagonal for non-square matrix', () => {
-      const a = array([[1, 2, 3, 4], [5, 6, 7, 8]]);
+      const a = array([
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+      ]);
       const jsResult = diagonal(a);
 
       const pyResult = runNumPy(`
@@ -748,8 +763,14 @@ result = np.kron(a, b)
     });
 
     it('matches NumPy kron for 2D matrices', () => {
-      const a = array([[1, 2], [3, 4]]);
-      const b = array([[5, 6], [7, 8]]);
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [5, 6],
+        [7, 8],
+      ]);
       const jsResult = kron(a, b);
 
       const pyResult = runNumPy(`
@@ -763,8 +784,14 @@ result = np.kron(a, b)
     });
 
     it('matches NumPy kron with identity matrix', () => {
-      const a = array([[0, 1], [1, 0]]);
-      const b = array([[1, 2], [3, 4]]);
+      const a = array([
+        [0, 1],
+        [1, 0],
+      ]);
+      const b = array([
+        [1, 2],
+        [3, 4],
+      ]);
       const jsResult = kron(a, b);
 
       const pyResult = runNumPy(`

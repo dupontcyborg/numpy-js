@@ -484,49 +484,80 @@ describe('Linear Algebra Operations', () => {
 
   describe('diagonal()', () => {
     it('extracts main diagonal from 2D array', () => {
-      const a = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
       const result = diagonal(a);
       expect(result.shape).toEqual([3]);
       expect(result.toArray()).toEqual([1, 5, 9]);
     });
 
     it('extracts diagonal with positive offset', () => {
-      const a = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
       const result = diagonal(a, 1);
       expect(result.shape).toEqual([2]);
       expect(result.toArray()).toEqual([2, 6]);
     });
 
     it('extracts diagonal with negative offset', () => {
-      const a = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+      const a = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
       const result = diagonal(a, -1);
       expect(result.shape).toEqual([2]);
       expect(result.toArray()).toEqual([4, 8]);
     });
 
     it('works with non-square matrices', () => {
-      const a = array([[1, 2, 3, 4], [5, 6, 7, 8]]);
+      const a = array([
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+      ]);
       const result = diagonal(a);
       expect(result.shape).toEqual([2]);
       expect(result.toArray()).toEqual([1, 6]);
     });
 
     it('works with tall matrices', () => {
-      const a = array([[1, 2], [3, 4], [5, 6]]);
+      const a = array([
+        [1, 2],
+        [3, 4],
+        [5, 6],
+      ]);
       const result = diagonal(a);
       expect(result.shape).toEqual([2]);
       expect(result.toArray()).toEqual([1, 4]);
     });
 
     it('returns empty array when offset too large', () => {
-      const a = array([[1, 2], [3, 4]]);
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
       const result = diagonal(a, 5);
       expect(result.shape).toEqual([0]);
       expect(result.toArray()).toEqual([]);
     });
 
     it('works with 3D arrays', () => {
-      const a = array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]);
+      const a = array([
+        [
+          [1, 2],
+          [3, 4],
+        ],
+        [
+          [5, 6],
+          [7, 8],
+        ],
+      ]);
       // For 3D array shape (2, 2, 2), diagonal extracts along axes 0 and 1
       // Output shape is (other_dims..., diag_len) = (2, 2)
       const result = diagonal(a);
@@ -536,7 +567,10 @@ describe('Linear Algebra Operations', () => {
       // result[0, 1] = a[1, 1, 0] = 7
       // result[1, 0] = a[0, 0, 1] = 2
       // result[1, 1] = a[1, 1, 1] = 8
-      expect(result.toArray()).toEqual([[1, 7], [2, 8]]);
+      expect(result.toArray()).toEqual([
+        [1, 7],
+        [2, 8],
+      ]);
     });
 
     it('throws error for 1D arrays', () => {
@@ -555,15 +589,21 @@ describe('Linear Algebra Operations', () => {
     });
 
     it('computes Kronecker product of two 2D matrices', () => {
-      const a = array([[1, 2], [3, 4]]);
-      const b = array([[5, 6], [7, 8]]);
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [5, 6],
+        [7, 8],
+      ]);
       const result = kron(a, b);
       expect(result.shape).toEqual([4, 4]);
       expect(result.toArray()).toEqual([
         [5, 6, 10, 12],
         [7, 8, 14, 16],
         [15, 18, 20, 24],
-        [21, 24, 28, 32]
+        [21, 24, 28, 32],
       ]);
     });
 
@@ -572,7 +612,10 @@ describe('Linear Algebra Operations', () => {
       const b = array([[3], [4]]);
       const result = kron(a, b);
       expect(result.shape).toEqual([2, 2]);
-      expect(result.toArray()).toEqual([[3, 6], [4, 8]]);
+      expect(result.toArray()).toEqual([
+        [3, 6],
+        [4, 8],
+      ]);
     });
 
     it('works with scalar-like arrays', () => {
@@ -592,15 +635,21 @@ describe('Linear Algebra Operations', () => {
     });
 
     it('handles zeros correctly', () => {
-      const a = array([[0, 1], [1, 0]]);
-      const b = array([[1, 2], [3, 4]]);
+      const a = array([
+        [0, 1],
+        [1, 0],
+      ]);
+      const b = array([
+        [1, 2],
+        [3, 4],
+      ]);
       const result = kron(a, b);
       expect(result.shape).toEqual([4, 4]);
       expect(result.toArray()).toEqual([
         [0, 0, 1, 2],
         [0, 0, 3, 4],
         [1, 2, 0, 0],
-        [3, 4, 0, 0]
+        [3, 4, 0, 0],
       ]);
     });
 

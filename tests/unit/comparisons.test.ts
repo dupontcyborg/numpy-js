@@ -428,14 +428,23 @@ describe('Comparison Operations', () => {
     });
 
     it('requires same shapes (no broadcasting)', () => {
-      const a = array([[1, 2], [3, 4]]);
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
       const b = array([1, 2]);
       expect(array_equal(a, b)).toBe(false);
     });
 
     it('works with 2D arrays', () => {
-      const a = array([[1, 2], [3, 4]]);
-      const b = array([[1, 2], [3, 4]]);
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [1, 2],
+        [3, 4],
+      ]);
       expect(array_equal(a, b)).toBe(true);
     });
   });
@@ -454,25 +463,38 @@ describe('Comparison Operations', () => {
     });
 
     it('broadcasts arrays before comparing', () => {
-      const a = array([[1, 2], [1, 2]]);
+      const a = array([
+        [1, 2],
+        [1, 2],
+      ]);
       const b = array([1, 2]);
       expect(array_equiv(a, b)).toBe(true);
     });
 
     it('broadcasts with size-1 dimensions', () => {
       const a = array([[1], [2], [3]]);
-      const b = array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]);
+      const b = array([
+        [1, 1, 1],
+        [2, 2, 2],
+        [3, 3, 3],
+      ]);
       expect(array_equiv(a, b)).toBe(true);
     });
 
     it('broadcasts 2D with 1D', () => {
-      const a = array([[5, 5, 5], [5, 5, 5]]);
+      const a = array([
+        [5, 5, 5],
+        [5, 5, 5],
+      ]);
       const b = array([5, 5, 5]);
       expect(array_equiv(a, b)).toBe(true);
     });
 
     it('returns false when broadcast values differ', () => {
-      const a = array([[1, 2], [3, 4]]);
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
       const b = array([1, 2]);
       expect(array_equiv(a, b)).toBe(false);
     });
@@ -508,8 +530,14 @@ describe('Comparison Operations', () => {
     });
 
     it('returns true for same-shape arrays (no actual broadcasting)', () => {
-      const a = array([[1, 2], [3, 4]]);
-      const b = array([[1, 2], [3, 4]]);
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const b = array([
+        [1, 2],
+        [3, 4],
+      ]);
       expect(array_equiv(a, b)).toBe(true);
     });
   });

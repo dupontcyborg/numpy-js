@@ -487,7 +487,10 @@ result = np.allclose(a, b)
 
   describe('array_equiv()', () => {
     it('matches NumPy array_equiv with broadcasting', () => {
-      const a = array([[1, 2], [1, 2]]);
+      const a = array([
+        [1, 2],
+        [1, 2],
+      ]);
       const b = array([1, 2]);
       const result = array_equiv(a, b);
 
@@ -501,7 +504,10 @@ result = np.array_equiv(a, b)
     });
 
     it('matches NumPy array_equiv for non-equivalent arrays', () => {
-      const a = array([[1, 2], [3, 4]]);
+      const a = array([
+        [1, 2],
+        [3, 4],
+      ]);
       const b = array([1, 2]);
       const result = array_equiv(a, b);
 
