@@ -786,6 +786,209 @@ export class NDArray {
     return typeof result === 'boolean' ? result : NDArray._fromStorage(result);
   }
 
+  /**
+   * Return the cumulative sum of elements along a given axis
+   * @param axis - Axis along which to compute cumsum. If undefined, compute over flattened array.
+   * @returns Array with cumulative sums
+   */
+  cumsum(axis?: number): NDArray {
+    return NDArray._fromStorage(reductionOps.cumsum(this._storage, axis));
+  }
+
+  /**
+   * Return the cumulative product of elements along a given axis
+   * @param axis - Axis along which to compute cumprod. If undefined, compute over flattened array.
+   * @returns Array with cumulative products
+   */
+  cumprod(axis?: number): NDArray {
+    return NDArray._fromStorage(reductionOps.cumprod(this._storage, axis));
+  }
+
+  /**
+   * Peak to peak (maximum - minimum) value along a given axis
+   * @param axis - Axis along which to compute ptp. If undefined, compute over all elements.
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Range of values
+   */
+  ptp(axis?: number, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.ptp(this._storage, axis, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Compute the median along the specified axis
+   * @param axis - Axis along which to compute median. If undefined, compute over all elements.
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Median of array elements
+   */
+  median(axis?: number, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.median(this._storage, axis, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Compute the q-th percentile of the data along the specified axis
+   * @param q - Percentile to compute (0-100)
+   * @param axis - Axis along which to compute percentile. If undefined, compute over all elements.
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Percentile of array elements
+   */
+  percentile(q: number, axis?: number, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.percentile(this._storage, q, axis, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Compute the q-th quantile of the data along the specified axis
+   * @param q - Quantile to compute (0-1)
+   * @param axis - Axis along which to compute quantile. If undefined, compute over all elements.
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Quantile of array elements
+   */
+  quantile(q: number, axis?: number, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.quantile(this._storage, q, axis, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Compute the weighted average along the specified axis
+   * @param weights - Array of weights (optional)
+   * @param axis - Axis along which to compute average. If undefined, compute over all elements.
+   * @returns Weighted average of array elements
+   */
+  average(weights?: NDArray, axis?: number): NDArray | number {
+    const result = reductionOps.average(this._storage, axis, weights?.storage);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Return the sum of array elements, treating NaNs as zero
+   * @param axis - Axis along which to compute sum. If undefined, compute over all elements.
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Sum of array elements ignoring NaNs
+   */
+  nansum(axis?: number, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.nansum(this._storage, axis, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Return the product of array elements, treating NaNs as ones
+   * @param axis - Axis along which to compute product. If undefined, compute over all elements.
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Product of array elements ignoring NaNs
+   */
+  nanprod(axis?: number, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.nanprod(this._storage, axis, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Compute the arithmetic mean, ignoring NaNs
+   * @param axis - Axis along which to compute mean. If undefined, compute over all elements.
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Mean of array elements ignoring NaNs
+   */
+  nanmean(axis?: number, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.nanmean(this._storage, axis, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Compute the variance, ignoring NaNs
+   * @param axis - Axis along which to compute variance. If undefined, compute over all elements.
+   * @param ddof - Delta degrees of freedom (default: 0)
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Variance of array elements ignoring NaNs
+   */
+  nanvar(axis?: number, ddof: number = 0, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.nanvar(this._storage, axis, ddof, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Compute the standard deviation, ignoring NaNs
+   * @param axis - Axis along which to compute std. If undefined, compute over all elements.
+   * @param ddof - Delta degrees of freedom (default: 0)
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Standard deviation of array elements ignoring NaNs
+   */
+  nanstd(axis?: number, ddof: number = 0, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.nanstd(this._storage, axis, ddof, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Return minimum of an array or minimum along an axis, ignoring NaNs
+   * @param axis - Axis along which to compute minimum. If undefined, compute over all elements.
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Minimum of array elements ignoring NaNs
+   */
+  nanmin(axis?: number, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.nanmin(this._storage, axis, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Return maximum of an array or maximum along an axis, ignoring NaNs
+   * @param axis - Axis along which to compute maximum. If undefined, compute over all elements.
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Maximum of array elements ignoring NaNs
+   */
+  nanmax(axis?: number, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.nanmax(this._storage, axis, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Return the indices of the minimum values, ignoring NaNs
+   * @param axis - Axis along which to find minimum indices. If undefined, index of global minimum.
+   * @returns Indices of minimum values ignoring NaNs
+   */
+  nanargmin(axis?: number): NDArray | number {
+    const result = reductionOps.nanargmin(this._storage, axis);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Return the indices of the maximum values, ignoring NaNs
+   * @param axis - Axis along which to find maximum indices. If undefined, index of global maximum.
+   * @returns Indices of maximum values ignoring NaNs
+   */
+  nanargmax(axis?: number): NDArray | number {
+    const result = reductionOps.nanargmax(this._storage, axis);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  /**
+   * Return the cumulative sum of elements, treating NaNs as zero
+   * @param axis - Axis along which to compute cumsum. If undefined, compute over flattened array.
+   * @returns Array with cumulative sums ignoring NaNs
+   */
+  nancumsum(axis?: number): NDArray {
+    return NDArray._fromStorage(reductionOps.nancumsum(this._storage, axis));
+  }
+
+  /**
+   * Return the cumulative product of elements, treating NaNs as one
+   * @param axis - Axis along which to compute cumprod. If undefined, compute over flattened array.
+   * @returns Array with cumulative products ignoring NaNs
+   */
+  nancumprod(axis?: number): NDArray {
+    return NDArray._fromStorage(reductionOps.nancumprod(this._storage, axis));
+  }
+
+  /**
+   * Compute the median, ignoring NaNs
+   * @param axis - Axis along which to compute median. If undefined, compute over all elements.
+   * @param keepdims - If true, reduced axes are left as dimensions with size 1
+   * @returns Median of array elements ignoring NaNs
+   */
+  nanmedian(axis?: number, keepdims: boolean = false): NDArray | number {
+    const result = reductionOps.nanmedian(this._storage, axis, keepdims);
+    return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
   // Shape manipulation
   /**
    * Reshape array to a new shape

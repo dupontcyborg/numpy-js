@@ -422,4 +422,603 @@ describe('Extended reduction tests', () => {
       expect(() => arr.sum(-4)).toThrow(/out of bounds/);
     });
   });
+
+  describe('cumsum()', () => {
+    it('computes cumulative sum of all elements (flattened)', () => {
+      const arr = array([1, 2, 3, 4]);
+      const result = arr.cumsum();
+      expect((result as any).toArray()).toEqual([1, 3, 6, 10]);
+    });
+
+    it('computes cumulative sum of 2D array (flattened)', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.cumsum();
+      expect((result as any).toArray()).toEqual([1, 3, 6, 10]);
+    });
+
+    it('computes cumulative sum along axis=0', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.cumsum(0);
+      expect((result as any).shape).toEqual([2, 2]);
+      expect((result as any).toArray()).toEqual([
+        [1, 2],
+        [4, 6],
+      ]);
+    });
+
+    it('computes cumulative sum along axis=1', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      const result = arr.cumsum(1);
+      expect((result as any).shape).toEqual([2, 3]);
+      expect((result as any).toArray()).toEqual([
+        [1, 3, 6],
+        [4, 9, 15],
+      ]);
+    });
+
+    it('computes cumulative sum along axis=-1', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.cumsum(-1);
+      expect((result as any).shape).toEqual([2, 2]);
+      expect((result as any).toArray()).toEqual([
+        [1, 3],
+        [3, 7],
+      ]);
+    });
+  });
+
+  describe('cumprod()', () => {
+    it('computes cumulative product of all elements (flattened)', () => {
+      const arr = array([1, 2, 3, 4]);
+      const result = arr.cumprod();
+      expect((result as any).toArray()).toEqual([1, 2, 6, 24]);
+    });
+
+    it('computes cumulative product of 2D array (flattened)', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.cumprod();
+      expect((result as any).toArray()).toEqual([1, 2, 6, 24]);
+    });
+
+    it('computes cumulative product along axis=0', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.cumprod(0);
+      expect((result as any).shape).toEqual([2, 2]);
+      expect((result as any).toArray()).toEqual([
+        [1, 2],
+        [3, 8],
+      ]);
+    });
+
+    it('computes cumulative product along axis=1', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      const result = arr.cumprod(1);
+      expect((result as any).shape).toEqual([2, 3]);
+      expect((result as any).toArray()).toEqual([
+        [1, 2, 6],
+        [4, 20, 120],
+      ]);
+    });
+  });
+
+  describe('ptp()', () => {
+    it('computes peak-to-peak (range) of all elements', () => {
+      const arr = array([1, 5, 3, 9, 2]);
+      expect(arr.ptp()).toBe(8);
+    });
+
+    it('computes ptp of 2D array', () => {
+      const arr = array([
+        [1, 5, 3],
+        [9, 2, 6],
+      ]);
+      expect(arr.ptp()).toBe(8);
+    });
+
+    it('computes ptp along axis=0', () => {
+      const arr = array([
+        [1, 5, 3],
+        [9, 2, 6],
+      ]);
+      const result = arr.ptp(0);
+      expect((result as any).shape).toEqual([3]);
+      expect((result as any).toArray()).toEqual([8, 3, 3]);
+    });
+
+    it('computes ptp along axis=1', () => {
+      const arr = array([
+        [1, 5, 3],
+        [9, 2, 6],
+      ]);
+      const result = arr.ptp(1);
+      expect((result as any).shape).toEqual([2]);
+      expect((result as any).toArray()).toEqual([4, 7]);
+    });
+
+    it('computes ptp with keepdims=true', () => {
+      const arr = array([
+        [1, 5, 3],
+        [9, 2, 6],
+      ]);
+      const result = arr.ptp(0, true);
+      expect((result as any).shape).toEqual([1, 3]);
+      expect((result as any).toArray()).toEqual([[8, 3, 3]]);
+    });
+  });
+
+  describe('median()', () => {
+    it('computes median of odd-length array', () => {
+      const arr = array([1, 3, 2, 5, 4]);
+      expect(arr.median()).toBe(3);
+    });
+
+    it('computes median of even-length array', () => {
+      const arr = array([1, 2, 3, 4]);
+      expect(arr.median()).toBe(2.5);
+    });
+
+    it('computes median of 2D array', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      expect(arr.median()).toBe(3.5);
+    });
+
+    it('computes median along axis=0', () => {
+      const arr = array([
+        [1, 3, 5],
+        [2, 4, 6],
+      ]);
+      const result = arr.median(0);
+      expect((result as any).shape).toEqual([3]);
+      expect((result as any).toArray()).toEqual([1.5, 3.5, 5.5]);
+    });
+
+    it('computes median along axis=1', () => {
+      const arr = array([
+        [1, 3, 2],
+        [6, 4, 5],
+      ]);
+      const result = arr.median(1);
+      expect((result as any).shape).toEqual([2]);
+      expect((result as any).toArray()).toEqual([2, 5]);
+    });
+
+    it('computes median with keepdims=true', () => {
+      const arr = array([
+        [1, 3, 2],
+        [6, 4, 5],
+      ]);
+      const result = arr.median(1, true);
+      expect((result as any).shape).toEqual([2, 1]);
+      expect((result as any).toArray()).toEqual([[2], [5]]);
+    });
+  });
+
+  describe('percentile()', () => {
+    it('computes 50th percentile (median)', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      expect(arr.percentile(50)).toBe(3);
+    });
+
+    it('computes 0th percentile (min)', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      expect(arr.percentile(0)).toBe(1);
+    });
+
+    it('computes 100th percentile (max)', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      expect(arr.percentile(100)).toBe(5);
+    });
+
+    it('computes 25th percentile', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const result = arr.percentile(25);
+      expect(result).toBeCloseTo(2, 5);
+    });
+
+    it('computes percentile along axis=0', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+        [5, 6],
+      ]);
+      const result = arr.percentile(50, 0);
+      expect((result as any).shape).toEqual([2]);
+      expect((result as any).toArray()).toEqual([3, 4]);
+    });
+
+    it('computes percentile with keepdims=true', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.percentile(50, 0, true);
+      expect((result as any).shape).toEqual([1, 2]);
+    });
+  });
+
+  describe('quantile()', () => {
+    it('computes 0.5 quantile (median)', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      expect(arr.quantile(0.5)).toBe(3);
+    });
+
+    it('computes 0.0 quantile (min)', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      expect(arr.quantile(0)).toBe(1);
+    });
+
+    it('computes 1.0 quantile (max)', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      expect(arr.quantile(1)).toBe(5);
+    });
+
+    it('computes 0.25 quantile', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const result = arr.quantile(0.25);
+      expect(result).toBeCloseTo(2, 5);
+    });
+
+    it('computes quantile along axis=1', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      const result = arr.quantile(0.5, 1);
+      expect((result as any).shape).toEqual([2]);
+      expect((result as any).toArray()).toEqual([2, 5]);
+    });
+  });
+
+  describe('average()', () => {
+    it('computes unweighted average', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      expect(arr.average()).toBe(3);
+    });
+
+    it('computes weighted average', () => {
+      const arr = array([1, 2, 3]);
+      const weights = array([3, 2, 1]);
+      // (1*3 + 2*2 + 3*1) / (3+2+1) = 10/6 = 1.666...
+      expect(arr.average(weights)).toBeCloseTo(10 / 6, 5);
+    });
+
+    it('computes average along axis=0', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = arr.average(undefined, 0);
+      expect((result as any).shape).toEqual([2]);
+      expect((result as any).toArray()).toEqual([2, 3]);
+    });
+
+    it('computes average along axis=1', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      const result = arr.average(undefined, 1);
+      expect((result as any).shape).toEqual([2]);
+      expect((result as any).toArray()).toEqual([2, 5]);
+    });
+
+    it('computes weighted average along axis', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const weights = array([3, 1]);
+      const result = arr.average(weights, 1);
+      expect((result as any).shape).toEqual([2]);
+      // Row 0: (1*3 + 2*1) / 4 = 5/4 = 1.25
+      // Row 1: (3*3 + 4*1) / 4 = 13/4 = 3.25
+      expect((result as any).toArray()[0]).toBeCloseTo(1.25, 5);
+      expect((result as any).toArray()[1]).toBeCloseTo(3.25, 5);
+    });
+  });
+
+  describe('nansum()', () => {
+    it('sums array ignoring NaN values', () => {
+      const arr = array([1, NaN, 3, NaN, 5]);
+      expect(arr.nansum()).toBe(9);
+    });
+
+    it('sums all non-NaN elements in 2D array', () => {
+      const arr = array([
+        [1, NaN, 3],
+        [4, 5, NaN],
+      ]);
+      expect(arr.nansum()).toBe(13);
+    });
+
+    it('sums along axis=0 ignoring NaN', () => {
+      const arr = array([
+        [1, NaN, 3],
+        [4, 5, NaN],
+      ]);
+      const result = arr.nansum(0);
+      expect((result as any).shape).toEqual([3]);
+      expect((result as any).toArray()).toEqual([5, 5, 3]);
+    });
+
+    it('sums along axis=1 ignoring NaN', () => {
+      const arr = array([
+        [1, NaN, 3],
+        [NaN, 5, 6],
+      ]);
+      const result = arr.nansum(1);
+      expect((result as any).shape).toEqual([2]);
+      expect((result as any).toArray()).toEqual([4, 11]);
+    });
+
+    it('handles array with all NaN returning 0', () => {
+      const arr = array([NaN, NaN, NaN]);
+      expect(arr.nansum()).toBe(0);
+    });
+  });
+
+  describe('nanprod()', () => {
+    it('computes product ignoring NaN values', () => {
+      const arr = array([2, NaN, 3, NaN, 4]);
+      expect(arr.nanprod()).toBe(24);
+    });
+
+    it('handles 2D array with NaN', () => {
+      const arr = array([
+        [2, NaN],
+        [3, 4],
+      ]);
+      expect(arr.nanprod()).toBe(24);
+    });
+
+    it('computes product along axis ignoring NaN', () => {
+      const arr = array([
+        [2, NaN],
+        [3, 4],
+      ]);
+      const result = arr.nanprod(0);
+      expect((result as any).shape).toEqual([2]);
+      expect((result as any).toArray()).toEqual([6, 4]);
+    });
+  });
+
+  describe('nanmean()', () => {
+    it('computes mean ignoring NaN values', () => {
+      const arr = array([1, NaN, 3, NaN, 5]);
+      expect(arr.nanmean()).toBe(3);
+    });
+
+    it('handles 2D array with NaN', () => {
+      const arr = array([
+        [1, NaN, 3],
+        [4, 5, NaN],
+      ]);
+      // (1 + 3 + 4 + 5) / 4 = 13/4 = 3.25
+      expect(arr.nanmean()).toBe(3.25);
+    });
+
+    it('computes mean along axis ignoring NaN', () => {
+      const arr = array([
+        [1, NaN, 3],
+        [4, 5, NaN],
+      ]);
+      const result = arr.nanmean(0);
+      expect((result as any).shape).toEqual([3]);
+      expect((result as any).toArray()).toEqual([2.5, 5, 3]);
+    });
+  });
+
+  describe('nanvar()', () => {
+    it('computes variance ignoring NaN values', () => {
+      const arr = array([1, NaN, 2, NaN, 3]);
+      // Mean of [1, 2, 3] = 2, variance = ((1-2)^2 + (2-2)^2 + (3-2)^2) / 3 = 2/3
+      expect(arr.nanvar()).toBeCloseTo(2 / 3, 5);
+    });
+
+    it('computes variance along axis ignoring NaN', () => {
+      const arr = array([
+        [1, NaN],
+        [2, 4],
+      ]);
+      const result = arr.nanvar(0);
+      expect((result as any).shape).toEqual([2]);
+      // Column 0: mean=1.5, var=((1-1.5)^2 + (2-1.5)^2)/2 = 0.25
+      expect((result as any).toArray()[0]).toBeCloseTo(0.25, 5);
+      // Column 1: only 4, var=0
+      expect((result as any).toArray()[1]).toBe(0);
+    });
+  });
+
+  describe('nanstd()', () => {
+    it('computes std ignoring NaN values', () => {
+      const arr = array([1, NaN, 2, NaN, 3]);
+      // variance = 2/3, std = sqrt(2/3)
+      expect(arr.nanstd()).toBeCloseTo(Math.sqrt(2 / 3), 5);
+    });
+
+    it('computes std along axis ignoring NaN', () => {
+      const arr = array([
+        [1, NaN],
+        [3, 4],
+      ]);
+      const result = arr.nanstd(0);
+      expect((result as any).shape).toEqual([2]);
+      // Column 0: mean=2, var=1, std=1
+      expect((result as any).toArray()[0]).toBeCloseTo(1, 5);
+      // Column 1: only 4, std=0
+      expect((result as any).toArray()[1]).toBe(0);
+    });
+  });
+
+  describe('nanmin()', () => {
+    it('finds minimum ignoring NaN values', () => {
+      const arr = array([NaN, 3, NaN, 1, NaN, 5]);
+      expect(arr.nanmin()).toBe(1);
+    });
+
+    it('handles 2D array with NaN', () => {
+      const arr = array([
+        [NaN, 5, 3],
+        [9, NaN, 2],
+      ]);
+      expect(arr.nanmin()).toBe(2);
+    });
+
+    it('finds min along axis ignoring NaN', () => {
+      const arr = array([
+        [NaN, 5, 3],
+        [9, NaN, 2],
+      ]);
+      const result = arr.nanmin(0);
+      expect((result as any).shape).toEqual([3]);
+      expect((result as any).toArray()).toEqual([9, 5, 2]);
+    });
+  });
+
+  describe('nanmax()', () => {
+    it('finds maximum ignoring NaN values', () => {
+      const arr = array([NaN, 3, NaN, 9, NaN, 5]);
+      expect(arr.nanmax()).toBe(9);
+    });
+
+    it('handles 2D array with NaN', () => {
+      const arr = array([
+        [NaN, 5, 3],
+        [9, NaN, 2],
+      ]);
+      expect(arr.nanmax()).toBe(9);
+    });
+
+    it('finds max along axis ignoring NaN', () => {
+      const arr = array([
+        [NaN, 5, 3],
+        [9, NaN, 8],
+      ]);
+      const result = arr.nanmax(0);
+      expect((result as any).shape).toEqual([3]);
+      expect((result as any).toArray()).toEqual([9, 5, 8]);
+    });
+  });
+
+  describe('nanargmin()', () => {
+    it('finds index of minimum ignoring NaN values', () => {
+      const arr = array([NaN, 3, NaN, 1, NaN, 5]);
+      expect(arr.nanargmin()).toBe(3);
+    });
+
+    it('finds indices of min along axis ignoring NaN', () => {
+      const arr = array([
+        [NaN, 5],
+        [2, NaN],
+      ]);
+      const result = arr.nanargmin(0);
+      expect((result as any).shape).toEqual([2]);
+      expect((result as any).toArray()).toEqual([1, 0]);
+    });
+  });
+
+  describe('nanargmax()', () => {
+    it('finds index of maximum ignoring NaN values', () => {
+      const arr = array([NaN, 3, NaN, 9, NaN, 5]);
+      expect(arr.nanargmax()).toBe(3);
+    });
+
+    it('finds indices of max along axis ignoring NaN', () => {
+      const arr = array([
+        [NaN, 5],
+        [2, NaN],
+      ]);
+      const result = arr.nanargmax(0);
+      expect((result as any).shape).toEqual([2]);
+      expect((result as any).toArray()).toEqual([1, 0]);
+    });
+  });
+
+  describe('nancumsum()', () => {
+    it('computes cumulative sum treating NaN as 0', () => {
+      const arr = array([1, NaN, 3, NaN, 5]);
+      const result = arr.nancumsum();
+      expect((result as any).toArray()).toEqual([1, 1, 4, 4, 9]);
+    });
+
+    it('computes nancumsum along axis', () => {
+      const arr = array([
+        [1, NaN],
+        [NaN, 4],
+      ]);
+      const result = arr.nancumsum(0);
+      expect((result as any).shape).toEqual([2, 2]);
+      expect((result as any).toArray()).toEqual([
+        [1, 0],
+        [1, 4],
+      ]);
+    });
+  });
+
+  describe('nancumprod()', () => {
+    it('computes cumulative product treating NaN as 1', () => {
+      const arr = array([2, NaN, 3, NaN, 4]);
+      const result = arr.nancumprod();
+      expect((result as any).toArray()).toEqual([2, 2, 6, 6, 24]);
+    });
+
+    it('computes nancumprod along axis', () => {
+      const arr = array([
+        [2, NaN],
+        [NaN, 3],
+      ]);
+      const result = arr.nancumprod(0);
+      expect((result as any).shape).toEqual([2, 2]);
+      expect((result as any).toArray()).toEqual([
+        [2, 1],
+        [2, 3],
+      ]);
+    });
+  });
+
+  describe('nanmedian()', () => {
+    it('computes median ignoring NaN values', () => {
+      const arr = array([1, NaN, 2, NaN, 3]);
+      expect(arr.nanmedian()).toBe(2);
+    });
+
+    it('computes nanmedian of even-length non-NaN elements', () => {
+      const arr = array([1, NaN, 2, NaN, 3, 4]);
+      expect(arr.nanmedian()).toBe(2.5);
+    });
+
+    it('computes nanmedian along axis', () => {
+      const arr = array([
+        [1, NaN, 3],
+        [NaN, 5, 6],
+      ]);
+      const result = arr.nanmedian(0);
+      expect((result as any).shape).toEqual([3]);
+      expect((result as any).toArray()).toEqual([1, 5, 4.5]);
+    });
+  });
 });
