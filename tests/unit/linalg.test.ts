@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { array, dot, trace, transpose, inner, outer, tensordot } from '../../src';
+import { array, dot, trace, transpose, inner, outer, tensordot, diagonal, kron } from '../../src';
 
 describe('Linear Algebra Operations', () => {
   describe('dot()', () => {
@@ -479,6 +479,136 @@ describe('Linear Algebra Operations', () => {
       // Contract axis 2 of a with axis 2 of b
       // Result shape: (1, 2, 2, 1) = (1, 2) + (2, 1)
       expect(result.shape).toEqual([1, 2, 2, 1]);
+    });
+  });
+
+  describe('diagonal()', () => {
+    it('extracts main diagonal from 2D array', () => {
+      const a = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+      const result = diagonal(a);
+      expect(result.shape).toEqual([3]);
+      expect(result.toArray()).toEqual([1, 5, 9]);
+    });
+
+    it('extracts diagonal with positive offset', () => {
+      const a = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+      const result = diagonal(a, 1);
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()).toEqual([2, 6]);
+    });
+
+    it('extracts diagonal with negative offset', () => {
+      const a = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+      const result = diagonal(a, -1);
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()).toEqual([4, 8]);
+    });
+
+    it('works with non-square matrices', () => {
+      const a = array([[1, 2, 3, 4], [5, 6, 7, 8]]);
+      const result = diagonal(a);
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()).toEqual([1, 6]);
+    });
+
+    it('works with tall matrices', () => {
+      const a = array([[1, 2], [3, 4], [5, 6]]);
+      const result = diagonal(a);
+      expect(result.shape).toEqual([2]);
+      expect(result.toArray()).toEqual([1, 4]);
+    });
+
+    it('returns empty array when offset too large', () => {
+      const a = array([[1, 2], [3, 4]]);
+      const result = diagonal(a, 5);
+      expect(result.shape).toEqual([0]);
+      expect(result.toArray()).toEqual([]);
+    });
+
+    it('works with 3D arrays', () => {
+      const a = array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]);
+      // For 3D array shape (2, 2, 2), diagonal extracts along axes 0 and 1
+      // Output shape is (other_dims..., diag_len) = (2, 2)
+      const result = diagonal(a);
+      expect(result.shape).toEqual([2, 2]);
+      // Element [other_idx, diag_idx] of result comes from input[diag_idx, diag_idx, other_idx]
+      // result[0, 0] = a[0, 0, 0] = 1
+      // result[0, 1] = a[1, 1, 0] = 7
+      // result[1, 0] = a[0, 0, 1] = 2
+      // result[1, 1] = a[1, 1, 1] = 8
+      expect(result.toArray()).toEqual([[1, 7], [2, 8]]);
+    });
+
+    it('throws error for 1D arrays', () => {
+      const a = array([1, 2, 3]);
+      expect(() => diagonal(a)).toThrow(/at least two dimensions/);
+    });
+  });
+
+  describe('kron()', () => {
+    it('computes Kronecker product of two 1D vectors', () => {
+      const a = array([1, 2]);
+      const b = array([3, 4]);
+      const result = kron(a, b);
+      expect(result.shape).toEqual([4]);
+      expect(result.toArray()).toEqual([3, 4, 6, 8]);
+    });
+
+    it('computes Kronecker product of two 2D matrices', () => {
+      const a = array([[1, 2], [3, 4]]);
+      const b = array([[5, 6], [7, 8]]);
+      const result = kron(a, b);
+      expect(result.shape).toEqual([4, 4]);
+      expect(result.toArray()).toEqual([
+        [5, 6, 10, 12],
+        [7, 8, 14, 16],
+        [15, 18, 20, 24],
+        [21, 24, 28, 32]
+      ]);
+    });
+
+    it('works with different sized matrices', () => {
+      const a = array([[1, 2]]);
+      const b = array([[3], [4]]);
+      const result = kron(a, b);
+      expect(result.shape).toEqual([2, 2]);
+      expect(result.toArray()).toEqual([[3, 6], [4, 8]]);
+    });
+
+    it('works with scalar-like arrays', () => {
+      const a = array(2);
+      const b = array([1, 2, 3]);
+      const result = kron(a, b);
+      expect(result.shape).toEqual([3]);
+      expect(result.toArray()).toEqual([2, 4, 6]);
+    });
+
+    it('works with different dimensions', () => {
+      const a = array([[1, 2]]);
+      const b = array([3, 4, 5]);
+      const result = kron(a, b);
+      expect(result.shape).toEqual([1, 6]);
+      expect(result.toArray()).toEqual([[3, 4, 5, 6, 8, 10]]);
+    });
+
+    it('handles zeros correctly', () => {
+      const a = array([[0, 1], [1, 0]]);
+      const b = array([[1, 2], [3, 4]]);
+      const result = kron(a, b);
+      expect(result.shape).toEqual([4, 4]);
+      expect(result.toArray()).toEqual([
+        [0, 0, 1, 2],
+        [0, 0, 3, 4],
+        [1, 2, 0, 0],
+        [3, 4, 0, 0]
+      ]);
+    });
+
+    it('preserves dtype for integer inputs', () => {
+      const a = array([1, 2], 'int32');
+      const b = array([3, 4], 'int32');
+      const result = kron(a, b);
+      expect(result.dtype).toBe('int32');
     });
   });
 });

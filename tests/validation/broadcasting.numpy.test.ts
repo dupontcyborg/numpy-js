@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { array } from '../../src/core/ndarray';
+import { array, broadcast_shapes } from '../../src/core/ndarray';
 import { runNumPy, arraysClose, checkNumPyAvailable } from './numpy-oracle';
 
 describe('NumPy Validation: Broadcasting', () => {
@@ -301,6 +301,52 @@ result = a * b
 
       expect(result.shape).toEqual(pyResult.shape);
       expect(arraysClose(result.toArray(), pyResult.value)).toBe(true);
+    });
+  });
+
+  describe('broadcast_shapes', () => {
+    it('matches NumPy broadcast_shapes for compatible shapes', () => {
+      const result1 = broadcast_shapes([3, 4], [4]);
+      expect(result1).toEqual([3, 4]);
+
+      const pyResult1 = runNumPy(`
+result = np.broadcast_shapes((3, 4), (4,))
+      `);
+      expect(result1).toEqual(Array.from(pyResult1.value));
+    });
+
+    it('matches NumPy for complex broadcasting', () => {
+      const result = broadcast_shapes([8, 1, 6, 1], [7, 1, 5]);
+      expect(result).toEqual([8, 7, 6, 5]);
+
+      const pyResult = runNumPy(`
+result = np.broadcast_shapes((8, 1, 6, 1), (7, 1, 5))
+      `);
+      expect(result).toEqual(Array.from(pyResult.value));
+    });
+
+    it('matches NumPy for multiple shapes', () => {
+      const result = broadcast_shapes([6, 7], [5, 6, 1], [7], [5, 1, 7]);
+      expect(result).toEqual([5, 6, 7]);
+
+      const pyResult = runNumPy(`
+result = np.broadcast_shapes((6, 7), (5, 6, 1), (7,), (5, 1, 7))
+      `);
+      expect(result).toEqual(Array.from(pyResult.value));
+    });
+
+    it('throws error for incompatible shapes like NumPy', () => {
+      expect(() => broadcast_shapes([3], [4])).toThrow();
+
+      const pyCode = `
+try:
+    np.broadcast_shapes((3,), (4,))
+    result = False
+except ValueError:
+    result = True
+      `;
+      const pyResult = runNumPy(pyCode);
+      expect(pyResult.value).toBe(true);
     });
   });
 });

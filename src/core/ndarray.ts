@@ -1803,6 +1803,37 @@ export function trace(a: NDArray): number | bigint {
 }
 
 /**
+ * Extract a diagonal from a matrix or N-D array
+ *
+ * @param a - Input array (must be at least 2D)
+ * @param offset - Offset of the diagonal from the main diagonal (default: 0)
+ * @param axis1 - First axis (default: 0)
+ * @param axis2 - Second axis (default: 1)
+ * @returns Array containing the diagonal elements
+ */
+export function diagonal(
+  a: NDArray,
+  offset: number = 0,
+  axis1: number = 0,
+  axis2: number = 1
+): NDArray {
+  const resultStorage = linalgOps.diagonal(a.storage, offset, axis1, axis2);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Kronecker product of two arrays
+ *
+ * @param a - First input array
+ * @param b - Second input array
+ * @returns Kronecker product of a and b
+ */
+export function kron(a: NDArray, b: NDArray): NDArray {
+  const resultStorage = linalgOps.kron(a.storage, b.storage);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
  * Permute array dimensions
  *
  * @param a - Input array
@@ -1949,6 +1980,24 @@ export function degrees(x: NDArray): NDArray {
  */
 export function radians(x: NDArray): NDArray {
   return x.radians();
+}
+
+/**
+ * Convert angles from degrees to radians (alias for radians)
+ * @param x - Input array (angles in degrees)
+ * @returns Angles in radians
+ */
+export function deg2rad(x: NDArray): NDArray {
+  return x.radians();
+}
+
+/**
+ * Convert angles from radians to degrees (alias for degrees)
+ * @param x - Input array (angles in radians)
+ * @returns Angles in degrees
+ */
+export function rad2deg(x: NDArray): NDArray {
+  return x.degrees();
 }
 
 // Hyperbolic functions (standalone)
@@ -2227,6 +2276,20 @@ export function broadcast_arrays(...arrays: NDArray[]): NDArray[] {
 }
 
 /**
+ * Compute the broadcast shape for multiple shapes
+ *
+ * Returns the resulting shape if all shapes are broadcast-compatible.
+ * Throws an error if shapes are not broadcast-compatible.
+ *
+ * @param shapes - Variable number of shapes to broadcast
+ * @returns The broadcast output shape
+ * @throws Error if shapes are not broadcast-compatible
+ */
+export function broadcast_shapes(...shapes: number[][]): number[] {
+  return advancedOps.broadcast_shapes(...shapes);
+}
+
+/**
  * Take elements from an array along an axis
  *
  * @param a - Input array
@@ -2272,4 +2335,16 @@ export function choose(a: NDArray, choices: NDArray[]): NDArray {
  */
 export function array_equal(a: NDArray, b: NDArray, equal_nan: boolean = false): boolean {
   return advancedOps.array_equal(a.storage, b.storage, equal_nan);
+}
+
+/**
+ * Returns True if two arrays are element-wise equal within a tolerance.
+ * Unlike array_equal, this function broadcasts the arrays before comparison.
+ *
+ * @param a1 - First input array
+ * @param a2 - Second input array
+ * @returns True if arrays are equivalent (after broadcasting)
+ */
+export function array_equiv(a1: NDArray, a2: NDArray): boolean {
+  return comparisonOps.arrayEquiv(a1.storage, a2.storage);
 }

@@ -1084,6 +1084,58 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
     });
   }
 
+  // New functions benchmarks
+  // Trigonometric conversions
+  specs.push({
+    name: `deg2rad [${sizes.small}]`,
+    category: 'trig',
+    operation: 'deg2rad',
+    setup: {
+      a: { shape: [sizes.small], fill: 'arange', value: 0 },
+    },
+    iterations,
+    warmup,
+  });
+
+  specs.push({
+    name: `rad2deg [${sizes.small}]`,
+    category: 'trig',
+    operation: 'rad2deg',
+    setup: {
+      a: { shape: [sizes.small], fill: 'arange', value: 0 },
+    },
+    iterations,
+    warmup,
+  });
+
+  if (Array.isArray(sizes.medium)) {
+    // Linear algebra operations
+    specs.push({
+      name: `diagonal [${sizes.medium.join('x')}]`,
+      category: 'linalg',
+      operation: 'diagonal',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // Kron produces large outputs, so use smaller inputs (10x10 -> 100x100 output)
+    const kronSize = [10, 10] as [number, number];
+    specs.push({
+      name: `kron [${kronSize.join('x')}] ⊗ [${kronSize.join('x')}]`,
+      category: 'linalg',
+      operation: 'kron',
+      setup: {
+        a: { shape: kronSize, fill: 'arange' },
+        b: { shape: kronSize, fill: 'ones' },
+      },
+      iterations,
+      warmup,
+    });
+  }
+
   return specs;
 }
 

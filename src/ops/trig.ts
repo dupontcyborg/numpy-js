@@ -242,3 +242,25 @@ export function radians(a: ArrayStorage): ArrayStorage {
   const factor = Math.PI / 180;
   return elementwiseUnaryOp(a, (x) => x * factor, false);
 }
+
+/**
+ * Convert angles from degrees to radians (alias for radians).
+ * NumPy behavior: Always promotes to float64 for integer types
+ *
+ * @param a - Input array storage (angles in degrees)
+ * @returns Angles in radians
+ */
+export function deg2rad(a: ArrayStorage): ArrayStorage {
+  return radians(a);
+}
+
+/**
+ * Convert angles from radians to degrees (alias for degrees).
+ * NumPy behavior: Always promotes to float64 for integer types
+ *
+ * @param a - Input array storage (angles in radians)
+ * @returns Angles in degrees
+ */
+export function rad2deg(a: ArrayStorage): ArrayStorage {
+  return degrees(a);
+}

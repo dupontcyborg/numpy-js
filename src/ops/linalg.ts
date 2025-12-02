@@ -908,3 +908,215 @@ export function tensordot(
 
   return result;
 }
+
+/**
+ * Extract a diagonal or construct a diagonal array.
+ *
+ * NumPy behavior:
+ * - For 2D arrays: extract the k-th diagonal
+ * - For ND arrays (N >= 2): extract diagonal from the axes specified
+ * - Returns a view when possible, copy otherwise
+ *
+ * @param a - Input array (must be at least 2D)
+ * @param offset - Offset of the diagonal from the main diagonal (default: 0)
+ *                 - offset > 0: diagonal above main diagonal
+ *                 - offset < 0: diagonal below main diagonal
+ * @param axis1 - First axis for ND arrays (default: 0)
+ * @param axis2 - Second axis for ND arrays (default: 1)
+ * @returns Array containing the diagonal elements
+ */
+export function diagonal(
+  a: ArrayStorage,
+  offset: number = 0,
+  axis1: number = 0,
+  axis2: number = 1
+): ArrayStorage {
+  const shape = a.shape;
+  const ndim = shape.length;
+
+  if (ndim < 2) {
+    throw new Error('diagonal requires an array of at least two dimensions');
+  }
+
+  // Normalize negative axes
+  const ax1 = axis1 < 0 ? ndim + axis1 : axis1;
+  const ax2 = axis2 < 0 ? ndim + axis2 : axis2;
+
+  if (ax1 < 0 || ax1 >= ndim || ax2 < 0 || ax2 >= ndim) {
+    throw new Error('axis out of bounds');
+  }
+
+  if (ax1 === ax2) {
+    throw new Error('axis1 and axis2 cannot be the same');
+  }
+
+  // Get dimensions of the two axes
+  const dim1 = shape[ax1]!;
+  const dim2 = shape[ax2]!;
+
+  // Calculate diagonal length
+  let diagLen: number;
+  if (offset >= 0) {
+    diagLen = Math.max(0, Math.min(dim1, dim2 - offset));
+  } else {
+    diagLen = Math.max(0, Math.min(dim1 + offset, dim2));
+  }
+
+  // Build output shape: remove axis1 and axis2, append diagLen
+  const outShape: number[] = [];
+  for (let i = 0; i < ndim; i++) {
+    if (i !== ax1 && i !== ax2) {
+      outShape.push(shape[i]!);
+    }
+  }
+  outShape.push(diagLen);
+
+  // Create output array
+  const result = ArrayStorage.zeros(outShape, a.dtype);
+
+  // Extract diagonal elements
+  // We need to iterate over all combinations of indices for other dimensions
+  const otherDims = shape.filter((_, i) => i !== ax1 && i !== ax2);
+  const otherSize = otherDims.reduce((acc, d) => acc * d, 1);
+
+  for (let otherIdx = 0; otherIdx < otherSize; otherIdx++) {
+    // Convert flat index to multi-dimensional indices for "other" dimensions
+    let temp = otherIdx;
+    const otherIndices: number[] = [];
+    for (let i = otherDims.length - 1; i >= 0; i--) {
+      otherIndices.unshift(temp % otherDims[i]!);
+      temp = Math.floor(temp / otherDims[i]!);
+    }
+
+    // Extract diagonal for this slice
+    for (let d = 0; d < diagLen; d++) {
+      // Build source indices
+      const srcIndices: number[] = new Array(ndim);
+      let otherIdx2 = 0;
+      for (let i = 0; i < ndim; i++) {
+        if (i === ax1) {
+          srcIndices[i] = offset >= 0 ? d : d - offset;
+        } else if (i === ax2) {
+          srcIndices[i] = offset >= 0 ? d + offset : d;
+        } else {
+          srcIndices[i] = otherIndices[otherIdx2++]!;
+        }
+      }
+
+      // Build destination indices
+      const dstIndices = [...otherIndices, d];
+
+      // Copy element
+      const value = a.get(...srcIndices);
+      result.set(dstIndices, value);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Kronecker product of two arrays.
+ *
+ * Computes the Kronecker product, a composite array made of blocks of the
+ * second array scaled by the elements of the first.
+ *
+ * NumPy behavior:
+ * - If both inputs are vectors (1D), output is also a vector
+ * - If both inputs are 2D matrices, output shape is (m1*m2, n1*n2)
+ * - General case: broadcasts shapes then computes block product
+ *
+ * @param a - First input array
+ * @param b - Second input array
+ * @returns Kronecker product of a and b
+ */
+export function kron(a: ArrayStorage, b: ArrayStorage): ArrayStorage {
+  const aShape = a.shape;
+  const bShape = b.shape;
+  const aNdim = aShape.length;
+  const bNdim = bShape.length;
+
+  // Promote dtypes
+  const resultDtype = promoteDTypes(a.dtype, b.dtype);
+
+  // Determine output shape
+  const ndim = Math.max(aNdim, bNdim);
+  const outShape: number[] = new Array(ndim);
+
+  // Pad shapes with ones on the left if needed
+  const aPadded: number[] = new Array(ndim).fill(1);
+  const bPadded: number[] = new Array(ndim).fill(1);
+
+  for (let i = 0; i < aNdim; i++) {
+    aPadded[ndim - aNdim + i] = aShape[i]!;
+  }
+  for (let i = 0; i < bNdim; i++) {
+    bPadded[ndim - bNdim + i] = bShape[i]!;
+  }
+
+  // Output shape is element-wise product
+  for (let i = 0; i < ndim; i++) {
+    outShape[i] = aPadded[i]! * bPadded[i]!;
+  }
+
+  // Create result array
+  const result = ArrayStorage.zeros(outShape, resultDtype);
+
+  // Compute total number of elements in each array
+  const aSize = aShape.reduce((acc, d) => acc * d, 1);
+  const bSize = bShape.reduce((acc, d) => acc * d, 1);
+
+  // Nested loop approach: for each element in a, scale all of b
+  for (let aIdx = 0; aIdx < aSize; aIdx++) {
+    // Convert flat index to multi-dimensional index for a
+    let temp = aIdx;
+    const aIndices: number[] = new Array(aNdim);
+    for (let i = aNdim - 1; i >= 0; i--) {
+      aIndices[i] = temp % aShape[i]!;
+      temp = Math.floor(temp / aShape[i]!);
+    }
+
+    // Pad aIndices to match ndim
+    const aIndicesPadded: number[] = new Array(ndim).fill(0);
+    for (let i = 0; i < aNdim; i++) {
+      aIndicesPadded[ndim - aNdim + i] = aIndices[i]!;
+    }
+
+    const aVal = a.get(...aIndices);
+
+    // For each element in b
+    for (let bIdx = 0; bIdx < bSize; bIdx++) {
+      // Convert flat index to multi-dimensional index for b
+      let temp2 = bIdx;
+      const bIndices: number[] = new Array(bNdim);
+      for (let i = bNdim - 1; i >= 0; i--) {
+        bIndices[i] = temp2 % bShape[i]!;
+        temp2 = Math.floor(temp2 / bShape[i]!);
+      }
+
+      // Pad bIndices to match ndim
+      const bIndicesPadded: number[] = new Array(ndim).fill(0);
+      for (let i = 0; i < bNdim; i++) {
+        bIndicesPadded[ndim - bNdim + i] = bIndices[i]!;
+      }
+
+      const bVal = b.get(...bIndices);
+
+      // Compute output index: each dimension is aIdx*bDim + bIdx
+      const outIndices: number[] = new Array(ndim);
+      for (let i = 0; i < ndim; i++) {
+        outIndices[i] = aIndicesPadded[i]! * bPadded[i]! + bIndicesPadded[i]!;
+      }
+
+      // Compute product and store
+      const product =
+        typeof aVal === 'bigint' || typeof bVal === 'bigint'
+          ? BigInt(Number(aVal)) * BigInt(Number(bVal))
+          : Number(aVal) * Number(bVal);
+
+      result.set(outIndices, product);
+    }
+  }
+
+  return result;
+}

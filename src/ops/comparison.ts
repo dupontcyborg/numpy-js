@@ -9,6 +9,7 @@
 import { ArrayStorage } from '../core/storage';
 import { isBigIntDType } from '../core/dtype';
 import { elementwiseComparisonOp } from '../internal/compute';
+import { computeBroadcastShape, broadcastTo } from '../core/broadcasting';
 
 /**
  * Element-wise greater than comparison (a > b)
@@ -109,6 +110,70 @@ export function allclose(
       return false;
     }
   }
+  return true;
+}
+
+/**
+ * Returns True if two arrays are element-wise equal within a tolerance.
+ * Unlike array_equal, this function broadcasts the arrays before comparison.
+ *
+ * NumPy behavior: Broadcasts arrays before comparing, returns True if shapes
+ * are broadcast-compatible and all elements are equal.
+ *
+ * @param a1 - First input array
+ * @param a2 - Second input array
+ * @returns True if arrays are equivalent (after broadcasting), False otherwise
+ */
+export function arrayEquiv(a1: ArrayStorage, a2: ArrayStorage): boolean {
+  // Check if arrays can be broadcast together
+  const shapes = [Array.from(a1.shape), Array.from(a2.shape)];
+  const broadcastShape = computeBroadcastShape(shapes);
+
+  if (broadcastShape === null) {
+    // If shapes are incompatible for broadcasting, arrays are not equivalent
+    return false;
+  }
+
+  // Broadcast both arrays to the common shape
+  const b1 = broadcastTo(a1, broadcastShape);
+  const b2 = broadcastTo(a2, broadcastShape);
+
+  // Compare element by element using proper multi-dimensional indexing
+  const ndim = broadcastShape.length;
+  const size = broadcastShape.reduce((acc, d) => acc * d, 1);
+
+  // Handle different dtypes
+  const isBigInt1 = isBigIntDType(b1.dtype);
+  const isBigInt2 = isBigIntDType(b2.dtype);
+
+  // Iterate over all elements using multi-dimensional indices
+  for (let flatIdx = 0; flatIdx < size; flatIdx++) {
+    // Convert flat index to multi-dimensional indices
+    let temp = flatIdx;
+    const indices: number[] = new Array(ndim);
+    for (let i = ndim - 1; i >= 0; i--) {
+      indices[i] = temp % broadcastShape[i]!;
+      temp = Math.floor(temp / broadcastShape[i]!);
+    }
+
+    // Get values using proper indexing
+    const val1 = b1.get(...indices);
+    const val2 = b2.get(...indices);
+
+    // Compare values
+    if (isBigInt1 || isBigInt2) {
+      const v1 = typeof val1 === 'bigint' ? val1 : BigInt(Number(val1));
+      const v2 = typeof val2 === 'bigint' ? val2 : BigInt(Number(val2));
+      if (v1 !== v2) {
+        return false;
+      }
+    } else {
+      if (val1 !== val2) {
+        return false;
+      }
+    }
+  }
+
   return true;
 }
 

@@ -18,7 +18,7 @@ Complete NumPy implementation for TypeScript and JavaScript
 
 **⚠️ Under active development** — API may change before v1.0
 
-A faithful NumPy 2.0+ implementation for TypeScript/JavaScript, validated against Python NumPy. **128 of 333 NumPy functions (38.4% complete)** covering array creation, manipulation, linear algebra, reductions, and more.
+A faithful NumPy 2.0+ implementation for TypeScript/JavaScript, validated against Python NumPy. **134 of 333 NumPy functions (40.2% complete)** covering array creation, manipulation, linear algebra, reductions, and more.
 
 ```bash
 npm install numpy-ts
@@ -64,12 +64,12 @@ Progress toward complete NumPy API compatibility:
 
 | Category | Complete | Total | Status |
 |----------|----------|-------|--------|
+| **Broadcasting** | 3/3 | 100% | ✅ |
+| **Comparison** | 10/10 | 100% | ✅ |
 | **Hyperbolic** | 6/6 | 100% | ✅ |
-| **Comparison** | 9/10 | 90% | 🟡 |
-| **Trigonometric** | 10/12 | 83% | 🟡 |
+| **Trigonometric** | 12/12 | 100% | ✅ |
+| **Linear Algebra** | 8/9 | 89% | 🟡 |
 | **Arithmetic** | 13/19 | 68% | 🟡 |
-| **Broadcasting** | 2/3 | 67% | 🟡 |
-| **Linear Algebra** | 6/9 | 67% | 🟡 |
 | **Array Creation** | 17/32 | 53% | 🟡 |
 | **Array Manipulation** | 18/35 | 51% | 🟡 |
 | **Reductions** | 11/30 | 37% | 🔴 |
@@ -89,7 +89,7 @@ Progress toward complete NumPy API compatibility:
 | **Sorting** | 0/6 | 0% | 🔴 |
 | **Statistics** | 0/9 | 0% | 🔴 |
 
-**Overall: 128/333 functions (38.4% complete)**
+**Overall: 134/333 functions (40.2% complete)**
 
 See the complete [API Reference](docs/API-REFERENCE.md) for detailed function list.
 
@@ -239,7 +239,7 @@ arr.sum();  // Type: number
 
 | Feature | numpy-ts | numjs | ndarray | TensorFlow.js |
 |---------|----------|-------|---------|---------------|
-| NumPy API Coverage | 128/333 (38%) | ~20% | Different | ML-focused |
+| NumPy API Coverage | 134/333 (40%) | ~20% | Different | ML-focused |
 | TypeScript Native | ✅ Full | Partial | ❌ No | ✅ Yes |
 | NumPy Validated | ✅ 1365+ tests | Mostly | ❌ No | ❌ No |
 | .npy/.npz Files | ✅ v1/v2/v3 | ❌ No | ❌ No | ❌ No |

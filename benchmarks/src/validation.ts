@@ -273,6 +273,16 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
     case 'take':
       return arrays.a.take(arrays.indices);
 
+    // New functions
+    case 'diagonal':
+      return np.diagonal(arrays.a);
+    case 'kron':
+      return np.kron(arrays.a, arrays.b);
+    case 'deg2rad':
+      return np.deg2rad(arrays.a);
+    case 'rad2deg':
+      return np.rad2deg(arrays.a);
+
     default:
       throw new Error(`Unknown operation: ${spec.operation}`);
   }

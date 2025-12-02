@@ -176,6 +176,14 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         return np.trace(arrays["a"])
     elif operation == "transpose":
         return arrays["a"].T
+    elif operation == "diagonal":
+        return np.diagonal(arrays["a"])
+    elif operation == "kron":
+        return np.kron(arrays["a"], arrays["b"])
+    elif operation == "deg2rad":
+        return np.deg2rad(arrays["a"])
+    elif operation == "rad2deg":
+        return np.rad2deg(arrays["a"])
 
     # Reductions
     elif operation == "sum":
