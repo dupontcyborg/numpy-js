@@ -256,6 +256,26 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
     elif operation == "take":
         return np.take(arrays["a"], arrays["indices"])
 
+    # New creation functions
+    elif operation == "diag":
+        return np.diag(arrays["a"])
+    elif operation == "tri":
+        return np.tri(arrays["shape"][0], arrays["shape"][1])
+    elif operation == "tril":
+        return np.tril(arrays["a"])
+    elif operation == "triu":
+        return np.triu(arrays["a"])
+
+    # New manipulation functions
+    elif operation == "flip":
+        return np.flip(arrays["a"])
+    elif operation == "rot90":
+        return np.rot90(arrays["a"])
+    elif operation == "roll":
+        return np.roll(arrays["a"], 10)
+    elif operation == "pad":
+        return np.pad(arrays["a"], 2)
+
     # IO operations (NPY/NPZ)
     elif operation == "serializeNpy":
         import io

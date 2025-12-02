@@ -2,13 +2,14 @@
  * Unit tests for array manipulation functions
  *
  * Tests: swapaxes, moveaxis, concatenate, stack, vstack, hstack, dstack,
- *        split, array_split, vsplit, hsplit, tile, repeat
+ *        split, array_split, vsplit, hsplit, tile, repeat, and new functions
  */
 
 import { describe, it, expect } from 'vitest';
 import {
   array,
   zeros,
+  arange,
   swapaxes,
   moveaxis,
   concatenate,
@@ -22,7 +23,29 @@ import {
   hsplit,
   tile,
   repeat,
+  ravel,
+  reshape,
+  squeeze,
+  expand_dims,
+  flip,
+  fliplr,
+  flipud,
+  rot90,
+  roll,
+  rollaxis,
+  atleast_1d,
+  atleast_2d,
+  atleast_3d,
+  dsplit,
+  column_stack,
+  row_stack,
+  resize,
+  append,
+  insert,
+  pad,
 } from '../../src';
+// Note: delete is a reserved keyword, so we use delete_ from ndarray directly
+import { delete_ } from '../../src/core/ndarray';
 
 describe('Array Manipulation', () => {
   // ========================================
@@ -597,6 +620,373 @@ describe('Array Manipulation', () => {
       const result = repeat(arr, [1, 2, 3]);
       expect(result.shape).toEqual([6]);
       expect(result.toArray()).toEqual([1, 2, 2, 3, 3, 3]);
+    });
+  });
+
+  // ========================================
+  // New Manipulation Functions
+  // ========================================
+
+  describe('ravel', () => {
+    it('flattens 2D array', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      const result = ravel(arr);
+      expect(result.shape).toEqual([6]);
+      expect(result.toArray()).toEqual([1, 2, 3, 4, 5, 6]);
+    });
+  });
+
+  describe('reshape', () => {
+    it('reshapes array to new shape', () => {
+      const arr = arange(6);
+      const result = reshape(arr, [2, 3]);
+      expect(result.shape).toEqual([2, 3]);
+      expect(result.toArray()).toEqual([
+        [0, 1, 2],
+        [3, 4, 5],
+      ]);
+    });
+  });
+
+  describe('squeeze', () => {
+    it('removes size-1 dimensions', () => {
+      const arr = zeros([1, 3, 1]);
+      const result = squeeze(arr);
+      expect(result.shape).toEqual([3]);
+    });
+
+    it('removes specific size-1 dimension', () => {
+      const arr = zeros([1, 3, 1]);
+      const result = squeeze(arr, 0);
+      expect(result.shape).toEqual([3, 1]);
+    });
+  });
+
+  describe('expand_dims', () => {
+    it('adds new axis at position 0', () => {
+      const arr = array([1, 2, 3]);
+      const result = expand_dims(arr, 0);
+      expect(result.shape).toEqual([1, 3]);
+    });
+
+    it('adds new axis at position 1', () => {
+      const arr = array([1, 2, 3]);
+      const result = expand_dims(arr, 1);
+      expect(result.shape).toEqual([3, 1]);
+    });
+  });
+
+  describe('flip', () => {
+    it('flips 1D array', () => {
+      const arr = array([1, 2, 3]);
+      const result = flip(arr);
+      expect(result.toArray()).toEqual([3, 2, 1]);
+    });
+
+    it('flips 2D array along axis 0', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = flip(arr, 0);
+      expect(result.toArray()).toEqual([
+        [3, 4],
+        [1, 2],
+      ]);
+    });
+
+    it('flips 2D array along axis 1', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = flip(arr, 1);
+      expect(result.toArray()).toEqual([
+        [2, 1],
+        [4, 3],
+      ]);
+    });
+  });
+
+  describe('fliplr', () => {
+    it('flips 2D array left-right', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      const result = fliplr(arr);
+      expect(result.toArray()).toEqual([
+        [3, 2, 1],
+        [6, 5, 4],
+      ]);
+    });
+  });
+
+  describe('flipud', () => {
+    it('flips 2D array up-down', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+        [5, 6],
+      ]);
+      const result = flipud(arr);
+      expect(result.toArray()).toEqual([
+        [5, 6],
+        [3, 4],
+        [1, 2],
+      ]);
+    });
+  });
+
+  describe('rot90', () => {
+    it('rotates array 90 degrees', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = rot90(arr);
+      expect(result.toArray()).toEqual([
+        [2, 4],
+        [1, 3],
+      ]);
+    });
+
+    it('rotates array 180 degrees', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = rot90(arr, 2);
+      expect(result.toArray()).toEqual([
+        [4, 3],
+        [2, 1],
+      ]);
+    });
+  });
+
+  describe('roll', () => {
+    it('rolls 1D array', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const result = roll(arr, 2);
+      expect(result.toArray()).toEqual([4, 5, 1, 2, 3]);
+    });
+
+    it('rolls negative shift', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const result = roll(arr, -2);
+      expect(result.toArray()).toEqual([3, 4, 5, 1, 2]);
+    });
+
+    it('rolls along axis', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      const result = roll(arr, 1, 1);
+      expect(result.toArray()).toEqual([
+        [3, 1, 2],
+        [6, 4, 5],
+      ]);
+    });
+  });
+
+  describe('rollaxis', () => {
+    it('rolls axis to new position', () => {
+      const arr = zeros([3, 4, 5]);
+      const result = rollaxis(arr, 2, 0);
+      expect(result.shape).toEqual([5, 3, 4]);
+    });
+  });
+
+  describe('atleast_1d', () => {
+    it('ensures array has at least 1 dimension', () => {
+      const arr = array([1, 2, 3]);
+      const result = atleast_1d(arr);
+      expect((result as any).shape).toEqual([3]);
+    });
+  });
+
+  describe('atleast_2d', () => {
+    it('converts 1D to 2D', () => {
+      const arr = array([1, 2, 3]);
+      const result = atleast_2d(arr);
+      expect((result as any).shape).toEqual([1, 3]);
+    });
+
+    it('keeps 2D unchanged', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = atleast_2d(arr);
+      expect((result as any).shape).toEqual([2, 2]);
+    });
+  });
+
+  describe('atleast_3d', () => {
+    it('converts 1D to 3D', () => {
+      const arr = array([1, 2, 3]);
+      const result = atleast_3d(arr);
+      expect((result as any).shape).toEqual([1, 3, 1]);
+    });
+
+    it('converts 2D to 3D', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = atleast_3d(arr);
+      expect((result as any).shape).toEqual([2, 2, 1]);
+    });
+  });
+
+  describe('dsplit', () => {
+    it('splits 3D array along depth', () => {
+      const arr = zeros([2, 2, 4]);
+      const result = dsplit(arr, 2);
+      expect(result.length).toBe(2);
+      expect(result[0]!.shape).toEqual([2, 2, 2]);
+    });
+  });
+
+  describe('column_stack', () => {
+    it('stacks 1D arrays as columns', () => {
+      const a = array([1, 2, 3]);
+      const b = array([4, 5, 6]);
+      const result = column_stack([a, b]);
+      expect(result.shape).toEqual([3, 2]);
+      expect(result.toArray()).toEqual([
+        [1, 4],
+        [2, 5],
+        [3, 6],
+      ]);
+    });
+  });
+
+  describe('row_stack', () => {
+    it('stacks arrays vertically (alias for vstack)', () => {
+      const a = array([1, 2, 3]);
+      const b = array([4, 5, 6]);
+      const result = row_stack([a, b]);
+      expect(result.shape).toEqual([2, 3]);
+      expect(result.toArray()).toEqual([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+    });
+  });
+
+  describe('resize', () => {
+    it('resizes to larger shape', () => {
+      const arr = array([1, 2, 3]);
+      const result = resize(arr, [6]);
+      expect(result.toArray()).toEqual([1, 2, 3, 1, 2, 3]);
+    });
+
+    it('resizes to smaller shape', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const result = resize(arr, [3]);
+      expect(result.toArray()).toEqual([1, 2, 3]);
+    });
+
+    it('resizes to different dimensions', () => {
+      const arr = array([1, 2, 3]);
+      const result = resize(arr, [2, 3]);
+      expect(result.shape).toEqual([2, 3]);
+    });
+  });
+
+  describe('append', () => {
+    it('appends values to 1D array', () => {
+      const arr = array([1, 2, 3]);
+      const values = array([4, 5]);
+      const result = append(arr, values);
+      expect(result.toArray()).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('appends along axis', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const values = array([[5, 6]]);
+      const result = append(arr, values, 0);
+      expect(result.shape).toEqual([3, 2]);
+    });
+  });
+
+  describe('delete_', () => {
+    it('deletes element from 1D array', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const result = delete_(arr, 2);
+      expect(result.toArray()).toEqual([1, 2, 4, 5]);
+    });
+
+    it('deletes multiple elements', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const result = delete_(arr, [1, 3]);
+      expect(result.toArray()).toEqual([1, 3, 5]);
+    });
+
+    it('deletes along axis', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const result = delete_(arr, 1, 0);
+      expect(result.shape).toEqual([2, 3]);
+    });
+  });
+
+  describe('insert', () => {
+    it('inserts value into 1D array', () => {
+      const arr = array([1, 2, 4, 5]);
+      const values = array([3]);
+      const result = insert(arr, 2, values);
+      expect(result.toArray()).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('inserts along axis', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const values = array([[5, 6]]);
+      const result = insert(arr, 1, values, 0);
+      expect(result.shape).toEqual([3, 2]);
+    });
+  });
+
+  describe('pad', () => {
+    it('pads array with constant values', () => {
+      const arr = array([1, 2, 3]);
+      const result = pad(arr, 2);
+      expect(result.toArray()).toEqual([0, 0, 1, 2, 3, 0, 0]);
+    });
+
+    it('pads 2D array', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const result = pad(arr, 1);
+      expect(result.shape).toEqual([4, 4]);
+    });
+
+    it('pads with custom constant value', () => {
+      const arr = array([1, 2, 3]);
+      const result = pad(arr, 1, 'constant', 9);
+      expect(result.toArray()).toEqual([9, 1, 2, 3, 9]);
+    });
+
+    it('pads with edge mode', () => {
+      const arr = array([1, 2, 3]);
+      const result = pad(arr, 2, 'edge');
+      expect(result.toArray()).toEqual([1, 1, 1, 2, 3, 3, 3]);
     });
   });
 });

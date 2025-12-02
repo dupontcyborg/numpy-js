@@ -295,6 +295,25 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
     return np.broadcast_to(arrays['a'], arrays['target_shape']);
   } else if (operation === 'take') {
     return arrays['a'].take(arrays['indices']);
+  } else if (operation === 'flip') {
+    return np.flip(arrays['a']);
+  } else if (operation === 'rot90') {
+    return np.rot90(arrays['a']);
+  } else if (operation === 'roll') {
+    return np.roll(arrays['a'], 10);
+  } else if (operation === 'pad') {
+    return np.pad(arrays['a'], 2);
+  }
+
+  // New creation functions
+  else if (operation === 'diag') {
+    return np.diag(arrays['a']);
+  } else if (operation === 'tri') {
+    return np.tri(arrays['shape'][0], arrays['shape'][1]);
+  } else if (operation === 'tril') {
+    return np.tril(arrays['a']);
+  } else if (operation === 'triu') {
+    return np.triu(arrays['a']);
   }
 
   // IO operations

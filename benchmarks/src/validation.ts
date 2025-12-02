@@ -283,6 +283,26 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
     case 'rad2deg':
       return np.rad2deg(arrays.a);
 
+    // New creation functions
+    case 'diag':
+      return np.diag(arrays.a);
+    case 'tri':
+      return np.tri(arrays.shape[0], arrays.shape[1]);
+    case 'tril':
+      return np.tril(arrays.a);
+    case 'triu':
+      return np.triu(arrays.a);
+
+    // New manipulation functions
+    case 'flip':
+      return np.flip(arrays.a);
+    case 'rot90':
+      return np.rot90(arrays.a);
+    case 'roll':
+      return np.roll(arrays.a, 10);
+    case 'pad':
+      return np.pad(arrays.a, 2);
+
     default:
       throw new Error(`Unknown operation: ${spec.operation}`);
   }
