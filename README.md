@@ -3,7 +3,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 [![npm version](https://img.shields.io/npm/v/numpy-ts)](https://www.npmjs.com/package/numpy-ts)
 ![bundle size](https://img.shields.io/bundlephobia/minzip/numpy-ts)
-![numpy api coverage](https://img.shields.io/badge/numpy_api_coverage-58%20%25-yellow)
+![numpy api coverage](https://img.shields.io/badge/numpy_api_coverage-63%20%25-yellow)
 
 ```
 ███╗   ██╗██╗   ██╗███╗   ███╗██████╗ ██╗   ██╗  ████████╗███████╗
@@ -18,7 +18,7 @@ Complete NumPy implementation for TypeScript and JavaScript
 
 **⚠️ Under active development** — API may change before v1.0
 
-A faithful NumPy 2.0+ implementation for TypeScript/JavaScript, validated against Python NumPy. **192 of 333 NumPy functions (57.7% complete)** covering array creation, manipulation, linear algebra, reductions, and more.
+A faithful NumPy 2.0+ implementation for TypeScript/JavaScript, validated against Python NumPy. **209 of 333 NumPy functions (62.8% complete)** covering array creation, manipulation, linear algebra, reductions, and more.
 
 ```bash
 npm install numpy-ts
@@ -70,10 +70,10 @@ Progress toward complete NumPy API compatibility:
 | **Broadcasting** | 3/3 | 100% | ✅ |
 | **Comparison** | 10/10 | 100% | ✅ |
 | **Hyperbolic** | 6/6 | 100% | ✅ |
+| **Indexing** | 20/20 | 100% | ✅ |
 | **Linear Algebra** | 9/9 | 100% | ✅ |
 | **Reductions** | 30/30 | 100% | ✅ |
 | **Trigonometric** | 12/12 | 100% | ✅ |
-| **Indexing** | 3/20 | 15% | 🔴 |
 | **Bit Operations** | 0/9 | 0% | 🔴 |
 | **Exponential** | 0/9 | 0% | 🔴 |
 | **FFT** | 0/18 | 0% | 🔴 |
@@ -89,7 +89,7 @@ Progress toward complete NumPy API compatibility:
 | **Sorting** | 0/6 | 0% | 🔴 |
 | **Statistics** | 0/9 | 0% | 🔴 |
 
-**Overall: 192/333 functions (57.7% complete)**
+**Overall: 209/333 functions (62.8% complete)**
 
 See the complete [API Reference](docs/API-REFERENCE.md) for detailed function list.
 
@@ -239,7 +239,7 @@ arr.sum();  // Type: number
 
 | Feature | numpy-ts | numjs | ndarray | TensorFlow.js |
 |---------|----------|-------|---------|---------------|
-| NumPy API Coverage | 192/333 (58%) | ~20% | Different | ML-focused |
+| NumPy API Coverage | 209/333 (63%) | ~20% | Different | ML-focused |
 | TypeScript Native | ✅ Full | Partial | ❌ No | ✅ Yes |
 | NumPy Validated | ✅ 1365+ tests | Mostly | ❌ No | ❌ No |
 | .npy/.npz Files | ✅ v1/v2/v3 | ❌ No | ❌ No | ❌ No |
