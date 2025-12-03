@@ -1492,6 +1492,114 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       iterations,
       warmup,
     });
+
+    // ========================================
+    // Bitwise Operations Benchmarks
+    // ========================================
+
+    specs.push({
+      name: `bitwise_and [${sizes.medium.join('x')}] & [${sizes.medium.join('x')}]`,
+      category: 'bitwise',
+      operation: 'bitwise_and',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', dtype: 'int32' },
+        b: { shape: sizes.medium, fill: 'arange', dtype: 'int32' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `bitwise_or [${sizes.medium.join('x')}] | [${sizes.medium.join('x')}]`,
+      category: 'bitwise',
+      operation: 'bitwise_or',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', dtype: 'int32' },
+        b: { shape: sizes.medium, fill: 'arange', dtype: 'int32' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `bitwise_xor [${sizes.medium.join('x')}] ^ [${sizes.medium.join('x')}]`,
+      category: 'bitwise',
+      operation: 'bitwise_xor',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', dtype: 'int32' },
+        b: { shape: sizes.medium, fill: 'arange', dtype: 'int32' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `bitwise_not [${sizes.medium.join('x')}]`,
+      category: 'bitwise',
+      operation: 'bitwise_not',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', dtype: 'int32' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `invert [${sizes.medium.join('x')}]`,
+      category: 'bitwise',
+      operation: 'invert',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', dtype: 'int32' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `left_shift [${sizes.medium.join('x')}] << 2`,
+      category: 'bitwise',
+      operation: 'left_shift',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', dtype: 'int32' },
+        b: { shape: [1], value: 2, dtype: 'int32' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `right_shift [${sizes.medium.join('x')}] >> 2`,
+      category: 'bitwise',
+      operation: 'right_shift',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange', dtype: 'int32' },
+        b: { shape: [1], value: 2, dtype: 'int32' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `packbits [${sizes.small}]`,
+      category: 'bitwise',
+      operation: 'packbits',
+      setup: {
+        a: { shape: [sizes.small], fill: 'arange', dtype: 'uint8' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `unpackbits [${Math.ceil(sizes.small / 8)}]`,
+      category: 'bitwise',
+      operation: 'unpackbits',
+      setup: {
+        a: { shape: [Math.ceil(sizes.small / 8)], fill: 'arange', dtype: 'uint8' },
+      },
+      iterations,
+      warmup,
+    });
   }
 
   return specs;

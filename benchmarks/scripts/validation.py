@@ -292,6 +292,28 @@ def run_operation(spec):
         idx = np.unravel_index(arrays["a"].astype(np.intp).ravel(), tuple(arrays["dims"]))
         result = np.stack([np.array(i) for i in idx], axis=0)
 
+    # Bitwise operations
+    elif operation == "bitwise_and":
+        result = np.bitwise_and(arrays["a"], arrays["b"])
+    elif operation == "bitwise_or":
+        result = np.bitwise_or(arrays["a"], arrays["b"])
+    elif operation == "bitwise_xor":
+        result = np.bitwise_xor(arrays["a"], arrays["b"])
+    elif operation == "bitwise_not":
+        result = np.bitwise_not(arrays["a"])
+    elif operation == "invert":
+        result = np.invert(arrays["a"])
+    elif operation == "left_shift":
+        shift = arrays.get("b") if "b" in arrays else 2
+        result = np.left_shift(arrays["a"], shift)
+    elif operation == "right_shift":
+        shift = arrays.get("b") if "b" in arrays else 2
+        result = np.right_shift(arrays["a"], shift)
+    elif operation == "packbits":
+        result = np.packbits(arrays["a"].astype(np.uint8))
+    elif operation == "unpackbits":
+        result = np.unpackbits(arrays["a"].astype(np.uint8))
+
     else:
         raise ValueError(f"Unknown operation: {operation}")
 

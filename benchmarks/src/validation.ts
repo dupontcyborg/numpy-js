@@ -373,6 +373,26 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
       return np.stack(idx, 0);
     }
 
+    // Bitwise operations
+    case 'bitwise_and':
+      return np.bitwise_and(arrays.a, arrays.b);
+    case 'bitwise_or':
+      return np.bitwise_or(arrays.a, arrays.b);
+    case 'bitwise_xor':
+      return np.bitwise_xor(arrays.a, arrays.b);
+    case 'bitwise_not':
+      return np.bitwise_not(arrays.a);
+    case 'invert':
+      return np.invert(arrays.a);
+    case 'left_shift':
+      return np.left_shift(arrays.a, arrays.b);
+    case 'right_shift':
+      return np.right_shift(arrays.a, arrays.b);
+    case 'packbits':
+      return np.packbits(arrays.a);
+    case 'unpackbits':
+      return np.unpackbits(arrays.a);
+
     default:
       throw new Error(`Unknown operation: ${spec.operation}`);
   }

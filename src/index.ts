@@ -169,6 +169,16 @@ export {
   nancumsum,
   nancumprod,
   nanmedian,
+  // Bitwise functions
+  bitwise_and,
+  bitwise_or,
+  bitwise_xor,
+  bitwise_not,
+  invert,
+  left_shift,
+  right_shift,
+  packbits,
+  unpackbits,
 } from './core/ndarray';
 
 // IO functions (environment-agnostic parsing/serialization)

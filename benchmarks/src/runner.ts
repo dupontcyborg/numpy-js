@@ -239,6 +239,26 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
   } else if (operation === 'rad2deg') {
     return np.rad2deg(arrays['a']);
   }
+  // Bitwise operations
+  else if (operation === 'bitwise_and') {
+    return np.bitwise_and(arrays['a'], arrays['b']);
+  } else if (operation === 'bitwise_or') {
+    return np.bitwise_or(arrays['a'], arrays['b']);
+  } else if (operation === 'bitwise_xor') {
+    return np.bitwise_xor(arrays['a'], arrays['b']);
+  } else if (operation === 'bitwise_not') {
+    return np.bitwise_not(arrays['a']);
+  } else if (operation === 'invert') {
+    return np.invert(arrays['a']);
+  } else if (operation === 'left_shift') {
+    return np.left_shift(arrays['a'], arrays['b']);
+  } else if (operation === 'right_shift') {
+    return np.right_shift(arrays['a'], arrays['b']);
+  } else if (operation === 'packbits') {
+    return np.packbits(arrays['a']);
+  } else if (operation === 'unpackbits') {
+    return np.unpackbits(arrays['a']);
+  }
   // Reductions
   else if (operation === 'sum') {
     const axis = arrays['axis'];
