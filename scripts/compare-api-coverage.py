@@ -266,22 +266,11 @@ def update_readme(analysis):
     new_badge = f'![numpy api coverage](https://img.shields.io/badge/numpy_api_coverage-{coverage_int}%20%25-{color})'
     content = re.sub(old_badge_pattern, new_badge, content)
 
-    # Update the intro paragraph
-    old_pattern = r'A faithful NumPy.*?more\.'
-    new_intro = (
-        f"A faithful NumPy 2.0+ implementation for TypeScript/JavaScript, "
-        f"validated against Python NumPy. **{total_impl} of {total_numpy} "
-        f"NumPy functions ({coverage:.1f}% complete)** covering array "
-        f"creation, manipulation, linear algebra, reductions, and more."
-    )
-    content = re.sub(old_pattern, new_intro, content, flags=re.DOTALL)
-
     # Update the "Why numpy-ts?" section
-    old_pattern = r'- \*\*📊 Growing API\*\* — .*'
+    old_pattern = r'- \*\*📊 Extensive API\*\* — \*\*.*?\*\*'
     new_bullet = (
-        f"- **📊 Growing API** — {total_impl}/{total_numpy} NumPy "
-        f"functions ({coverage:.1f}% complete) with 1365+ tests "
-        f"validated against Python NumPy"
+        f"- **📊 Extensive API** — **{total_impl} of {total_numpy} NumPy "
+        f"functions ({coverage:.1f}% coverage)**"
     )
     content = re.sub(old_pattern, new_bullet, content)
 

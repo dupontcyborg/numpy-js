@@ -18,16 +18,14 @@ Complete NumPy implementation for TypeScript and JavaScript
 
 **⚠️ Under active development** — API may change before v1.0
 
-A faithful NumPy 2.0+ implementation for TypeScript/JavaScript, validated against Python NumPy. **218 of 333 NumPy functions (65.5% complete)** covering array creation, manipulation, linear algebra, reductions, and more.
-
 ```bash
 npm install numpy-ts
 ```
 
 ## Why numpy-ts?
 
-- **📊 Extensive API** — 120+ NumPy functions with 1365+ tests validated against Python NumPy
-- **✅ NumPy-validated** — 1365+ test cases cross-validated against Python NumPy
+- **📊 Extensive API** — **218 of 333 NumPy functions (65.5% coverage)**
+- **✅ NumPy-validated** — 2000+ test cases cross-validated against Python NumPy
 - **🔒 Type-safe** — Full TypeScript support with shape and dtype inference
 - **🌐 Universal** — Works in Node.js and browsers with .npy/.npz file support
 - **🎯 Zero dependencies** — Pure TypeScript, no heavy external libraries
