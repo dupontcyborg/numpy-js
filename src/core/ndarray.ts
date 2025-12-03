@@ -22,6 +22,7 @@ import * as exponentialOps from '../ops/exponential';
 import * as trigOps from '../ops/trig';
 import * as hyperbolicOps from '../ops/hyperbolic';
 import * as advancedOps from '../ops/advanced';
+import * as bitwiseOps from '../ops/bitwise';
 
 export class NDArray {
   // Internal storage
@@ -660,6 +661,80 @@ export class NDArray {
   allclose(other: NDArray | number, rtol: number = 1e-5, atol: number = 1e-8): boolean {
     const otherStorage = typeof other === 'number' ? other : other._storage;
     return comparisonOps.allclose(this._storage, otherStorage, rtol, atol);
+  }
+
+  // Bitwise operations
+  /**
+   * Bitwise AND element-wise
+   * @param other - Array or scalar for AND operation (must be integer type)
+   * @returns Result of bitwise AND
+   */
+  bitwise_and(other: NDArray | number): NDArray {
+    const otherStorage = typeof other === 'number' ? other : other._storage;
+    const resultStorage = bitwiseOps.bitwise_and(this._storage, otherStorage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Bitwise OR element-wise
+   * @param other - Array or scalar for OR operation (must be integer type)
+   * @returns Result of bitwise OR
+   */
+  bitwise_or(other: NDArray | number): NDArray {
+    const otherStorage = typeof other === 'number' ? other : other._storage;
+    const resultStorage = bitwiseOps.bitwise_or(this._storage, otherStorage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Bitwise XOR element-wise
+   * @param other - Array or scalar for XOR operation (must be integer type)
+   * @returns Result of bitwise XOR
+   */
+  bitwise_xor(other: NDArray | number): NDArray {
+    const otherStorage = typeof other === 'number' ? other : other._storage;
+    const resultStorage = bitwiseOps.bitwise_xor(this._storage, otherStorage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Bitwise NOT (inversion) element-wise
+   * @returns Result of bitwise NOT
+   */
+  bitwise_not(): NDArray {
+    const resultStorage = bitwiseOps.bitwise_not(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Invert (bitwise NOT) element-wise - alias for bitwise_not
+   * @returns Result of bitwise inversion
+   */
+  invert(): NDArray {
+    const resultStorage = bitwiseOps.invert(this._storage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Left shift elements by positions
+   * @param shift - Shift amount (array or scalar)
+   * @returns Result of left shift
+   */
+  left_shift(shift: NDArray | number): NDArray {
+    const shiftStorage = typeof shift === 'number' ? shift : shift._storage;
+    const resultStorage = bitwiseOps.left_shift(this._storage, shiftStorage);
+    return NDArray._fromStorage(resultStorage);
+  }
+
+  /**
+   * Right shift elements by positions
+   * @param shift - Shift amount (array or scalar)
+   * @returns Result of right shift
+   */
+  right_shift(shift: NDArray | number): NDArray {
+    const shiftStorage = typeof shift === 'number' ? shift : shift._storage;
+    const resultStorage = bitwiseOps.right_shift(this._storage, shiftStorage);
+    return NDArray._fromStorage(resultStorage);
   }
 
   // Reductions
@@ -4019,6 +4094,126 @@ export function remainder(x: NDArray, y: NDArray | number): NDArray {
  */
 export function heaviside(x1: NDArray, x2: NDArray | number): NDArray {
   return x1.heaviside(x2);
+}
+
+// ========================================
+// Bitwise Functions
+// ========================================
+
+/**
+ * Bitwise AND element-wise
+ *
+ * @param x1 - First input array (must be integer type)
+ * @param x2 - Second input array or scalar (must be integer type)
+ * @returns Result of bitwise AND
+ */
+export function bitwise_and(x1: NDArray, x2: NDArray | number): NDArray {
+  return x1.bitwise_and(x2);
+}
+
+/**
+ * Bitwise OR element-wise
+ *
+ * @param x1 - First input array (must be integer type)
+ * @param x2 - Second input array or scalar (must be integer type)
+ * @returns Result of bitwise OR
+ */
+export function bitwise_or(x1: NDArray, x2: NDArray | number): NDArray {
+  return x1.bitwise_or(x2);
+}
+
+/**
+ * Bitwise XOR element-wise
+ *
+ * @param x1 - First input array (must be integer type)
+ * @param x2 - Second input array or scalar (must be integer type)
+ * @returns Result of bitwise XOR
+ */
+export function bitwise_xor(x1: NDArray, x2: NDArray | number): NDArray {
+  return x1.bitwise_xor(x2);
+}
+
+/**
+ * Bitwise NOT (inversion) element-wise
+ *
+ * @param x - Input array (must be integer type)
+ * @returns Result of bitwise NOT
+ */
+export function bitwise_not(x: NDArray): NDArray {
+  return x.bitwise_not();
+}
+
+/**
+ * Invert (bitwise NOT) element-wise
+ * Alias for bitwise_not
+ *
+ * @param x - Input array (must be integer type)
+ * @returns Result of bitwise inversion
+ */
+export function invert(x: NDArray): NDArray {
+  return x.invert();
+}
+
+/**
+ * Left shift elements by positions
+ *
+ * @param x1 - Input array (must be integer type)
+ * @param x2 - Shift amount (array or scalar)
+ * @returns Result of left shift
+ */
+export function left_shift(x1: NDArray, x2: NDArray | number): NDArray {
+  return x1.left_shift(x2);
+}
+
+/**
+ * Right shift elements by positions
+ *
+ * @param x1 - Input array (must be integer type)
+ * @param x2 - Shift amount (array or scalar)
+ * @returns Result of right shift
+ */
+export function right_shift(x1: NDArray, x2: NDArray | number): NDArray {
+  return x1.right_shift(x2);
+}
+
+/**
+ * Pack binary values into uint8 array
+ *
+ * Packs the elements of a binary-valued array into bits in a uint8 array.
+ *
+ * @param a - Input array (values are interpreted as binary: 0 or non-zero)
+ * @param axis - The dimension over which bit-packing is done (default: -1)
+ * @param bitorder - Order of bits: 'big' or 'little' (default: 'big')
+ * @returns Packed uint8 array
+ */
+export function packbits(
+  a: NDArray,
+  axis: number = -1,
+  bitorder: 'big' | 'little' = 'big'
+): NDArray {
+  const resultStorage = bitwiseOps.packbits(a.storage, axis, bitorder);
+  return NDArray._fromStorage(resultStorage);
+}
+
+/**
+ * Unpack uint8 array into binary values
+ *
+ * Unpacks elements of a uint8 array into a binary-valued output array.
+ *
+ * @param a - Input uint8 array
+ * @param axis - The dimension over which bit-unpacking is done (default: -1)
+ * @param count - Number of elements to unpack, or -1 for all (default: -1)
+ * @param bitorder - Order of bits: 'big' or 'little' (default: 'big')
+ * @returns Unpacked uint8 array of 0s and 1s
+ */
+export function unpackbits(
+  a: NDArray,
+  axis: number = -1,
+  count: number = -1,
+  bitorder: 'big' | 'little' = 'big'
+): NDArray {
+  const resultStorage = bitwiseOps.unpackbits(a.storage, axis, count, bitorder);
+  return NDArray._fromStorage(resultStorage);
 }
 
 // ========================================

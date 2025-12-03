@@ -314,6 +314,26 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
     elif operation == "pad":
         return np.pad(arrays["a"], 2)
 
+    # Bitwise operations
+    elif operation == "bitwise_and":
+        return np.bitwise_and(arrays["a"], arrays["b"])
+    elif operation == "bitwise_or":
+        return np.bitwise_or(arrays["a"], arrays["b"])
+    elif operation == "bitwise_xor":
+        return np.bitwise_xor(arrays["a"], arrays["b"])
+    elif operation == "bitwise_not":
+        return np.bitwise_not(arrays["a"])
+    elif operation == "invert":
+        return np.invert(arrays["a"])
+    elif operation == "left_shift":
+        return np.left_shift(arrays["a"], arrays["b"])
+    elif operation == "right_shift":
+        return np.right_shift(arrays["a"], arrays["b"])
+    elif operation == "packbits":
+        return np.packbits(arrays["a"].astype(np.uint8))
+    elif operation == "unpackbits":
+        return np.unpackbits(arrays["a"].astype(np.uint8))
+
     # IO operations (NPY/NPZ)
     elif operation == "serializeNpy":
         import io
