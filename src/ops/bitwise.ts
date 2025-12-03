@@ -372,9 +372,7 @@ export function left_shift(a: ArrayStorage, b: ArrayStorage | number): ArrayStor
 
   // Fast path: single-element array or broadcastable scalar shape treated as scalar
   if (b.size === 1 || (b.ndim === 1 && b.shape[0] === 1)) {
-    const shiftVal = isBigIntDType(b.dtype)
-      ? Number(b.data[0] as bigint)
-      : (b.data[0] as number);
+    const shiftVal = isBigIntDType(b.dtype) ? Number(b.data[0] as bigint) : (b.data[0] as number);
     return leftShiftScalar(a, shiftVal);
   }
 
@@ -462,9 +460,7 @@ export function right_shift(a: ArrayStorage, b: ArrayStorage | number): ArraySto
 
   // Fast path: single-element array or broadcastable scalar shape treated as scalar
   if (b.size === 1 || (b.ndim === 1 && b.shape[0] === 1)) {
-    const shiftVal = isBigIntDType(b.dtype)
-      ? Number(b.data[0] as bigint)
-      : (b.data[0] as number);
+    const shiftVal = isBigIntDType(b.dtype) ? Number(b.data[0] as bigint) : (b.data[0] as number);
     return rightShiftScalar(a, shiftVal);
   }
 

@@ -574,32 +574,37 @@ export function compress(
   const ndim = shape.length;
   const dtype = storage.dtype;
 
+  // Get direct access to underlying data for fast reading
+  const inputData = storage.data;
+  const isBigInt = isBigIntDType(dtype);
+
   if (axis === undefined) {
-    // Flatten and select
-    const flat = storage;
-    const conditionArray: boolean[] = [];
-    for (let i = 0; i < condition.size; i++) {
-      conditionArray.push(Boolean(condition.iget(i)));
+    // Flatten and select - optimized path
+    // First pass: count true values
+    let trueCount = 0;
+    const maxLen = Math.min(condition.size, storage.size);
+    for (let i = 0; i < maxLen; i++) {
+      if (condition.iget(i)) trueCount++;
     }
 
-    // Count true values
-    const trueCount = conditionArray.filter(Boolean).length;
     const Constructor = getTypedArrayConstructor(dtype);
     if (!Constructor) {
       throw new Error(`Cannot compress with dtype ${dtype}`);
     }
     const outputData = new Constructor(trueCount);
 
+    // Second pass: copy values
     let outIdx = 0;
-    const maxLen = Math.min(conditionArray.length, flat.size);
     for (let i = 0; i < maxLen; i++) {
-      if (conditionArray[i]) {
-        const value = flat.iget(i);
-        if (isBigIntDType(dtype)) {
-          (outputData as BigInt64Array | BigUint64Array)[outIdx] = value as bigint;
+      if (condition.iget(i)) {
+        if (isBigInt) {
+          (outputData as BigInt64Array | BigUint64Array)[outIdx] = (
+            inputData as BigInt64Array | BigUint64Array
+          )[i]!;
         } else {
-          (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[outIdx] =
-            value as number;
+          (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[outIdx] = (
+            inputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>
+          )[i]!;
         }
         outIdx++;
       }
@@ -608,28 +613,27 @@ export function compress(
     return ArrayStorage.fromData(outputData, [trueCount], dtype);
   }
 
-  // Compress along axis
+  // Compress along axis - optimized version
   const normalizedAxis = axis < 0 ? ndim + axis : axis;
   if (normalizedAxis < 0 || normalizedAxis >= ndim) {
     throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
   }
 
-  // Get condition as boolean array
-  const conditionArray: boolean[] = [];
-  for (let i = 0; i < condition.size; i++) {
-    conditionArray.push(Boolean(condition.iget(i)));
+  // Build boolean array and axis mapping in one pass
+  const axisSize = shape[normalizedAxis]!;
+  const maxLen = Math.min(condition.size, axisSize);
+  const axisMap: number[] = [];
+
+  for (let i = 0; i < maxLen; i++) {
+    if (condition.iget(i)) {
+      axisMap.push(i);
+    }
   }
 
-  // Count true values
-  const axisSize = shape[normalizedAxis]!;
-  const maxLen = Math.min(conditionArray.length, axisSize);
-  let trueCount = 0;
-  for (let i = 0; i < maxLen; i++) {
-    if (conditionArray[i]) trueCount++;
-  }
+  const trueCount = axisMap.length;
 
   // Output shape
-  const outputShape = Array.from(shape);
+  const outputShape = [...shape];
   outputShape[normalizedAxis] = trueCount;
   const outputSize = outputShape.reduce((a, b) => a * b, 1);
 
@@ -638,41 +642,71 @@ export function compress(
     throw new Error(`Cannot compress with dtype ${dtype}`);
   }
   const outputData = new Constructor(outputSize);
+
+  // Compute strides for efficient indexing
   const inputStrides = computeStrides(shape);
 
-  // Build mapping from output axis index to input axis index
-  const axisMap: number[] = [];
-  for (let i = 0; i < maxLen; i++) {
-    if (conditionArray[i]) {
-      axisMap.push(i);
+  // Special case: axis = 0 (most common, optimize heavily)
+  if (normalizedAxis === 0) {
+    const strideAlongAxis = inputStrides[0]!;
+    const elementsPerSlice = shape.slice(1).reduce((a, b) => a * b, 1);
+
+    let outIdx = 0;
+    for (let i = 0; i < trueCount; i++) {
+      const inputAxisIdx = axisMap[i]!;
+      const srcOffset = inputAxisIdx * strideAlongAxis;
+
+      // Copy entire slice at once
+      if (isBigInt) {
+        const src = inputData as BigInt64Array | BigUint64Array;
+        const dst = outputData as BigInt64Array | BigUint64Array;
+        for (let j = 0; j < elementsPerSlice; j++) {
+          dst[outIdx++] = src[srcOffset + j]!;
+        }
+      } else {
+        const src = inputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>;
+        const dst = outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>;
+        for (let j = 0; j < elementsPerSlice; j++) {
+          dst[outIdx++] = src[srcOffset + j]!;
+        }
+      }
     }
-  }
+  } else {
+    // General case for other axes
+    // Pre-compute outer and inner iteration counts
+    const outerSize = shape.slice(0, normalizedAxis).reduce((a, b) => a * b, 1);
+    const innerSize = shape.slice(normalizedAxis + 1).reduce((a, b) => a * b, 1);
 
-  // Iterate through output positions
-  for (let outIdx = 0; outIdx < outputSize; outIdx++) {
-    // Convert outIdx to multi-index
-    const multiIdx = new Array(ndim);
-    let remaining = outIdx;
-    for (let d = ndim - 1; d >= 0; d--) {
-      multiIdx[d] = remaining % outputShape[d]!;
-      remaining = Math.floor(remaining / outputShape[d]!);
-    }
+    let outIdx = 0;
+    for (let outer = 0; outer < outerSize; outer++) {
+      for (let axisIdx = 0; axisIdx < trueCount; axisIdx++) {
+        const inputAxisIdx = axisMap[axisIdx]!;
 
-    // Map axis index
-    const inputMultiIdx = [...multiIdx];
-    inputMultiIdx[normalizedAxis] = axisMap[multiIdx[normalizedAxis]!]!;
+        // Compute base offset for this outer/axis combination
+        let baseOffset = 0;
+        let rem = outer;
+        for (let d = normalizedAxis - 1; d >= 0; d--) {
+          const idx = rem % shape[d]!;
+          rem = Math.floor(rem / shape[d]!);
+          baseOffset += idx * inputStrides[d]!;
+        }
+        baseOffset += inputAxisIdx * inputStrides[normalizedAxis]!;
 
-    // Compute input linear index
-    let srcIdx = 0;
-    for (let d = 0; d < ndim; d++) {
-      srcIdx += inputMultiIdx[d]! * inputStrides[d]!;
-    }
-
-    const value = storage.iget(srcIdx);
-    if (isBigIntDType(dtype)) {
-      (outputData as BigInt64Array | BigUint64Array)[outIdx] = value as bigint;
-    } else {
-      (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[outIdx] = value as number;
+        // Copy inner elements
+        if (isBigInt) {
+          const src = inputData as BigInt64Array | BigUint64Array;
+          const dst = outputData as BigInt64Array | BigUint64Array;
+          for (let inner = 0; inner < innerSize; inner++) {
+            dst[outIdx++] = src[baseOffset + inner]!;
+          }
+        } else {
+          const src = inputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>;
+          const dst = outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>;
+          for (let inner = 0; inner < innerSize; inner++) {
+            dst[outIdx++] = src[baseOffset + inner]!;
+          }
+        }
+      }
     }
   }
 
