@@ -32,8 +32,8 @@ def setup_arrays(setup: Dict[str, Any], operation: str = None) -> Dict[str, np.n
         dtype = spec.get("dtype", "float64")
         fill_type = spec.get("fill", "zeros")
 
-        # Handle scalar values (n, axis, new_shape, shape, fill_value, target_shape)
-        if key in ["n", "axis", "new_shape", "shape", "fill_value", "target_shape"]:
+        # Handle scalar values (n, axis, new_shape, shape, fill_value, target_shape, dims)
+        if key in ["n", "axis", "new_shape", "shape", "fill_value", "target_shape", "dims"]:
             if len(shape) == 1:
                 arrays[key] = shape[0]
             else:
@@ -313,6 +313,24 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         return np.roll(arrays["a"], 10)
     elif operation == "pad":
         return np.pad(arrays["a"], 2)
+
+    # Indexing functions
+    elif operation == "take_along_axis":
+        return np.take_along_axis(arrays["a"], arrays["b"].astype(np.intp), axis=0)
+    elif operation == "compress":
+        return np.compress(arrays["b"].astype(bool), arrays["a"], axis=0)
+    elif operation == "diag_indices":
+        return np.diag_indices(arrays["n"])
+    elif operation == "tril_indices":
+        return np.tril_indices(arrays["n"])
+    elif operation == "triu_indices":
+        return np.triu_indices(arrays["n"])
+    elif operation == "indices":
+        return np.indices(tuple(arrays["shape"]))
+    elif operation == "ravel_multi_index":
+        return np.ravel_multi_index((arrays["a"].astype(np.intp).ravel(), arrays["b"].astype(np.intp).ravel()), tuple(arrays["dims"]))
+    elif operation == "unravel_index":
+        return np.unravel_index(arrays["a"].astype(np.intp).ravel(), tuple(arrays["dims"]))
 
     # Bitwise operations
     elif operation == "bitwise_and":

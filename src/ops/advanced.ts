@@ -335,3 +335,824 @@ export function array_equal(a: ArrayStorage, b: ArrayStorage, equal_nan: boolean
 
   return true;
 }
+
+/**
+ * Take values along an axis using 1D index array
+ */
+export function take_along_axis(
+  storage: ArrayStorage,
+  indices: ArrayStorage,
+  axis: number
+): ArrayStorage {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const dtype = storage.dtype;
+
+  // Normalize axis
+  const normalizedAxis = axis < 0 ? ndim + axis : axis;
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  // indices must have same ndim as storage
+  const indicesShape = indices.shape;
+  if (indicesShape.length !== ndim) {
+    throw new Error(
+      `indices and arr must have the same number of dimensions, got ${indicesShape.length} vs ${ndim}`
+    );
+  }
+
+  // Check that non-axis dimensions match (or are broadcastable with 1)
+  for (let i = 0; i < ndim; i++) {
+    if (i !== normalizedAxis) {
+      if (indicesShape[i] !== shape[i] && indicesShape[i] !== 1 && shape[i] !== 1) {
+        throw new Error(
+          `index ${indicesShape[i]} is out of bounds for size ${shape[i]} in dimension ${i}`
+        );
+      }
+    }
+  }
+
+  // Output shape matches indices shape
+  const outputShape = Array.from(indicesShape);
+  const outputSize = outputShape.reduce((a, b) => a * b, 1);
+  const Constructor = getTypedArrayConstructor(dtype);
+  if (!Constructor) {
+    throw new Error(`Cannot take_along_axis with dtype ${dtype}`);
+  }
+  const outputData = new Constructor(outputSize);
+  const inputStrides = computeStrides(shape);
+  const indicesStrides = computeStrides(indicesShape);
+
+  const axisSize = shape[normalizedAxis]!;
+
+  // Iterate through output positions
+  for (let outIdx = 0; outIdx < outputSize; outIdx++) {
+    // Convert outIdx to multi-index in output shape
+    const multiIdx = new Array(ndim);
+    let remaining = outIdx;
+    for (let d = ndim - 1; d >= 0; d--) {
+      multiIdx[d] = remaining % outputShape[d]!;
+      remaining = Math.floor(remaining / outputShape[d]!);
+    }
+
+    // Get the index value from indices array
+    let indicesLinearIdx = 0;
+    for (let d = 0; d < ndim; d++) {
+      const idx = indicesShape[d] === 1 ? 0 : multiIdx[d]!;
+      indicesLinearIdx += idx * indicesStrides[d]!;
+    }
+    let indexValue = Number(indices.iget(indicesLinearIdx));
+    if (indexValue < 0) indexValue = axisSize + indexValue;
+    if (indexValue < 0 || indexValue >= axisSize) {
+      throw new Error(
+        `index ${indexValue} is out of bounds for axis ${normalizedAxis} with size ${axisSize}`
+      );
+    }
+
+    // Compute source index
+    const sourceMultiIdx = [...multiIdx];
+    sourceMultiIdx[normalizedAxis] = indexValue;
+    let srcLinearIdx = 0;
+    for (let d = 0; d < ndim; d++) {
+      const idx = shape[d] === 1 ? 0 : sourceMultiIdx[d]!;
+      srcLinearIdx += idx * inputStrides[d]!;
+    }
+
+    const value = storage.iget(srcLinearIdx);
+    if (isBigIntDType(dtype)) {
+      (outputData as BigInt64Array | BigUint64Array)[outIdx] = value as bigint;
+    } else {
+      (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[outIdx] = value as number;
+    }
+  }
+
+  return ArrayStorage.fromData(outputData, outputShape, dtype);
+}
+
+/**
+ * Put values into array along an axis using 1D index array
+ */
+export function put_along_axis(
+  storage: ArrayStorage,
+  indices: ArrayStorage,
+  values: ArrayStorage,
+  axis: number
+): void {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const dtype = storage.dtype;
+
+  // Normalize axis
+  const normalizedAxis = axis < 0 ? ndim + axis : axis;
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  const indicesShape = indices.shape;
+  const valuesShape = values.shape;
+
+  if (indicesShape.length !== ndim || valuesShape.length !== ndim) {
+    throw new Error('indices, arr, and values must have same ndim');
+  }
+
+  const axisSize = shape[normalizedAxis]!;
+  const inputStrides = computeStrides(shape);
+  const indicesStrides = computeStrides(indicesShape);
+  const valuesStrides = computeStrides(valuesShape);
+
+  // Iterate through indices positions
+  const indicesSize = indicesShape.reduce((a, b) => a * b, 1);
+  for (let idx = 0; idx < indicesSize; idx++) {
+    // Convert idx to multi-index
+    const multiIdx = new Array(ndim);
+    let remaining = idx;
+    for (let d = ndim - 1; d >= 0; d--) {
+      multiIdx[d] = remaining % indicesShape[d]!;
+      remaining = Math.floor(remaining / indicesShape[d]!);
+    }
+
+    // Get the index value
+    let indicesLinearIdx = 0;
+    for (let d = 0; d < ndim; d++) {
+      indicesLinearIdx += multiIdx[d]! * indicesStrides[d]!;
+    }
+    let indexValue = Number(indices.iget(indicesLinearIdx));
+    if (indexValue < 0) indexValue = axisSize + indexValue;
+    if (indexValue < 0 || indexValue >= axisSize) {
+      throw new Error(
+        `index ${indexValue} is out of bounds for axis ${normalizedAxis} with size ${axisSize}`
+      );
+    }
+
+    // Get value from values array (broadcast if needed)
+    let valuesLinearIdx = 0;
+    for (let d = 0; d < ndim; d++) {
+      const vidx = valuesShape[d] === 1 ? 0 : multiIdx[d]!;
+      valuesLinearIdx += vidx * valuesStrides[d]!;
+    }
+    let value = values.iget(valuesLinearIdx);
+
+    // Compute destination index
+    const destMultiIdx = [...multiIdx];
+    destMultiIdx[normalizedAxis] = indexValue;
+    let destLinearIdx = 0;
+    for (let d = 0; d < ndim; d++) {
+      destLinearIdx += destMultiIdx[d]! * inputStrides[d]!;
+    }
+
+    // Convert type if needed
+    if (isBigIntDType(dtype)) {
+      if (typeof value !== 'bigint') {
+        value = BigInt(Math.round(Number(value)));
+      }
+    } else {
+      if (typeof value === 'bigint') {
+        value = Number(value);
+      }
+    }
+
+    storage.iset(destLinearIdx, value);
+  }
+}
+
+/**
+ * Change elements of array based on conditional mask
+ */
+export function putmask(
+  storage: ArrayStorage,
+  mask: ArrayStorage,
+  values: ArrayStorage | number | bigint
+): void {
+  const size = storage.size;
+  const dtype = storage.dtype;
+
+  // Get values array
+  let valueArray: (number | bigint)[];
+  if (typeof values === 'number' || typeof values === 'bigint') {
+    valueArray = [values];
+  } else {
+    valueArray = [];
+    for (let i = 0; i < values.size; i++) {
+      valueArray.push(values.iget(i));
+    }
+  }
+
+  // Put values where mask is true
+  let valueIdx = 0;
+  for (let i = 0; i < size; i++) {
+    const maskVal = mask.iget(i);
+    if (maskVal) {
+      let value = valueArray[valueIdx % valueArray.length]!;
+
+      // Convert type if needed
+      if (isBigIntDType(dtype)) {
+        if (typeof value !== 'bigint') {
+          value = BigInt(Math.round(Number(value)));
+        }
+      } else {
+        if (typeof value === 'bigint') {
+          value = Number(value);
+        }
+      }
+
+      storage.iset(i, value);
+      valueIdx++;
+    }
+  }
+}
+
+/**
+ * Return selected slices along given axis based on condition
+ */
+export function compress(
+  condition: ArrayStorage,
+  storage: ArrayStorage,
+  axis?: number
+): ArrayStorage {
+  const shape = storage.shape;
+  const ndim = shape.length;
+  const dtype = storage.dtype;
+
+  if (axis === undefined) {
+    // Flatten and select
+    const flat = storage;
+    const conditionArray: boolean[] = [];
+    for (let i = 0; i < condition.size; i++) {
+      conditionArray.push(Boolean(condition.iget(i)));
+    }
+
+    // Count true values
+    const trueCount = conditionArray.filter(Boolean).length;
+    const Constructor = getTypedArrayConstructor(dtype);
+    if (!Constructor) {
+      throw new Error(`Cannot compress with dtype ${dtype}`);
+    }
+    const outputData = new Constructor(trueCount);
+
+    let outIdx = 0;
+    const maxLen = Math.min(conditionArray.length, flat.size);
+    for (let i = 0; i < maxLen; i++) {
+      if (conditionArray[i]) {
+        const value = flat.iget(i);
+        if (isBigIntDType(dtype)) {
+          (outputData as BigInt64Array | BigUint64Array)[outIdx] = value as bigint;
+        } else {
+          (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[outIdx] =
+            value as number;
+        }
+        outIdx++;
+      }
+    }
+
+    return ArrayStorage.fromData(outputData, [trueCount], dtype);
+  }
+
+  // Compress along axis
+  const normalizedAxis = axis < 0 ? ndim + axis : axis;
+  if (normalizedAxis < 0 || normalizedAxis >= ndim) {
+    throw new Error(`axis ${axis} is out of bounds for array of dimension ${ndim}`);
+  }
+
+  // Get condition as boolean array
+  const conditionArray: boolean[] = [];
+  for (let i = 0; i < condition.size; i++) {
+    conditionArray.push(Boolean(condition.iget(i)));
+  }
+
+  // Count true values
+  const axisSize = shape[normalizedAxis]!;
+  const maxLen = Math.min(conditionArray.length, axisSize);
+  let trueCount = 0;
+  for (let i = 0; i < maxLen; i++) {
+    if (conditionArray[i]) trueCount++;
+  }
+
+  // Output shape
+  const outputShape = Array.from(shape);
+  outputShape[normalizedAxis] = trueCount;
+  const outputSize = outputShape.reduce((a, b) => a * b, 1);
+
+  const Constructor = getTypedArrayConstructor(dtype);
+  if (!Constructor) {
+    throw new Error(`Cannot compress with dtype ${dtype}`);
+  }
+  const outputData = new Constructor(outputSize);
+  const inputStrides = computeStrides(shape);
+
+  // Build mapping from output axis index to input axis index
+  const axisMap: number[] = [];
+  for (let i = 0; i < maxLen; i++) {
+    if (conditionArray[i]) {
+      axisMap.push(i);
+    }
+  }
+
+  // Iterate through output positions
+  for (let outIdx = 0; outIdx < outputSize; outIdx++) {
+    // Convert outIdx to multi-index
+    const multiIdx = new Array(ndim);
+    let remaining = outIdx;
+    for (let d = ndim - 1; d >= 0; d--) {
+      multiIdx[d] = remaining % outputShape[d]!;
+      remaining = Math.floor(remaining / outputShape[d]!);
+    }
+
+    // Map axis index
+    const inputMultiIdx = [...multiIdx];
+    inputMultiIdx[normalizedAxis] = axisMap[multiIdx[normalizedAxis]!]!;
+
+    // Compute input linear index
+    let srcIdx = 0;
+    for (let d = 0; d < ndim; d++) {
+      srcIdx += inputMultiIdx[d]! * inputStrides[d]!;
+    }
+
+    const value = storage.iget(srcIdx);
+    if (isBigIntDType(dtype)) {
+      (outputData as BigInt64Array | BigUint64Array)[outIdx] = value as bigint;
+    } else {
+      (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[outIdx] = value as number;
+    }
+  }
+
+  return ArrayStorage.fromData(outputData, outputShape, dtype);
+}
+
+/**
+ * Return array drawn from elements in choicelist, depending on conditions
+ */
+export function select(
+  condlist: ArrayStorage[],
+  choicelist: ArrayStorage[],
+  defaultValue: number | bigint = 0
+): ArrayStorage {
+  if (condlist.length !== choicelist.length) {
+    throw new Error('condlist and choicelist must have same length');
+  }
+
+  if (condlist.length === 0) {
+    throw new Error('condlist and choicelist cannot be empty');
+  }
+
+  // Compute broadcast shape from all conditions and choices
+  const allShapes = [
+    ...condlist.map((c) => Array.from(c.shape)),
+    ...choicelist.map((c) => Array.from(c.shape)),
+  ];
+  const outputShape = computeBroadcastShape(allShapes);
+  if (outputShape === null) {
+    throw new Error('condlist and choicelist arrays could not be broadcast together');
+  }
+
+  const dtype = choicelist[0]!.dtype;
+  const outputSize = outputShape.reduce((a, b) => a * b, 1);
+  const Constructor = getTypedArrayConstructor(dtype);
+  if (!Constructor) {
+    throw new Error(`Cannot select with dtype ${dtype}`);
+  }
+
+  // Initialize with default value
+  let defaultVal: number | bigint = defaultValue;
+  if (isBigIntDType(dtype)) {
+    defaultVal = typeof defaultValue === 'bigint' ? defaultValue : BigInt(defaultValue);
+  } else {
+    defaultVal = typeof defaultValue === 'bigint' ? Number(defaultValue) : defaultValue;
+  }
+
+  const outputData = new Constructor(outputSize);
+  for (let i = 0; i < outputSize; i++) {
+    if (isBigIntDType(dtype)) {
+      (outputData as BigInt64Array | BigUint64Array)[i] = defaultVal as bigint;
+    } else {
+      (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[i] = defaultVal as number;
+    }
+  }
+
+  // Broadcast all arrays
+  const broadcastedConds = condlist.map((c) => broadcastTo(c, outputShape));
+  const broadcastedChoices = choicelist.map((c) => broadcastTo(c, outputShape));
+
+  // Process conditions in order (first match wins)
+  for (let i = 0; i < outputSize; i++) {
+    for (let j = 0; j < condlist.length; j++) {
+      if (broadcastedConds[j]!.iget(i)) {
+        const value = broadcastedChoices[j]!.iget(i);
+        if (isBigIntDType(dtype)) {
+          (outputData as BigInt64Array | BigUint64Array)[i] = value as bigint;
+        } else {
+          (outputData as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[i] = value as number;
+        }
+        break;
+      }
+    }
+  }
+
+  return ArrayStorage.fromData(outputData, outputShape, dtype);
+}
+
+/**
+ * Change elements of array based on conditional and input values
+ */
+export function place(storage: ArrayStorage, mask: ArrayStorage, vals: ArrayStorage): void {
+  const size = storage.size;
+  const dtype = storage.dtype;
+
+  // Get values array
+  const valueArray: (number | bigint)[] = [];
+  for (let i = 0; i < vals.size; i++) {
+    valueArray.push(vals.iget(i));
+  }
+
+  if (valueArray.length === 0) {
+    return;
+  }
+
+  // Place values where mask is true
+  let valueIdx = 0;
+  for (let i = 0; i < size; i++) {
+    const maskVal = mask.iget(i);
+    if (maskVal) {
+      let value = valueArray[valueIdx % valueArray.length]!;
+
+      // Convert type if needed
+      if (isBigIntDType(dtype)) {
+        if (typeof value !== 'bigint') {
+          value = BigInt(Math.round(Number(value)));
+        }
+      } else {
+        if (typeof value === 'bigint') {
+          value = Number(value);
+        }
+      }
+
+      storage.iset(i, value);
+      valueIdx++;
+    }
+  }
+}
+
+/**
+ * Return indices to access main diagonal of array
+ */
+export function diag_indices(n: number, ndim: number = 2): ArrayStorage[] {
+  if (ndim < 1) {
+    throw new Error('ndim must be at least 1');
+  }
+
+  const indices = new Int32Array(n);
+  for (let i = 0; i < n; i++) {
+    indices[i] = i;
+  }
+
+  const result: ArrayStorage[] = [];
+  for (let d = 0; d < ndim; d++) {
+    result.push(ArrayStorage.fromData(new Int32Array(indices), [n], 'int32'));
+  }
+
+  return result;
+}
+
+/**
+ * Return indices to access main diagonal of array from given array
+ */
+export function diag_indices_from(storage: ArrayStorage): ArrayStorage[] {
+  const shape = storage.shape;
+  const ndim = shape.length;
+
+  if (ndim < 2) {
+    throw new Error('array must be at least 2-D');
+  }
+
+  // Check that all dimensions are equal
+  const n = shape[0]!;
+  for (let i = 1; i < ndim; i++) {
+    if (shape[i] !== n) {
+      throw new Error('All dimensions of input must be equal');
+    }
+  }
+
+  return diag_indices(n, ndim);
+}
+
+/**
+ * Return indices for lower-triangle of an (n, m) array
+ */
+export function tril_indices(n: number, k: number = 0, m?: number): ArrayStorage[] {
+  const cols = m ?? n;
+
+  const rows: number[] = [];
+  const colIndices: number[] = [];
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j <= Math.min(i + k, cols - 1); j++) {
+      if (j >= 0) {
+        rows.push(i);
+        colIndices.push(j);
+      }
+    }
+  }
+
+  return [
+    ArrayStorage.fromData(new Int32Array(rows), [rows.length], 'int32'),
+    ArrayStorage.fromData(new Int32Array(colIndices), [colIndices.length], 'int32'),
+  ];
+}
+
+/**
+ * Return indices for lower-triangle of given array
+ */
+export function tril_indices_from(storage: ArrayStorage, k: number = 0): ArrayStorage[] {
+  const shape = storage.shape;
+
+  if (shape.length !== 2) {
+    throw new Error('array must be 2-D');
+  }
+
+  return tril_indices(shape[0]!, k, shape[1]);
+}
+
+/**
+ * Return indices for upper-triangle of an (n, m) array
+ */
+export function triu_indices(n: number, k: number = 0, m?: number): ArrayStorage[] {
+  const cols = m ?? n;
+
+  const rows: number[] = [];
+  const colIndices: number[] = [];
+
+  for (let i = 0; i < n; i++) {
+    for (let j = Math.max(i + k, 0); j < cols; j++) {
+      rows.push(i);
+      colIndices.push(j);
+    }
+  }
+
+  return [
+    ArrayStorage.fromData(new Int32Array(rows), [rows.length], 'int32'),
+    ArrayStorage.fromData(new Int32Array(colIndices), [colIndices.length], 'int32'),
+  ];
+}
+
+/**
+ * Return indices for upper-triangle of given array
+ */
+export function triu_indices_from(storage: ArrayStorage, k: number = 0): ArrayStorage[] {
+  const shape = storage.shape;
+
+  if (shape.length !== 2) {
+    throw new Error('array must be 2-D');
+  }
+
+  return triu_indices(shape[0]!, k, shape[1]);
+}
+
+/**
+ * Return indices to access elements using mask function
+ */
+export function mask_indices(
+  n: number,
+  mask_func: (n: number, k: number) => ArrayStorage,
+  k: number = 0
+): ArrayStorage[] {
+  // Generate the mask using the mask function
+  const mask = mask_func(n, k);
+  const maskShape = mask.shape;
+
+  if (maskShape.length !== 2 || maskShape[0] !== n || maskShape[1] !== n) {
+    throw new Error('mask_func must return n x n array');
+  }
+
+  const rows: number[] = [];
+  const cols: number[] = [];
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (mask.get(i, j)) {
+        rows.push(i);
+        cols.push(j);
+      }
+    }
+  }
+
+  return [
+    ArrayStorage.fromData(new Int32Array(rows), [rows.length], 'int32'),
+    ArrayStorage.fromData(new Int32Array(cols), [cols.length], 'int32'),
+  ];
+}
+
+/**
+ * Return array representing indices of a grid
+ */
+export function indices(
+  dimensions: number[],
+  dtype: 'int32' | 'int64' | 'float64' = 'int32'
+): ArrayStorage {
+  const ndim = dimensions.length;
+  const outputShape = [ndim, ...dimensions];
+  const outputSize = outputShape.reduce((a, b) => a * b, 1);
+
+  const Constructor = getTypedArrayConstructor(dtype);
+  if (!Constructor) {
+    throw new Error(`Cannot create indices with dtype ${dtype}`);
+  }
+
+  const outputData = new Constructor(outputSize);
+  const gridSize = dimensions.reduce((a, b) => a * b, 1);
+
+  // For each dimension, fill the corresponding slice
+  for (let d = 0; d < ndim; d++) {
+    const sliceOffset = d * gridSize;
+
+    // Iterate through grid positions
+    for (let gridIdx = 0; gridIdx < gridSize; gridIdx++) {
+      // Convert gridIdx to multi-index
+      const multiIdx = new Array(ndim);
+      let remaining = gridIdx;
+      for (let i = ndim - 1; i >= 0; i--) {
+        multiIdx[i] = remaining % dimensions[i]!;
+        remaining = Math.floor(remaining / dimensions[i]!);
+      }
+
+      const value = multiIdx[d]!;
+      if (dtype === 'int64') {
+        (outputData as BigInt64Array)[sliceOffset + gridIdx] = BigInt(value);
+      } else {
+        (outputData as Float64Array | Int32Array)[sliceOffset + gridIdx] = value;
+      }
+    }
+  }
+
+  return ArrayStorage.fromData(outputData, outputShape, dtype);
+}
+
+/**
+ * Construct open mesh from multiple sequences
+ */
+export function ix_(...args: ArrayStorage[]): ArrayStorage[] {
+  const ndim = args.length;
+  const result: ArrayStorage[] = [];
+
+  for (let i = 0; i < ndim; i++) {
+    const arr = args[i]!;
+    const arrSize = arr.size;
+    const dtype = arr.dtype;
+
+    // Create shape with 1s except at position i
+    const shape = new Array(ndim).fill(1);
+    shape[i] = arrSize;
+
+    const Constructor = getTypedArrayConstructor(dtype);
+    if (!Constructor) {
+      throw new Error(`Cannot create ix_ with dtype ${dtype}`);
+    }
+
+    const data = new Constructor(arrSize);
+    for (let j = 0; j < arrSize; j++) {
+      const value = arr.iget(j);
+      if (isBigIntDType(dtype)) {
+        (data as BigInt64Array | BigUint64Array)[j] = value as bigint;
+      } else {
+        (data as Exclude<TypedArray, BigInt64Array | BigUint64Array>)[j] = value as number;
+      }
+    }
+
+    result.push(ArrayStorage.fromData(data, shape, dtype));
+  }
+
+  return result;
+}
+
+/**
+ * Convert multi-dimensional index arrays to flat index array
+ */
+export function ravel_multi_index(
+  multi_index: ArrayStorage[],
+  dims: number[],
+  mode: 'raise' | 'wrap' | 'clip' = 'raise'
+): ArrayStorage {
+  if (multi_index.length !== dims.length) {
+    throw new Error('multi_index length must equal dims length');
+  }
+
+  if (multi_index.length === 0) {
+    throw new Error('multi_index cannot be empty');
+  }
+
+  const size = multi_index[0]!.size;
+  const ndim = dims.length;
+  const outputData = new Int32Array(size);
+
+  // Compute strides for row-major (C) order
+  const strides = new Array(ndim);
+  let stride = 1;
+  for (let i = ndim - 1; i >= 0; i--) {
+    strides[i] = stride;
+    stride *= dims[i]!;
+  }
+
+  for (let i = 0; i < size; i++) {
+    let flatIdx = 0;
+    for (let d = 0; d < ndim; d++) {
+      let idx = Number(multi_index[d]!.iget(i));
+      const dimSize = dims[d]!;
+
+      // Handle mode
+      if (mode === 'wrap') {
+        idx = ((idx % dimSize) + dimSize) % dimSize;
+      } else if (mode === 'clip') {
+        idx = Math.max(0, Math.min(idx, dimSize - 1));
+      } else if (idx < 0 || idx >= dimSize) {
+        throw new Error(`index ${idx} is out of bounds for axis ${d} with size ${dimSize}`);
+      }
+
+      flatIdx += idx * strides[d]!;
+    }
+    outputData[i] = flatIdx;
+  }
+
+  return ArrayStorage.fromData(outputData, [size], 'int32');
+}
+
+/**
+ * Convert flat index array to tuple of coordinate arrays
+ */
+export function unravel_index(
+  indices: ArrayStorage | number,
+  shape: number[],
+  order: 'C' | 'F' = 'C'
+): ArrayStorage[] {
+  const ndim = shape.length;
+
+  // Handle scalar input
+  let indicesArray: number[];
+  let outputShape: number[];
+  if (typeof indices === 'number') {
+    indicesArray = [indices];
+    outputShape = [];
+  } else {
+    indicesArray = [];
+    for (let i = 0; i < indices.size; i++) {
+      indicesArray.push(Number(indices.iget(i)));
+    }
+    outputShape = Array.from(indices.shape);
+  }
+
+  const size = indicesArray.length;
+  const totalSize = shape.reduce((a, b) => a * b, 1);
+
+  // Compute strides
+  const strides = new Array(ndim);
+  if (order === 'C') {
+    let stride = 1;
+    for (let i = ndim - 1; i >= 0; i--) {
+      strides[i] = stride;
+      stride *= shape[i]!;
+    }
+  } else {
+    let stride = 1;
+    for (let i = 0; i < ndim; i++) {
+      strides[i] = stride;
+      stride *= shape[i]!;
+    }
+  }
+
+  // Create output arrays
+  const result: ArrayStorage[] = [];
+  for (let d = 0; d < ndim; d++) {
+    const data = new Int32Array(size);
+    result.push(ArrayStorage.fromData(data, outputShape.length ? outputShape : [1], 'int32'));
+  }
+
+  // Convert each flat index
+  for (let i = 0; i < size; i++) {
+    let flatIdx = indicesArray[i]!;
+    if (flatIdx < 0 || flatIdx >= totalSize) {
+      throw new Error(`index ${flatIdx} is out of bounds for array with size ${totalSize}`);
+    }
+
+    if (order === 'C') {
+      for (let d = 0; d < ndim; d++) {
+        const coord = Math.floor(flatIdx / strides[d]!);
+        flatIdx = flatIdx % strides[d]!;
+        (result[d]!.data as Int32Array)[i] = coord % shape[d]!;
+      }
+    } else {
+      for (let d = ndim - 1; d >= 0; d--) {
+        const coord = Math.floor(flatIdx / strides[d]!);
+        flatIdx = flatIdx % strides[d]!;
+        (result[d]!.data as Int32Array)[i] = coord % shape[d]!;
+      }
+    }
+  }
+
+  // For scalar input, return scalar-shaped results
+  if (typeof indices === 'number') {
+    return result.map((arr) => {
+      const value = arr.iget(0);
+      return ArrayStorage.fromData(new Int32Array([Number(value)]), [], 'int32');
+    });
+  }
+
+  return result;
+}

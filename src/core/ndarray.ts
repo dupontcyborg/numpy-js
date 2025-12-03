@@ -4249,3 +4249,243 @@ export function einsum(subscripts: string, ...operands: NDArray[]): NDArray | nu
   }
   return NDArray._fromStorage(result);
 }
+
+// ============================================================================
+// Indexing Functions
+// ============================================================================
+
+/**
+ * Take values from the input array by matching 1d index and data slices along axis.
+ *
+ * @param arr - Input array
+ * @param indices - Index array with same ndim as arr
+ * @param axis - The axis along which to select values
+ * @returns Array of values taken along the axis
+ */
+export function take_along_axis(arr: NDArray, indices: NDArray, axis: number): NDArray {
+  return NDArray._fromStorage(advancedOps.take_along_axis(arr.storage, indices.storage, axis));
+}
+
+/**
+ * Put values into the destination array using 1d index and data slices along axis.
+ *
+ * @param arr - Destination array (modified in-place)
+ * @param indices - Index array with same ndim as arr
+ * @param values - Values to put
+ * @param axis - The axis along which to put values
+ */
+export function put_along_axis(
+  arr: NDArray,
+  indices: NDArray,
+  values: NDArray,
+  axis: number
+): void {
+  advancedOps.put_along_axis(arr.storage, indices.storage, values.storage, axis);
+}
+
+/**
+ * Change elements of array based on conditional mask.
+ *
+ * @param a - Array to modify (in-place)
+ * @param mask - Boolean mask array
+ * @param values - Values to put where mask is True
+ */
+export function putmask(a: NDArray, mask: NDArray, values: NDArray | number | bigint): void {
+  const valuesArg = values instanceof NDArray ? values.storage : values;
+  advancedOps.putmask(a.storage, mask.storage, valuesArg);
+}
+
+/**
+ * Return selected slices of array along given axis.
+ *
+ * @param condition - Boolean array for selecting
+ * @param a - Array from which to select
+ * @param axis - Axis along which to select (if undefined, works on flattened array)
+ * @returns Compressed array
+ */
+export function compress(condition: NDArray, a: NDArray, axis?: number): NDArray {
+  return NDArray._fromStorage(advancedOps.compress(condition.storage, a.storage, axis));
+}
+
+/**
+ * Return an array drawn from elements in choicelist, depending on conditions.
+ *
+ * @param condlist - List of boolean arrays (conditions)
+ * @param choicelist - List of arrays to choose from
+ * @param defaultVal - Default value when no condition is met (default 0)
+ * @returns Array with selected values
+ */
+export function select(
+  condlist: NDArray[],
+  choicelist: NDArray[],
+  defaultVal: number | bigint = 0
+): NDArray {
+  const condStorages = condlist.map((c) => c.storage);
+  const choiceStorages = choicelist.map((c) => c.storage);
+  return NDArray._fromStorage(advancedOps.select(condStorages, choiceStorages, defaultVal));
+}
+
+/**
+ * Change elements of an array based on conditional and input values.
+ *
+ * @param arr - Array to modify (in-place)
+ * @param mask - Boolean mask array
+ * @param vals - Values to place where mask is True (cycles if shorter)
+ */
+export function place(arr: NDArray, mask: NDArray, vals: NDArray): void {
+  advancedOps.place(arr.storage, mask.storage, vals.storage);
+}
+
+/**
+ * Return the indices to access the main diagonal of an array.
+ *
+ * @param n - Size of arrays for which indices are returned
+ * @param ndim - Number of dimensions (default 2)
+ * @returns Tuple of index arrays
+ */
+export function diag_indices(n: number, ndim: number = 2): NDArray[] {
+  const storages = advancedOps.diag_indices(n, ndim);
+  return storages.map((s) => NDArray._fromStorage(s));
+}
+
+/**
+ * Return the indices to access the main diagonal of an n-dimensional array.
+ *
+ * @param arr - Input array (must have all equal dimensions)
+ * @returns Tuple of index arrays
+ */
+export function diag_indices_from(arr: NDArray): NDArray[] {
+  const storages = advancedOps.diag_indices_from(arr.storage);
+  return storages.map((s) => NDArray._fromStorage(s));
+}
+
+/**
+ * Return the indices for the lower-triangle of an (n, m) array.
+ *
+ * @param n - Number of rows
+ * @param k - Diagonal offset (0 = main, positive = above, negative = below)
+ * @param m - Number of columns (default n)
+ * @returns Tuple of row and column index arrays
+ */
+export function tril_indices(n: number, k: number = 0, m?: number): NDArray[] {
+  const storages = advancedOps.tril_indices(n, k, m);
+  return storages.map((s) => NDArray._fromStorage(s));
+}
+
+/**
+ * Return the indices for the lower-triangle of arr.
+ *
+ * @param arr - Input 2-D array
+ * @param k - Diagonal offset (0 = main, positive = above, negative = below)
+ * @returns Tuple of row and column index arrays
+ */
+export function tril_indices_from(arr: NDArray, k: number = 0): NDArray[] {
+  const storages = advancedOps.tril_indices_from(arr.storage, k);
+  return storages.map((s) => NDArray._fromStorage(s));
+}
+
+/**
+ * Return the indices for the upper-triangle of an (n, m) array.
+ *
+ * @param n - Number of rows
+ * @param k - Diagonal offset (0 = main, positive = above, negative = below)
+ * @param m - Number of columns (default n)
+ * @returns Tuple of row and column index arrays
+ */
+export function triu_indices(n: number, k: number = 0, m?: number): NDArray[] {
+  const storages = advancedOps.triu_indices(n, k, m);
+  return storages.map((s) => NDArray._fromStorage(s));
+}
+
+/**
+ * Return the indices for the upper-triangle of arr.
+ *
+ * @param arr - Input 2-D array
+ * @param k - Diagonal offset (0 = main, positive = above, negative = below)
+ * @returns Tuple of row and column index arrays
+ */
+export function triu_indices_from(arr: NDArray, k: number = 0): NDArray[] {
+  const storages = advancedOps.triu_indices_from(arr.storage, k);
+  return storages.map((s) => NDArray._fromStorage(s));
+}
+
+/**
+ * Return the indices to access (n, n) arrays, given a masking function.
+ *
+ * @param n - The returned indices will be valid to access arrays of shape (n, n)
+ * @param mask_func - A function that generates an (n, n) boolean mask
+ * @param k - Optional diagonal offset passed to mask_func
+ * @returns Tuple of row and column index arrays
+ */
+export function mask_indices(
+  n: number,
+  mask_func: (n: number, k: number) => NDArray,
+  k: number = 0
+): NDArray[] {
+  // Wrap the function to work with storage
+  const storageMaskFunc = (n: number, k: number) => mask_func(n, k).storage;
+  const storages = advancedOps.mask_indices(n, storageMaskFunc, k);
+  return storages.map((s) => NDArray._fromStorage(s));
+}
+
+/**
+ * Return an array representing the indices of a grid.
+ *
+ * @param dimensions - The shape of the grid
+ * @param dtype - Data type of result (default 'int32')
+ * @returns Array of shape (len(dimensions), *dimensions)
+ */
+export function indices(
+  dimensions: number[],
+  dtype: 'int32' | 'int64' | 'float64' = 'int32'
+): NDArray {
+  return NDArray._fromStorage(advancedOps.indices(dimensions, dtype));
+}
+
+/**
+ * Construct an open mesh from multiple sequences.
+ *
+ * This function returns a list of arrays with shapes suitable for broadcasting.
+ *
+ * @param args - 1-D sequences
+ * @returns Tuple of arrays for open mesh
+ */
+export function ix_(...args: NDArray[]): NDArray[] {
+  const storages = advancedOps.ix_(...args.map((a) => a.storage));
+  return storages.map((s) => NDArray._fromStorage(s));
+}
+
+/**
+ * Convert a tuple of index arrays into an array of flat indices.
+ *
+ * @param multi_index - Tuple of index arrays
+ * @param dims - Shape of array into which indices apply
+ * @param mode - How to handle out-of-bounds indices ('raise', 'wrap', 'clip')
+ * @returns Flattened indices
+ */
+export function ravel_multi_index(
+  multi_index: NDArray[],
+  dims: number[],
+  mode: 'raise' | 'wrap' | 'clip' = 'raise'
+): NDArray {
+  const storages = multi_index.map((a) => a.storage);
+  return NDArray._fromStorage(advancedOps.ravel_multi_index(storages, dims, mode));
+}
+
+/**
+ * Convert a flat index or array of flat indices into a tuple of coordinate arrays.
+ *
+ * @param indices - Array of indices or single index
+ * @param shape - Shape of the array to index into
+ * @param order - Row-major ('C') or column-major ('F') order
+ * @returns Tuple of coordinate arrays
+ */
+export function unravel_index(
+  indices: NDArray | number,
+  shape: number[],
+  order: 'C' | 'F' = 'C'
+): NDArray[] {
+  const indicesArg = indices instanceof NDArray ? indices.storage : indices;
+  const storages = advancedOps.unravel_index(indicesArg, shape, order);
+  return storages.map((s) => NDArray._fromStorage(s));
+}
