@@ -332,3 +332,430 @@ describe('Advanced Functions', () => {
     });
   });
 });
+
+// Import new indexing functions
+import {
+  take_along_axis,
+  put_along_axis,
+  putmask,
+  compress,
+  select,
+  place,
+  diag_indices,
+  diag_indices_from,
+  tril_indices,
+  tril_indices_from,
+  triu_indices,
+  triu_indices_from,
+  mask_indices,
+  indices,
+  ix_,
+  ravel_multi_index,
+  unravel_index,
+  zeros,
+  tril,
+} from '../../src';
+
+describe('Indexing Functions', () => {
+  // ========================================
+  // take_along_axis
+  // ========================================
+  describe('take_along_axis', () => {
+    it('takes values along axis 0', () => {
+      const arr = array([
+        [10, 20, 30],
+        [40, 50, 60],
+      ]);
+      const idx = array([
+        [0, 1, 0],
+        [1, 0, 1],
+      ]);
+      const result = take_along_axis(arr, idx, 0);
+      expect(result.shape).toEqual([2, 3]);
+      expect(result.toArray()).toEqual([
+        [10, 50, 30],
+        [40, 20, 60],
+      ]);
+    });
+
+    it('takes values along axis 1', () => {
+      const arr = array([
+        [10, 20, 30],
+        [40, 50, 60],
+      ]);
+      const idx = array([[2], [0]]);
+      const result = take_along_axis(arr, idx, 1);
+      expect(result.shape).toEqual([2, 1]);
+      expect(result.toArray()).toEqual([[30], [40]]);
+    });
+
+    it('handles negative axis', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+      ]);
+      const idx = array([
+        [1, 0],
+        [0, 1],
+      ]);
+      const result = take_along_axis(arr, idx, -1);
+      expect(result.toArray()).toEqual([
+        [2, 1],
+        [3, 4],
+      ]);
+    });
+  });
+
+  // ========================================
+  // put_along_axis
+  // ========================================
+  describe('put_along_axis', () => {
+    it('puts values along axis 0', () => {
+      const arr = array([
+        [10, 20, 30],
+        [40, 50, 60],
+      ]);
+      const idx = array([[0], [1]]);
+      const vals = array([[99], [99]]);
+      put_along_axis(arr, idx, vals, 1);
+      expect(arr.get([0, 0])).toBe(99);
+      expect(arr.get([1, 1])).toBe(99);
+    });
+
+    it('modifies array in place', () => {
+      const arr = zeros([2, 3]);
+      const idx = array([
+        [0, 1, 2],
+        [2, 1, 0],
+      ]);
+      const vals = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      put_along_axis(arr, idx, vals, 1);
+      expect(arr.get([0, 0])).toBe(1);
+      expect(arr.get([0, 1])).toBe(2);
+      expect(arr.get([0, 2])).toBe(3);
+    });
+  });
+
+  // ========================================
+  // putmask
+  // ========================================
+  describe('putmask', () => {
+    it('puts values where mask is true', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const mask = array([1, 0, 1, 0, 1]);
+      putmask(arr, mask, 99);
+      expect(arr.toArray()).toEqual([99, 2, 99, 4, 99]);
+    });
+
+    it('cycles values when needed', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const mask = array([1, 1, 1, 1, 1]);
+      const vals = array([10, 20]);
+      putmask(arr, mask, vals);
+      expect(arr.toArray()).toEqual([10, 20, 10, 20, 10]);
+    });
+  });
+
+  // ========================================
+  // compress
+  // ========================================
+  describe('compress', () => {
+    it('compresses along flattened array', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const cond = array([1, 0, 1, 0, 1]);
+      const result = compress(cond, arr);
+      expect(result.toArray()).toEqual([1, 3, 5]);
+    });
+
+    it('compresses along axis 0', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+        [5, 6],
+      ]);
+      const cond = array([1, 0, 1]);
+      const result = compress(cond, arr, 0);
+      expect(result.shape).toEqual([2, 2]);
+      expect(result.toArray()).toEqual([
+        [1, 2],
+        [5, 6],
+      ]);
+    });
+
+    it('compresses along axis 1', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      const cond = array([1, 0, 1]);
+      const result = compress(cond, arr, 1);
+      expect(result.shape).toEqual([2, 2]);
+      expect(result.toArray()).toEqual([
+        [1, 3],
+        [4, 6],
+      ]);
+    });
+  });
+
+  // ========================================
+  // select
+  // ========================================
+  describe('select', () => {
+    it('selects from choicelist based on conditions', () => {
+      const x = array([0, 1, 2, 3]);
+      const cond1 = x.less(1);
+      const cond2 = x.greater(2);
+      const result = select([cond1, cond2], [array([10, 10, 10, 10]), array([20, 20, 20, 20])], 0);
+      expect(result.toArray()).toEqual([10, 0, 0, 20]);
+    });
+
+    it('uses default value when no condition matches', () => {
+      const cond = array([0, 0, 0]);
+      const choice = array([1, 2, 3]);
+      const result = select([cond], [choice], 99);
+      expect(result.toArray()).toEqual([99, 99, 99]);
+    });
+  });
+
+  // ========================================
+  // place
+  // ========================================
+  describe('place', () => {
+    it('places values where mask is true', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const mask = array([1, 0, 1, 0, 1]);
+      const vals = array([10, 20, 30]);
+      place(arr, mask, vals);
+      expect(arr.toArray()).toEqual([10, 2, 20, 4, 30]);
+    });
+
+    it('cycles values if not enough provided', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const mask = array([1, 0, 1, 0, 1]);
+      const vals = array([10, 20]);
+      place(arr, mask, vals);
+      expect(arr.toArray()).toEqual([10, 2, 20, 4, 10]);
+    });
+  });
+
+  // ========================================
+  // diag_indices
+  // ========================================
+  describe('diag_indices', () => {
+    it('returns indices for 2D diagonal', () => {
+      const [rows, cols] = diag_indices(3);
+      expect(rows.toArray()).toEqual([0, 1, 2]);
+      expect(cols.toArray()).toEqual([0, 1, 2]);
+    });
+
+    it('returns indices for 3D diagonal', () => {
+      const result = diag_indices(2, 3);
+      expect(result.length).toBe(3);
+      expect(result[0]!.toArray()).toEqual([0, 1]);
+      expect(result[1]!.toArray()).toEqual([0, 1]);
+      expect(result[2]!.toArray()).toEqual([0, 1]);
+    });
+  });
+
+  // ========================================
+  // diag_indices_from
+  // ========================================
+  describe('diag_indices_from', () => {
+    it('returns indices from array', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const [rows, cols] = diag_indices_from(arr);
+      expect(rows.toArray()).toEqual([0, 1, 2]);
+      expect(cols.toArray()).toEqual([0, 1, 2]);
+    });
+
+    it('throws for non-square array', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      expect(() => diag_indices_from(arr)).toThrow();
+    });
+  });
+
+  // ========================================
+  // tril_indices
+  // ========================================
+  describe('tril_indices', () => {
+    it('returns lower triangle indices', () => {
+      const [rows, cols] = tril_indices(3);
+      expect(rows.toArray()).toEqual([0, 1, 1, 2, 2, 2]);
+      expect(cols.toArray()).toEqual([0, 0, 1, 0, 1, 2]);
+    });
+
+    it('handles diagonal offset k=1', () => {
+      const [rows, cols] = tril_indices(3, 1);
+      expect(rows.toArray()).toEqual([0, 0, 1, 1, 1, 2, 2, 2]);
+      expect(cols.toArray()).toEqual([0, 1, 0, 1, 2, 0, 1, 2]);
+    });
+
+    it('handles rectangular matrix', () => {
+      const [rows, cols] = tril_indices(3, 0, 4);
+      expect(rows.toArray()).toEqual([0, 1, 1, 2, 2, 2]);
+      expect(cols.toArray()).toEqual([0, 0, 1, 0, 1, 2]);
+    });
+  });
+
+  // ========================================
+  // tril_indices_from
+  // ========================================
+  describe('tril_indices_from', () => {
+    it('returns indices from array', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const [rows, cols] = tril_indices_from(arr);
+      expect(rows.toArray()).toEqual([0, 1, 1, 2, 2, 2]);
+      expect(cols.toArray()).toEqual([0, 0, 1, 0, 1, 2]);
+    });
+  });
+
+  // ========================================
+  // triu_indices
+  // ========================================
+  describe('triu_indices', () => {
+    it('returns upper triangle indices', () => {
+      const [rows, cols] = triu_indices(3);
+      expect(rows.toArray()).toEqual([0, 0, 0, 1, 1, 2]);
+      expect(cols.toArray()).toEqual([0, 1, 2, 1, 2, 2]);
+    });
+
+    it('handles diagonal offset k=1', () => {
+      const [rows, cols] = triu_indices(3, 1);
+      expect(rows.toArray()).toEqual([0, 0, 1]);
+      expect(cols.toArray()).toEqual([1, 2, 2]);
+    });
+  });
+
+  // ========================================
+  // triu_indices_from
+  // ========================================
+  describe('triu_indices_from', () => {
+    it('returns indices from array', () => {
+      const arr = array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ]);
+      const [rows, cols] = triu_indices_from(arr);
+      expect(rows.toArray()).toEqual([0, 0, 0, 1, 1, 2]);
+      expect(cols.toArray()).toEqual([0, 1, 2, 1, 2, 2]);
+    });
+  });
+
+  // ========================================
+  // mask_indices
+  // ========================================
+  describe('mask_indices', () => {
+    it('returns indices using mask function', () => {
+      // Use tril as mask function
+      const [rows, cols] = mask_indices(3, (n, k) => tril(zeros([n, n]).add(1), k));
+      expect(rows.toArray()).toEqual([0, 1, 1, 2, 2, 2]);
+      expect(cols.toArray()).toEqual([0, 0, 1, 0, 1, 2]);
+    });
+  });
+
+  // ========================================
+  // indices
+  // ========================================
+  describe('indices', () => {
+    it('returns indices for 2D grid', () => {
+      const result = indices([2, 3]);
+      expect(result.shape).toEqual([2, 2, 3]);
+      // First slice is row indices
+      expect(result.get([0, 0, 0])).toBe(0);
+      expect(result.get([0, 0, 1])).toBe(0);
+      expect(result.get([0, 0, 2])).toBe(0);
+      expect(result.get([0, 1, 0])).toBe(1);
+      expect(result.get([0, 1, 1])).toBe(1);
+      expect(result.get([0, 1, 2])).toBe(1);
+      // Second slice is column indices
+      expect(result.get([1, 0, 0])).toBe(0);
+      expect(result.get([1, 0, 1])).toBe(1);
+      expect(result.get([1, 0, 2])).toBe(2);
+    });
+  });
+
+  // ========================================
+  // ix_
+  // ========================================
+  describe('ix_', () => {
+    it('creates open mesh arrays', () => {
+      const result = ix_(array([0, 1]), array([2, 4, 6]));
+      expect(result.length).toBe(2);
+      expect(result[0]!.shape).toEqual([2, 1]);
+      expect(result[1]!.shape).toEqual([1, 3]);
+      expect(result[0]!.toArray()).toEqual([[0], [1]]);
+      expect(result[1]!.toArray()).toEqual([[2, 4, 6]]);
+    });
+
+    it('creates 3D open mesh', () => {
+      const result = ix_(array([0, 1]), array([2, 3]), array([4]));
+      expect(result.length).toBe(3);
+      expect(result[0]!.shape).toEqual([2, 1, 1]);
+      expect(result[1]!.shape).toEqual([1, 2, 1]);
+      expect(result[2]!.shape).toEqual([1, 1, 1]);
+    });
+  });
+
+  // ========================================
+  // ravel_multi_index
+  // ========================================
+  describe('ravel_multi_index', () => {
+    it('converts multi-index to flat index', () => {
+      const result = ravel_multi_index([array([0, 1, 2]), array([0, 1, 2])], [3, 3]);
+      expect(result.toArray()).toEqual([0, 4, 8]);
+    });
+
+    it('handles wrap mode', () => {
+      const result = ravel_multi_index([array([3]), array([1])], [3, 3], 'wrap');
+      expect(result.toArray()).toEqual([1]); // 3%3=0, so row 0, col 1 = 1
+    });
+
+    it('handles clip mode', () => {
+      const result = ravel_multi_index([array([5]), array([1])], [3, 3], 'clip');
+      expect(result.toArray()).toEqual([7]); // clipped to row 2, col 1 = 7
+    });
+  });
+
+  // ========================================
+  // unravel_index
+  // ========================================
+  describe('unravel_index', () => {
+    it('converts flat index to multi-index', () => {
+      const result = unravel_index(array([0, 4, 8]), [3, 3]);
+      expect(result.length).toBe(2);
+      expect(result[0]!.toArray()).toEqual([0, 1, 2]);
+      expect(result[1]!.toArray()).toEqual([0, 1, 2]);
+    });
+
+    it('handles scalar input', () => {
+      const result = unravel_index(5, [3, 3]);
+      expect(result.length).toBe(2);
+      // Scalar output - access first element of data
+      expect(result[0]!.data[0]).toBe(1);
+      expect(result[1]!.data[0]).toBe(2);
+    });
+
+    it('handles 3D shape', () => {
+      const result = unravel_index(array([0, 5, 23]), [2, 3, 4]);
+      expect(result.length).toBe(3);
+      expect(result[0]!.toArray()).toEqual([0, 0, 1]);
+      expect(result[1]!.toArray()).toEqual([0, 1, 2]);
+      expect(result[2]!.toArray()).toEqual([0, 1, 3]);
+    });
+  });
+});

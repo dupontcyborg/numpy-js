@@ -13,6 +13,16 @@ import {
   put,
   choose,
   array_equal,
+  take_along_axis,
+  compress,
+  select,
+  diag_indices,
+  tril_indices,
+  triu_indices,
+  indices,
+  ix_,
+  ravel_multi_index,
+  unravel_index,
 } from '../../src/core/ndarray';
 import { runNumPy, arraysClose, checkNumPyAvailable, getPythonInfo } from './numpy-oracle';
 
@@ -431,6 +441,291 @@ result = np.array_equal(a, b, equal_nan=True)
 `);
 
       expect(result).toBe(npResult.value);
+    });
+  });
+
+  // ========================================
+  // take_along_axis
+  // ========================================
+  describe('take_along_axis()', () => {
+    it('validates take_along_axis along axis 0', () => {
+      const arr = array([
+        [10, 20, 30],
+        [40, 50, 60],
+      ]);
+      const idx = array([
+        [0, 1, 0],
+        [1, 0, 1],
+      ]);
+      const result = take_along_axis(arr, idx, 0);
+
+      const npResult = runNumPy(`
+arr = np.array([[10, 20, 30], [40, 50, 60]])
+idx = np.array([[0, 1, 0], [1, 0, 1]])
+result = np.take_along_axis(arr, idx, axis=0)
+`);
+
+      expect(result.shape).toEqual(npResult.shape);
+      expect(arraysClose(result.toArray(), npResult.value)).toBe(true);
+    });
+
+    it('validates take_along_axis along axis 1', () => {
+      const arr = array([
+        [10, 20, 30],
+        [40, 50, 60],
+      ]);
+      const idx = array([[2], [0]]);
+      const result = take_along_axis(arr, idx, 1);
+
+      const npResult = runNumPy(`
+arr = np.array([[10, 20, 30], [40, 50, 60]])
+idx = np.array([[2], [0]])
+result = np.take_along_axis(arr, idx, axis=1)
+`);
+
+      expect(result.shape).toEqual(npResult.shape);
+      expect(arraysClose(result.toArray(), npResult.value)).toBe(true);
+    });
+  });
+
+  // ========================================
+  // compress
+  // ========================================
+  describe('compress()', () => {
+    it('validates compress along flattened array', () => {
+      const arr = array([1, 2, 3, 4, 5]);
+      const cond = array([1, 0, 1, 0, 1]);
+      const result = compress(cond, arr);
+
+      const npResult = runNumPy(`
+arr = np.array([1, 2, 3, 4, 5])
+cond = np.array([1, 0, 1, 0, 1])
+result = np.compress(cond, arr)
+`);
+
+      expect(result.shape).toEqual(npResult.shape);
+      expect(arraysClose(result.toArray(), npResult.value)).toBe(true);
+    });
+
+    it('validates compress along axis 0', () => {
+      const arr = array([
+        [1, 2],
+        [3, 4],
+        [5, 6],
+      ]);
+      const cond = array([1, 0, 1]);
+      const result = compress(cond, arr, 0);
+
+      const npResult = runNumPy(`
+arr = np.array([[1, 2], [3, 4], [5, 6]])
+cond = np.array([1, 0, 1])
+result = np.compress(cond, arr, axis=0)
+`);
+
+      expect(result.shape).toEqual(npResult.shape);
+      expect(arraysClose(result.toArray(), npResult.value)).toBe(true);
+    });
+  });
+
+  // ========================================
+  // select
+  // ========================================
+  describe('select()', () => {
+    it('validates select from choicelist', () => {
+      const x = array([0, 1, 2, 3]);
+      const cond1 = x.less(1);
+      const cond2 = x.greater(2);
+      const result = select([cond1, cond2], [array([10, 10, 10, 10]), array([20, 20, 20, 20])], 0);
+
+      const npResult = runNumPy(`
+x = np.array([0, 1, 2, 3])
+cond1 = x < 1
+cond2 = x > 2
+result = np.select([cond1, cond2], [np.full(4, 10), np.full(4, 20)], default=0)
+`);
+
+      expect(result.shape).toEqual(npResult.shape);
+      expect(arraysClose(result.toArray(), npResult.value)).toBe(true);
+    });
+  });
+
+  // ========================================
+  // diag_indices
+  // ========================================
+  describe('diag_indices()', () => {
+    it('validates diag_indices 2D', () => {
+      const [rows, cols] = diag_indices(3);
+
+      const npResult = runNumPy(`
+rows, cols = np.diag_indices(3)
+result = [rows.tolist(), cols.tolist()]
+`);
+
+      expect(arraysClose(rows.toArray(), npResult.value[0])).toBe(true);
+      expect(arraysClose(cols.toArray(), npResult.value[1])).toBe(true);
+    });
+
+    it('validates diag_indices 3D', () => {
+      const result = diag_indices(2, 3);
+
+      const npResult = runNumPy(`
+result = np.diag_indices(2, 3)
+result = [r.tolist() for r in result]
+`);
+
+      expect(result.length).toBe(3);
+      for (let i = 0; i < 3; i++) {
+        expect(arraysClose(result[i]!.toArray(), npResult.value[i])).toBe(true);
+      }
+    });
+  });
+
+  // ========================================
+  // tril_indices
+  // ========================================
+  describe('tril_indices()', () => {
+    it('validates tril_indices basic', () => {
+      const [rows, cols] = tril_indices(3);
+
+      const npResult = runNumPy(`
+rows, cols = np.tril_indices(3)
+result = [rows.tolist(), cols.tolist()]
+`);
+
+      expect(arraysClose(rows.toArray(), npResult.value[0])).toBe(true);
+      expect(arraysClose(cols.toArray(), npResult.value[1])).toBe(true);
+    });
+
+    it('validates tril_indices with k=1', () => {
+      const [rows, cols] = tril_indices(3, 1);
+
+      const npResult = runNumPy(`
+rows, cols = np.tril_indices(3, k=1)
+result = [rows.tolist(), cols.tolist()]
+`);
+
+      expect(arraysClose(rows.toArray(), npResult.value[0])).toBe(true);
+      expect(arraysClose(cols.toArray(), npResult.value[1])).toBe(true);
+    });
+  });
+
+  // ========================================
+  // triu_indices
+  // ========================================
+  describe('triu_indices()', () => {
+    it('validates triu_indices basic', () => {
+      const [rows, cols] = triu_indices(3);
+
+      const npResult = runNumPy(`
+rows, cols = np.triu_indices(3)
+result = [rows.tolist(), cols.tolist()]
+`);
+
+      expect(arraysClose(rows.toArray(), npResult.value[0])).toBe(true);
+      expect(arraysClose(cols.toArray(), npResult.value[1])).toBe(true);
+    });
+
+    it('validates triu_indices with k=1', () => {
+      const [rows, cols] = triu_indices(3, 1);
+
+      const npResult = runNumPy(`
+rows, cols = np.triu_indices(3, k=1)
+result = [rows.tolist(), cols.tolist()]
+`);
+
+      expect(arraysClose(rows.toArray(), npResult.value[0])).toBe(true);
+      expect(arraysClose(cols.toArray(), npResult.value[1])).toBe(true);
+    });
+  });
+
+  // ========================================
+  // indices
+  // ========================================
+  describe('indices()', () => {
+    it('validates indices 2D grid', () => {
+      const result = indices([2, 3]);
+
+      const npResult = runNumPy(`
+result = np.indices((2, 3))
+`);
+
+      expect(result.shape).toEqual(npResult.shape);
+      expect(arraysClose(result.toArray(), npResult.value)).toBe(true);
+    });
+  });
+
+  // ========================================
+  // ix_
+  // ========================================
+  describe('ix_()', () => {
+    it('validates ix_ open mesh', () => {
+      const result = ix_(array([0, 1]), array([2, 4, 6]));
+
+      const npResult = runNumPy(`
+r0, r1 = np.ix_(np.array([0, 1]), np.array([2, 4, 6]))
+result = [r0.tolist(), r1.tolist()]
+`);
+
+      expect(result.length).toBe(2);
+      expect(arraysClose(result[0]!.toArray(), npResult.value[0])).toBe(true);
+      expect(arraysClose(result[1]!.toArray(), npResult.value[1])).toBe(true);
+    });
+  });
+
+  // ========================================
+  // ravel_multi_index
+  // ========================================
+  describe('ravel_multi_index()', () => {
+    it('validates ravel_multi_index', () => {
+      const result = ravel_multi_index([array([0, 1, 2]), array([0, 1, 2])], [3, 3]);
+
+      const npResult = runNumPy(`
+result = np.ravel_multi_index(([0, 1, 2], [0, 1, 2]), (3, 3))
+`);
+
+      expect(arraysClose(result.toArray(), npResult.value)).toBe(true);
+    });
+
+    it('validates ravel_multi_index wrap mode', () => {
+      const result = ravel_multi_index([array([3]), array([1])], [3, 3], 'wrap');
+
+      const npResult = runNumPy(`
+result = np.ravel_multi_index(([3], [1]), (3, 3), mode='wrap')
+`);
+
+      expect(arraysClose(result.toArray(), npResult.value)).toBe(true);
+    });
+  });
+
+  // ========================================
+  // unravel_index
+  // ========================================
+  describe('unravel_index()', () => {
+    it('validates unravel_index', () => {
+      const result = unravel_index(array([0, 4, 8]), [3, 3]);
+
+      const npResult = runNumPy(`
+result = np.unravel_index([0, 4, 8], (3, 3))
+result = [np.array(r).tolist() for r in result]
+`);
+
+      expect(result.length).toBe(2);
+      expect(arraysClose(result[0]!.toArray(), npResult.value[0])).toBe(true);
+      expect(arraysClose(result[1]!.toArray(), npResult.value[1])).toBe(true);
+    });
+
+    it('validates unravel_index 3D shape', () => {
+      const result = unravel_index(array([0, 5, 23]), [2, 3, 4]);
+
+      const npResult = runNumPy(`
+result = np.unravel_index([0, 5, 23], (2, 3, 4))
+result = [np.array(r).tolist() for r in result]
+`);
+
+      expect(result.length).toBe(3);
+      for (let i = 0; i < 3; i++) {
+        expect(arraysClose(result[i]!.toArray(), npResult.value[i])).toBe(true);
+      }
     });
   });
 });

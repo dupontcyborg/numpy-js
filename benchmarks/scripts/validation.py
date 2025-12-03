@@ -20,9 +20,9 @@ def setup_arrays(setup_config):
         value = config.get("value")
 
         # Handle scalar values
-        if key in ["n", "axis", "new_shape", "shape", "fill_value", "target_shape"]:
+        if key in ["n", "axis", "new_shape", "shape", "fill_value", "target_shape", "dims"]:
             arrays[key] = shape[0]
-            if key in ["new_shape", "shape", "target_shape"]:
+            if key in ["new_shape", "shape", "target_shape", "dims"]:
                 arrays[key] = shape
             continue
 
@@ -268,6 +268,29 @@ def run_operation(spec):
         result = np.roll(arrays["a"], 10)
     elif operation == "pad":
         result = np.pad(arrays["a"], 2)
+
+    # Indexing functions
+    elif operation == "take_along_axis":
+        result = np.take_along_axis(arrays["a"], arrays["b"].astype(np.intp), axis=0)
+    elif operation == "compress":
+        result = np.compress(arrays["b"].astype(bool), arrays["a"], axis=0)
+    elif operation == "diag_indices":
+        idx = np.diag_indices(arrays["n"])
+        # Stack them for comparison
+        result = np.stack([idx[0], idx[1]], axis=0)
+    elif operation == "tril_indices":
+        idx = np.tril_indices(arrays["n"])
+        result = np.stack([idx[0], idx[1]], axis=0)
+    elif operation == "triu_indices":
+        idx = np.triu_indices(arrays["n"])
+        result = np.stack([idx[0], idx[1]], axis=0)
+    elif operation == "indices":
+        result = np.indices(tuple(arrays["shape"]))
+    elif operation == "ravel_multi_index":
+        result = np.ravel_multi_index((arrays["a"].astype(np.intp).ravel(), arrays["b"].astype(np.intp).ravel()), tuple(arrays["dims"]))
+    elif operation == "unravel_index":
+        idx = np.unravel_index(arrays["a"].astype(np.intp).ravel(), tuple(arrays["dims"]))
+        result = np.stack([np.array(i) for i in idx], axis=0)
 
     else:
         raise ValueError(f"Unknown operation: {operation}")

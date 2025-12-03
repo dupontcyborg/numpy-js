@@ -101,9 +101,9 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
     const { shape, dtype = 'float64', fill = 'zeros', value } = config;
 
     // Handle scalar values
-    if (['n', 'axis', 'new_shape', 'shape', 'fill_value', 'target_shape'].includes(key)) {
+    if (['n', 'axis', 'new_shape', 'shape', 'fill_value', 'target_shape', 'dims'].includes(key)) {
       arrays[key] = shape[0];
-      if (key === 'new_shape' || key === 'shape' || key === 'target_shape') {
+      if (key === 'new_shape' || key === 'shape' || key === 'target_shape' || key === 'dims') {
         arrays[key] = shape;
       }
       continue;
@@ -345,6 +345,33 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
     // Additional linalg
     case 'einsum':
       return np.einsum(arrays.subscripts, arrays.a, arrays.b);
+
+    // Indexing functions
+    case 'take_along_axis':
+      return np.take_along_axis(arrays.a, arrays.b, 0);
+    case 'compress':
+      return np.compress(arrays.b, arrays.a, 0);
+    case 'diag_indices': {
+      const idx = np.diag_indices(arrays.n);
+      // Stack the two arrays for comparison
+      return np.stack([idx[0]!, idx[1]!], 0);
+    }
+    case 'tril_indices': {
+      const idx = np.tril_indices(arrays.n);
+      return np.stack([idx[0]!, idx[1]!], 0);
+    }
+    case 'triu_indices': {
+      const idx = np.triu_indices(arrays.n);
+      return np.stack([idx[0]!, idx[1]!], 0);
+    }
+    case 'indices':
+      return np.indices(arrays.shape);
+    case 'ravel_multi_index':
+      return np.ravel_multi_index([arrays.a, arrays.b], arrays.dims);
+    case 'unravel_index': {
+      const idx = np.unravel_index(arrays.a, arrays.dims);
+      return np.stack(idx, 0);
+    }
 
     default:
       throw new Error(`Unknown operation: ${spec.operation}`);

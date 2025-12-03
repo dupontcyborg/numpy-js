@@ -1396,6 +1396,102 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       iterations,
       warmup,
     });
+
+    // Indexing benchmarks
+    specs.push({
+      name: `take_along_axis [${sizes.medium.join('x')}]`,
+      category: 'indexing',
+      operation: 'take_along_axis',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+        // indices array with same shape
+        b: { shape: sizes.medium, fill: 'zeros', dtype: 'int32' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `compress [${sizes.medium.join('x')}]`,
+      category: 'indexing',
+      operation: 'compress',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+        b: { shape: [sizes.medium[0]!], fill: 'ones', dtype: 'int32' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `diag_indices n=${sizes.medium[0]}`,
+      category: 'indexing',
+      operation: 'diag_indices',
+      setup: {
+        n: { shape: [sizes.medium[0]!] },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `tril_indices n=${sizes.medium[0]}`,
+      category: 'indexing',
+      operation: 'tril_indices',
+      setup: {
+        n: { shape: [sizes.medium[0]!] },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `triu_indices n=${sizes.medium[0]}`,
+      category: 'indexing',
+      operation: 'triu_indices',
+      setup: {
+        n: { shape: [sizes.medium[0]!] },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `indices [${sizes.medium.join('x')}]`,
+      category: 'indexing',
+      operation: 'indices',
+      setup: {
+        shape: { shape: sizes.medium },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `ravel_multi_index [${sizes.small}]`,
+      category: 'indexing',
+      operation: 'ravel_multi_index',
+      setup: {
+        // 1D index arrays
+        a: { shape: [sizes.small], fill: 'zeros', dtype: 'int32' },
+        b: { shape: [sizes.small], fill: 'zeros', dtype: 'int32' },
+        dims: { shape: [100, 100] },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `unravel_index [${sizes.small}]`,
+      category: 'indexing',
+      operation: 'unravel_index',
+      setup: {
+        a: { shape: [sizes.small], fill: 'arange', dtype: 'int32' },
+        dims: { shape: [100, 100] },
+      },
+      iterations,
+      warmup,
+    });
   }
 
   return specs;

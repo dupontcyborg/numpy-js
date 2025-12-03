@@ -51,10 +51,11 @@ function setupArrays(setup: BenchmarkSetup, operation?: string): Record<string, 
       key === 'new_shape' ||
       key === 'shape' ||
       key === 'fill_value' ||
-      key === 'target_shape'
+      key === 'target_shape' ||
+      key === 'dims'
     ) {
       arrays[key] = shape[0];
-      if (key === 'new_shape' || key === 'shape' || key === 'target_shape') {
+      if (key === 'new_shape' || key === 'shape' || key === 'target_shape' || key === 'dims') {
         arrays[key] = shape;
       }
       continue;
@@ -352,6 +353,25 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
     return np.tril(arrays['a']);
   } else if (operation === 'triu') {
     return np.triu(arrays['a']);
+  }
+
+  // Indexing functions
+  else if (operation === 'take_along_axis') {
+    return np.take_along_axis(arrays['a'], arrays['b'], 0);
+  } else if (operation === 'compress') {
+    return np.compress(arrays['b'], arrays['a'], 0);
+  } else if (operation === 'diag_indices') {
+    return np.diag_indices(arrays['n']);
+  } else if (operation === 'tril_indices') {
+    return np.tril_indices(arrays['n']);
+  } else if (operation === 'triu_indices') {
+    return np.triu_indices(arrays['n']);
+  } else if (operation === 'indices') {
+    return np.indices(arrays['shape']);
+  } else if (operation === 'ravel_multi_index') {
+    return np.ravel_multi_index([arrays['a'], arrays['b']], arrays['dims']);
+  } else if (operation === 'unravel_index') {
+    return np.unravel_index(arrays['a'], arrays['dims']);
   }
 
   // IO operations
