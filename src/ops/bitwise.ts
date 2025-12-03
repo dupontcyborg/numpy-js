@@ -370,6 +370,14 @@ export function left_shift(a: ArrayStorage, b: ArrayStorage | number): ArrayStor
 
   validateIntegerDType(b.dtype, 'left_shift');
 
+  // Fast path: single-element array treated as scalar
+  if (b.size === 1) {
+    const shiftVal = isBigIntDType(b.dtype)
+      ? Number(b.data[0] as bigint)
+      : (b.data[0] as number);
+    return leftShiftScalar(a, shiftVal);
+  }
+
   // Fast path: both contiguous, same shape
   if (canUseFastPath(a, b)) {
     return leftShiftArraysFast(a, b);
