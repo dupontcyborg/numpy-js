@@ -249,6 +249,200 @@ export function lexsort(keys: ArrayStorage[]): ArrayStorage {
 }
 
 /**
+ * Quickselect algorithm helper for number arrays
+ * Partitions array so element at kth position is in sorted position
+ */
+function quickselectNumbers(arr: number[], kth: number): void {
+  let left = 0;
+  let right = arr.length - 1;
+
+  while (left < right) {
+    // Choose pivot using median-of-three
+    const mid = Math.floor((left + right) / 2);
+    const a = arr[left]!;
+    const b = arr[mid]!;
+    const c = arr[right]!;
+
+    // Sort three elements and use middle as pivot
+    let pivotIdx: number;
+    if ((a <= b && b <= c) || (c <= b && b <= a)) pivotIdx = mid;
+    else if ((b <= a && a <= c) || (c <= a && a <= b)) pivotIdx = left;
+    else pivotIdx = right;
+
+    // Move pivot to end
+    const pivot = arr[pivotIdx]!;
+    [arr[pivotIdx], arr[right]] = [arr[right]!, arr[pivotIdx]!];
+
+    // Partition: all elements <= pivot go to left
+    let i = left;
+    for (let j = left; j < right; j++) {
+      const val = arr[j]!;
+      // Handle NaN: NaN values go to the end
+      const valIsNaN = isNaN(val);
+      const pivotIsNaN = isNaN(pivot);
+
+      if (!valIsNaN && (pivotIsNaN || val <= pivot)) {
+        [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+        i++;
+      }
+    }
+    [arr[i], arr[right]] = [arr[right]!, arr[i]!];
+
+    // Recurse on appropriate side
+    if (i === kth) {
+      return;
+    } else if (i < kth) {
+      left = i + 1;
+    } else {
+      right = i - 1;
+    }
+  }
+}
+
+/**
+ * Quickselect algorithm helper for bigint arrays
+ * Partitions array so element at kth position is in sorted position
+ */
+function quickselectBigInts(arr: bigint[], kth: number): void {
+  let left = 0;
+  let right = arr.length - 1;
+
+  while (left < right) {
+    // Choose pivot using median-of-three
+    const mid = Math.floor((left + right) / 2);
+    const a = arr[left]!;
+    const b = arr[mid]!;
+    const c = arr[right]!;
+
+    // Sort three elements and use middle as pivot
+    let pivotIdx: number;
+    if ((a <= b && b <= c) || (c <= b && b <= a)) pivotIdx = mid;
+    else if ((b <= a && a <= c) || (c <= a && a <= b)) pivotIdx = left;
+    else pivotIdx = right;
+
+    // Move pivot to end
+    const pivot = arr[pivotIdx]!;
+    [arr[pivotIdx], arr[right]] = [arr[right]!, arr[pivotIdx]!];
+
+    // Partition: all elements <= pivot go to left
+    let i = left;
+    for (let j = left; j < right; j++) {
+      if (arr[j]! <= pivot) {
+        [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+        i++;
+      }
+    }
+    [arr[i], arr[right]] = [arr[right]!, arr[i]!];
+
+    // Recurse on appropriate side
+    if (i === kth) {
+      return;
+    } else if (i < kth) {
+      left = i + 1;
+    } else {
+      right = i - 1;
+    }
+  }
+}
+
+/**
+ * Quickselect for argpartition with number values
+ * Partitions array of {value, idx} pairs by value
+ */
+function quickselectNumberIndices(arr: { value: number; idx: number }[], kth: number): void {
+  let left = 0;
+  let right = arr.length - 1;
+
+  while (left < right) {
+    // Choose pivot using median-of-three
+    const mid = Math.floor((left + right) / 2);
+    const a = arr[left]!.value;
+    const b = arr[mid]!.value;
+    const c = arr[right]!.value;
+
+    // Sort three elements and use middle as pivot
+    let pivotIdx: number;
+    if ((a <= b && b <= c) || (c <= b && b <= a)) pivotIdx = mid;
+    else if ((b <= a && a <= c) || (c <= a && a <= b)) pivotIdx = left;
+    else pivotIdx = right;
+
+    // Move pivot to end
+    const pivot = arr[pivotIdx]!.value;
+    [arr[pivotIdx], arr[right]] = [arr[right]!, arr[pivotIdx]!];
+
+    // Partition: all elements <= pivot go to left
+    let i = left;
+    for (let j = left; j < right; j++) {
+      const val = arr[j]!.value;
+      // Handle NaN: NaN values go to the end
+      const valIsNaN = isNaN(val);
+      const pivotIsNaN = isNaN(pivot);
+
+      if (!valIsNaN && (pivotIsNaN || val <= pivot)) {
+        [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+        i++;
+      }
+    }
+    [arr[i], arr[right]] = [arr[right]!, arr[i]!];
+
+    // Recurse on appropriate side
+    if (i === kth) {
+      return;
+    } else if (i < kth) {
+      left = i + 1;
+    } else {
+      right = i - 1;
+    }
+  }
+}
+
+/**
+ * Quickselect for argpartition with bigint values
+ * Partitions array of {value, idx} pairs by value
+ */
+function quickselectBigIntIndices(arr: { value: bigint; idx: number }[], kth: number): void {
+  let left = 0;
+  let right = arr.length - 1;
+
+  while (left < right) {
+    // Choose pivot using median-of-three
+    const mid = Math.floor((left + right) / 2);
+    const a = arr[left]!.value;
+    const b = arr[mid]!.value;
+    const c = arr[right]!.value;
+
+    // Sort three elements and use middle as pivot
+    let pivotIdx: number;
+    if ((a <= b && b <= c) || (c <= b && b <= a)) pivotIdx = mid;
+    else if ((b <= a && a <= c) || (c <= a && a <= b)) pivotIdx = left;
+    else pivotIdx = right;
+
+    // Move pivot to end
+    const pivot = arr[pivotIdx]!.value;
+    [arr[pivotIdx], arr[right]] = [arr[right]!, arr[pivotIdx]!];
+
+    // Partition: all elements <= pivot go to left
+    let i = left;
+    for (let j = left; j < right; j++) {
+      if (arr[j]!.value <= pivot) {
+        [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+        i++;
+      }
+    }
+    [arr[i], arr[right]] = [arr[right]!, arr[i]!];
+
+    // Recurse on appropriate side
+    if (i === kth) {
+      return;
+    } else if (i < kth) {
+      left = i + 1;
+    } else {
+      right = i - 1;
+    }
+  }
+}
+
+/**
  * Partially sort an array
  * Returns array with element at kth position in sorted position,
  * all smaller elements before it, all larger after it (not fully sorted)
@@ -295,27 +489,27 @@ export function partition(storage: ArrayStorage, kth: number, axis: number = -1)
   const outputShape = Array.from(shape).filter((_, i) => i !== normalizedAxis);
   const outerSize = outputShape.length === 0 ? 1 : outputShape.reduce((a, b) => a * b, 1);
 
-  // Partition along axis using quickselect-based partitioning
+  // Partition along axis using quickselect
   if (isBigIntDType(dtype)) {
     const resultTyped = resultData as BigInt64Array | BigUint64Array;
 
     for (let outerIdx = 0; outerIdx < outerSize; outerIdx++) {
       // Collect values along axis
-      const values: { value: bigint; origIdx: number }[] = [];
+      const values: bigint[] = [];
       for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
         const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
         const linearIdx = multiIndexToLinear(inputIndices, shape);
-        values.push({ value: resultTyped[linearIdx]!, origIdx: axisIdx });
+        values.push(resultTyped[linearIdx]!);
       }
 
-      // Partition: elements < pivot come first, then pivot, then elements >= pivot
-      values.sort((a, b) => (a.value < b.value ? -1 : a.value > b.value ? 1 : 0));
+      // Partition using quickselect
+      quickselectBigInts(values, normalizedKth);
 
       // Write partitioned values back
       for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
         const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
         const linearIdx = multiIndexToLinear(inputIndices, shape);
-        resultTyped[linearIdx] = values[axisIdx]!.value;
+        resultTyped[linearIdx] = values[axisIdx]!;
       }
     }
   } else {
@@ -328,13 +522,8 @@ export function partition(storage: ArrayStorage, kth: number, axis: number = -1)
         values.push(Number(resultData[linearIdx]!));
       }
 
-      // Partition using sort (simpler implementation)
-      values.sort((a, b) => {
-        if (isNaN(a) && isNaN(b)) return 0;
-        if (isNaN(a)) return 1;
-        if (isNaN(b)) return -1;
-        return a - b;
-      });
+      // Partition using quickselect
+      quickselectNumbers(values, normalizedKth);
 
       // Write partitioned values back
       for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
@@ -407,10 +596,10 @@ export function argpartition(storage: ArrayStorage, kth: number, axis: number = 
         values.push({ value: typedData[linearIdx]!, idx: axisIdx });
       }
 
-      // Sort by value
-      values.sort((a, b) => (a.value < b.value ? -1 : a.value > b.value ? 1 : 0));
+      // Partition using quickselect
+      quickselectBigIntIndices(values, normalizedKth);
 
-      // Write sorted indices back
+      // Write partitioned indices back
       for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
         const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
         const linearIdx = multiIndexToLinear(inputIndices, shape);
@@ -427,15 +616,10 @@ export function argpartition(storage: ArrayStorage, kth: number, axis: number = 
         values.push({ value: Number(data[linearIdx]!), idx: axisIdx });
       }
 
-      // Sort by value (NaN values go to end)
-      values.sort((a, b) => {
-        if (isNaN(a.value) && isNaN(b.value)) return 0;
-        if (isNaN(a.value)) return 1;
-        if (isNaN(b.value)) return -1;
-        return a.value - b.value;
-      });
+      // Partition using quickselect
+      quickselectNumberIndices(values, normalizedKth);
 
-      // Write sorted indices back
+      // Write partitioned indices back
       for (let axisIdx = 0; axisIdx < axisSize; axisIdx++) {
         const inputIndices = outerIndexToMultiIndex(outerIdx, normalizedAxis, axisIdx, shape);
         const linearIdx = multiIndexToLinear(inputIndices, shape);
