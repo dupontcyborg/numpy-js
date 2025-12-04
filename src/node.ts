@@ -21,6 +21,15 @@ import { parseNpy } from './io/npy/parser';
 import { serializeNpy } from './io/npy/serializer';
 import { parseNpz, type NpzParseOptions, type NpzParseResult } from './io/npz/parser';
 import { serializeNpz, type NpzSerializeOptions, type NpzArraysInput } from './io/npz/serializer';
+import {
+  parseTxt,
+  genfromtxt as genfromtxtCore,
+  fromregex as fromregexCore,
+  serializeTxt,
+  type ParseTxtOptions,
+  type SerializeTxtOptions,
+} from './io/txt';
+import type { DType } from './core/dtype';
 
 // Re-export everything from the main module for convenience
 export * from './index';
@@ -254,4 +263,172 @@ export async function savez_compressed(path: string, arrays: NpzArraysInput): Pr
     path = path + '.npz';
   }
   return saveNpz(path, arrays, { compress: true });
+}
+
+// =============================================================================
+// Text I/O Functions
+// =============================================================================
+
+/**
+ * Options for loadtxt
+ */
+export interface LoadTxtOptions extends ParseTxtOptions {}
+
+/**
+ * Options for savetxt
+ */
+export interface SaveTxtOptions extends SerializeTxtOptions {}
+
+/**
+ * Load data from a text file.
+ *
+ * Each row in the text file must have the same number of values.
+ *
+ * @param path - Path to the text file
+ * @param options - Load options
+ * @returns NDArray with the loaded data
+ *
+ * @example
+ * ```typescript
+ * // Load a CSV file
+ * const arr = await loadtxt('data.csv', { delimiter: ',' });
+ *
+ * // Load with specific columns
+ * const arr = await loadtxt('data.txt', { usecols: [0, 2] });
+ *
+ * // Skip header rows
+ * const arr = await loadtxt('data.txt', { skiprows: 1 });
+ * ```
+ */
+export async function loadtxt(path: string, options: LoadTxtOptions = {}): Promise<NDArray> {
+  const content = await readFile(path, { encoding: (options.encoding ?? 'utf-8') as 'utf-8' });
+  return parseTxt(content, options);
+}
+
+/**
+ * Synchronously load data from a text file.
+ *
+ * @param path - Path to the text file
+ * @param options - Load options
+ * @returns NDArray with the loaded data
+ */
+export function loadtxtSync(path: string, options: LoadTxtOptions = {}): NDArray {
+  const content = readFileSync(path, { encoding: (options.encoding ?? 'utf-8') as 'utf-8' });
+  return parseTxt(content, options);
+}
+
+/**
+ * Save an array to a text file.
+ *
+ * @param path - Path to save the text file
+ * @param arr - The array to save (must be 1D or 2D)
+ * @param options - Save options
+ *
+ * @example
+ * ```typescript
+ * // Save as CSV
+ * await savetxt('data.csv', arr, { delimiter: ',' });
+ *
+ * // Save with custom format
+ * await savetxt('data.txt', arr, { fmt: '%.2f', delimiter: '\t' });
+ *
+ * // Save with header
+ * await savetxt('data.txt', arr, { header: 'x y z' });
+ * ```
+ */
+export async function savetxt(
+  path: string,
+  arr: NDArray,
+  options: SaveTxtOptions = {}
+): Promise<void> {
+  const content = serializeTxt(arr, options);
+  await writeFile(path, content, 'utf-8');
+}
+
+/**
+ * Synchronously save an array to a text file.
+ *
+ * @param path - Path to save the text file
+ * @param arr - The array to save (must be 1D or 2D)
+ * @param options - Save options
+ */
+export function savetxtSync(path: string, arr: NDArray, options: SaveTxtOptions = {}): void {
+  const content = serializeTxt(arr, options);
+  writeFileSync(path, content, 'utf-8');
+}
+
+/**
+ * Load data from a text file with more flexible handling.
+ *
+ * Similar to loadtxt but handles missing values more gracefully.
+ *
+ * @param path - Path to the text file
+ * @param options - Load options
+ * @returns NDArray with the loaded data
+ *
+ * @example
+ * ```typescript
+ * // Load file with missing values
+ * const arr = await genfromtxt('data.csv', {
+ *   delimiter: ',',
+ *   missing_values: ['NA', ''],
+ *   filling_values: 0
+ * });
+ * ```
+ */
+export async function genfromtxt(path: string, options: LoadTxtOptions = {}): Promise<NDArray> {
+  const content = await readFile(path, { encoding: (options.encoding ?? 'utf-8') as 'utf-8' });
+  return genfromtxtCore(content, options);
+}
+
+/**
+ * Synchronously load data from a text file with more flexible handling.
+ *
+ * @param path - Path to the text file
+ * @param options - Load options
+ * @returns NDArray with the loaded data
+ */
+export function genfromtxtSync(path: string, options: LoadTxtOptions = {}): NDArray {
+  const content = readFileSync(path, { encoding: (options.encoding ?? 'utf-8') as 'utf-8' });
+  return genfromtxtCore(content, options);
+}
+
+/**
+ * Load data from a text file using regular expressions.
+ *
+ * @param path - Path to the text file
+ * @param regexp - Regular expression with capture groups for extracting values
+ * @param dtype - Data type of the resulting array (default: 'float64')
+ * @returns NDArray with the extracted data
+ *
+ * @example
+ * ```typescript
+ * // Extract x,y pairs from "Point: x=1.0, y=2.0" format
+ * const arr = await fromregex('points.txt', /x=([\d.]+), y=([\d.]+)/);
+ * ```
+ */
+export async function fromregex(
+  path: string,
+  regexp: RegExp | string,
+  dtype: DType = 'float64'
+): Promise<NDArray> {
+  const content = await readFile(path, { encoding: 'utf-8' });
+  return fromregexCore(content, regexp, dtype);
+}
+
+/**
+ * Synchronously load data from a text file using regular expressions.
+ *
+ * @param path - Path to the text file
+ * @param regexp - Regular expression with capture groups for extracting values
+ * @param dtype - Data type of the resulting array (default: 'float64')
+ * @returns NDArray with the extracted data
+ */
+export function fromregexSync(
+  path: string,
+  regexp: RegExp | string,
+  dtype: DType = 'float64'
+): NDArray {
+  const content = readFileSync(path, { encoding: 'utf-8' });
+  return fromregexCore(content, regexp, dtype);
 }

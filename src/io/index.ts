@@ -1,13 +1,13 @@
 /**
  * IO module for numpy-ts
  *
- * This module provides parsing and serialization for NPY and NPZ formats.
- * These functions work with bytes (Uint8Array/ArrayBuffer) and are environment-agnostic.
+ * This module provides parsing and serialization for NPY, NPZ, and text formats.
+ * These functions work with bytes/strings and are environment-agnostic.
  *
  * For file system operations (save/load), use the Node.js-specific entry point:
- *   import { save, load } from 'numpy-ts/node';
+ *   import { save, load, loadtxt, savetxt } from 'numpy-ts/node';
  *
- * For browser usage, use fetch or FileReader to get the bytes, then use these functions.
+ * For browser usage, use fetch or FileReader to get the bytes/text, then use these functions.
  */
 
 // NPY format
@@ -33,3 +33,13 @@ export {
   type NpzParseResult,
 } from './npz/parser';
 export { serializeNpz, serializeNpzSync, type NpzSerializeOptions } from './npz/serializer';
+
+// Text format (CSV, TSV, etc.)
+export {
+  parseTxt,
+  genfromtxt,
+  fromregex,
+  serializeTxt,
+  type ParseTxtOptions,
+  type SerializeTxtOptions,
+} from './txt';
