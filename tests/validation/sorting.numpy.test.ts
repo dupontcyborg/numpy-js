@@ -140,6 +140,78 @@ result = np.partition(arr, 2)
       const npResultArr = npResult.value as number[];
       expect(resultArr[2]).toBe(npResultArr[2]);
     });
+
+    it('validates partition() on 2D array along axis=-1', () => {
+      const arr = array([
+        [3, 1, 4, 2],
+        [8, 5, 7, 6],
+      ]);
+      const result = partition(arr, 2, -1);
+
+      const npResult = runNumPy(`
+arr = np.array([[3, 1, 4, 2], [8, 5, 7, 6]])
+result = np.partition(arr, 2, axis=-1)
+`);
+
+      // Check that kth element in each row is in correct position
+      const resultArr = (result as any).toArray() as number[][];
+      const npResultArr = npResult.value as number[][];
+      expect(resultArr[0]![2]).toBe(npResultArr[0]![2]);
+      expect(resultArr[1]![2]).toBe(npResultArr[1]![2]);
+    });
+
+    it('validates partition() on 2D array along axis=0', () => {
+      const arr = array([
+        [3, 1, 4],
+        [2, 5, 0],
+        [8, 7, 6],
+      ]);
+      const result = partition(arr, 1, 0);
+
+      const npResult = runNumPy(`
+arr = np.array([[3, 1, 4], [2, 5, 0], [8, 7, 6]])
+result = np.partition(arr, 1, axis=0)
+`);
+
+      // Check that kth element in each column is in correct position
+      const resultArr = (result as any).toArray() as number[][];
+      const npResultArr = npResult.value as number[][];
+      expect(resultArr[1]![0]).toBe(npResultArr[1]![0]);
+      expect(resultArr[1]![1]).toBe(npResultArr[1]![1]);
+      expect(resultArr[1]![2]).toBe(npResultArr[1]![2]);
+    });
+
+    it('validates partition() with kth=0 (first element)', () => {
+      const arr = array([5, 2, 8, 1, 9]);
+      const result = partition(arr, 0);
+
+      const npResult = runNumPy(`
+arr = np.array([5, 2, 8, 1, 9])
+result = np.partition(arr, 0)
+`);
+
+      // Element at index 0 should be the minimum
+      const resultArr = (result as any).toArray() as number[];
+      const npResultArr = npResult.value as number[];
+      expect(resultArr[0]).toBe(npResultArr[0]);
+      expect(resultArr[0]).toBe(1); // Should be minimum
+    });
+
+    it('validates partition() with kth=-1 (last element)', () => {
+      const arr = array([5, 2, 8, 1, 9]);
+      const result = partition(arr, -1);
+
+      const npResult = runNumPy(`
+arr = np.array([5, 2, 8, 1, 9])
+result = np.partition(arr, -1)
+`);
+
+      // Element at last index should be the maximum
+      const resultArr = (result as any).toArray() as number[];
+      const npResultArr = npResult.value as number[];
+      expect(resultArr[4]).toBe(npResultArr[4]);
+      expect(resultArr[4]).toBe(9); // Should be maximum
+    });
   });
 
   describe('argpartition()', () => {
@@ -158,6 +230,99 @@ result = np.argpartition(arr, 2)
       const originalVal = arr.get([resultIdx]);
       const npOriginalVal = [3, 4, 2, 1][npResultIdx];
       expect(originalVal).toBe(npOriginalVal);
+    });
+
+    it('validates argpartition() on 2D array along axis=-1', () => {
+      const arr = array([
+        [3, 1, 4, 2],
+        [8, 5, 7, 6],
+      ]);
+      const result = argpartition(arr, 2, -1);
+
+      const npResult = runNumPy(`
+arr = np.array([[3, 1, 4, 2], [8, 5, 7, 6]])
+result = np.argpartition(arr, 2, axis=-1)
+`);
+
+      // Check that indices at kth position point to correct values
+      const resultArr = (result as any).toArray() as number[][];
+      const npResultArr = npResult.value as number[][];
+      const originalArr = arr.toArray() as number[][];
+
+      // Value at kth index should be the same
+      const tsIdx0 = resultArr[0]![2]!;
+      const npIdx0 = npResultArr[0]![2]!;
+      expect(originalArr[0]![tsIdx0]).toBe(originalArr[0]![npIdx0]);
+
+      const tsIdx1 = resultArr[1]![2]!;
+      const npIdx1 = npResultArr[1]![2]!;
+      expect(originalArr[1]![tsIdx1]).toBe(originalArr[1]![npIdx1]);
+    });
+
+    it('validates argpartition() on 2D array along axis=0', () => {
+      const arr = array([
+        [3, 1, 4],
+        [2, 5, 0],
+        [8, 7, 6],
+      ]);
+      const result = argpartition(arr, 1, 0);
+
+      const npResult = runNumPy(`
+arr = np.array([[3, 1, 4], [2, 5, 0], [8, 7, 6]])
+result = np.argpartition(arr, 1, axis=0)
+`);
+
+      // Check that indices at kth position point to correct values
+      const resultArr = (result as any).toArray() as number[][];
+      const npResultArr = npResult.value as number[][];
+      const originalArr = arr.toArray() as number[][];
+
+      // Check each column's kth element
+      for (let col = 0; col < 3; col++) {
+        const tsIdx = resultArr[1]![col]!;
+        const npIdx = npResultArr[1]![col]!;
+        expect(originalArr[tsIdx]![col]).toBe(originalArr[npIdx]![col]);
+      }
+    });
+
+    it('validates argpartition() with kth=0 (first element)', () => {
+      const arr = array([5, 2, 8, 1, 9]);
+      const result = argpartition(arr, 0);
+
+      const npResult = runNumPy(`
+arr = np.array([5, 2, 8, 1, 9])
+result = np.argpartition(arr, 0)
+`);
+
+      // Index at position 0 should point to minimum value
+      const resultArr = (result as any).toArray() as number[];
+      const npResultArr = npResult.value as number[];
+      const originalArr = arr.toArray() as number[];
+
+      const tsIdx = resultArr[0]!;
+      const npIdx = npResultArr[0]!;
+      expect(originalArr[tsIdx]).toBe(originalArr[npIdx]);
+      expect(originalArr[tsIdx]).toBe(1); // Should be minimum
+    });
+
+    it('validates argpartition() with kth=-1 (last element)', () => {
+      const arr = array([5, 2, 8, 1, 9]);
+      const result = argpartition(arr, -1);
+
+      const npResult = runNumPy(`
+arr = np.array([5, 2, 8, 1, 9])
+result = np.argpartition(arr, -1)
+`);
+
+      // Index at last position should point to maximum value
+      const resultArr = (result as any).toArray() as number[];
+      const npResultArr = npResult.value as number[];
+      const originalArr = arr.toArray() as number[];
+
+      const tsIdx = resultArr[4]!;
+      const npIdx = npResultArr[4]!;
+      expect(originalArr[tsIdx]).toBe(originalArr[npIdx]);
+      expect(originalArr[tsIdx]).toBe(9); // Should be maximum
     });
   });
 
