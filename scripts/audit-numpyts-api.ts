@@ -50,9 +50,13 @@ function getNumpyTsTopLevelFunctions(): Record<string, any> {
     }
   }
 
-  // Scan node entry point for I/O functions (load, save, savez, savez_compressed)
-  // These are only exported from the /node entry point
-  const nodeOnlyFunctions = ['load', 'save', 'savez', 'savez_compressed'];
+  // Scan node entry point for I/O functions that are only exported from /node
+  // These include binary I/O (load, save, savez, savez_compressed)
+  // and text I/O (loadtxt, savetxt, genfromtxt, fromregex)
+  const nodeOnlyFunctions = [
+    'load', 'save', 'savez', 'savez_compressed',
+    'loadtxt', 'savetxt', 'genfromtxt', 'fromregex'
+  ];
   for (const name of nodeOnlyFunctions) {
     if (name in npNode && typeof (npNode as any)[name] === 'function') {
       functions[name] = {
