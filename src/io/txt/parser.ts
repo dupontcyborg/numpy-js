@@ -174,9 +174,9 @@ export function parseTxt(text: string, options: ParseTxtOptions = {}): NDArray {
   // Check if all rows have the same length
   const ncols = data[0]?.length ?? 0;
   for (let i = 1; i < data.length; i++) {
-    if (data[i].length !== ncols) {
+    if (data[i]!.length !== ncols) {
       throw new Error(
-        `Inconsistent number of columns: row 0 has ${ncols} columns, row ${i} has ${data[i].length} columns`
+        `Inconsistent number of columns: row 0 has ${ncols} columns, row ${i} has ${data[i]!.length} columns`
       );
     }
   }
@@ -258,7 +258,7 @@ export function fromregex(
   }
 
   // If only one column, return 1D array
-  if (data[0].length === 1) {
+  if (data[0]!.length === 1) {
     return array(
       data.map((row) => row[0]),
       dtype
