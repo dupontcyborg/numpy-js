@@ -14,6 +14,7 @@ import { join } from 'path';
 
 import { parseNpy, serializeNpy } from '../../src/io/npy';
 import { parseNpz, serializeNpz, serializeNpzSync } from '../../src/io/npz';
+import { parseTxt, serializeTxt, genfromtxt, fromregex } from '../../src/io/txt';
 import { array, arange } from '../../src/core/ndarray';
 import type { DType } from '../../src/core/dtype';
 
@@ -414,6 +415,283 @@ np.save('${npyPath}', arr)
       expect(modified.get([999])).toBe(1998);
 
       unlinkSync(npyPath);
+    });
+  });
+
+  describe('Text I/O Cross-Language Validation', () => {
+    describe('Python → TypeScript (read text files created by NumPy)', () => {
+      it('reads loadtxt output from NumPy (whitespace)', () => {
+        const txtPath = join(tempDir, 'test_loadtxt.txt');
+
+        const pythonCode = `
+import numpy as np
+arr = np.array([[1.5, 2.5, 3.5], [4.5, 5.5, 6.5]])
+np.savetxt('${txtPath}', arr)
+`;
+        execSync(`${PYTHON_CMD} -c "${pythonCode}"`, { stdio: 'pipe' });
+
+        const content = readFileSync(txtPath, 'utf-8');
+        const arr = parseTxt(content);
+
+        expect(arr.shape).toEqual([2, 3]);
+        expect(arr.get([0, 0])).toBeCloseTo(1.5, 5);
+        expect(arr.get([1, 2])).toBeCloseTo(6.5, 5);
+
+        unlinkSync(txtPath);
+      });
+
+      it('reads loadtxt output from NumPy (CSV)', () => {
+        const txtPath = join(tempDir, 'test_csv.txt');
+
+        const pythonCode = `
+import numpy as np
+arr = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+np.savetxt('${txtPath}', arr, delimiter=',', fmt='%d')
+`;
+        execSync(`${PYTHON_CMD} -c "${pythonCode}"`, { stdio: 'pipe' });
+
+        const content = readFileSync(txtPath, 'utf-8');
+        const arr = parseTxt(content, { delimiter: ',' });
+
+        expect(arr.shape).toEqual([3, 3]);
+        expect(arr.toArray()).toEqual([
+          [1, 2, 3],
+          [4, 5, 6],
+          [7, 8, 9],
+        ]);
+
+        unlinkSync(txtPath);
+      });
+
+      it('reads file with header from NumPy', () => {
+        const txtPath = join(tempDir, 'test_header.txt');
+
+        const pythonCode = `
+import numpy as np
+arr = np.array([[1.0, 2.0], [3.0, 4.0]])
+np.savetxt('${txtPath}', arr, header='x y', fmt='%.1f')
+`;
+        execSync(`${PYTHON_CMD} -c "${pythonCode}"`, { stdio: 'pipe' });
+
+        const content = readFileSync(txtPath, 'utf-8');
+        const arr = parseTxt(content);
+
+        expect(arr.shape).toEqual([2, 2]);
+        expect(arr.toArray()).toEqual([
+          [1, 2],
+          [3, 4],
+        ]);
+
+        unlinkSync(txtPath);
+      });
+
+      it('reads 1D array from NumPy', () => {
+        const txtPath = join(tempDir, 'test_1d.txt');
+
+        const pythonCode = `
+import numpy as np
+arr = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+np.savetxt('${txtPath}', arr, fmt='%.1f')
+`;
+        execSync(`${PYTHON_CMD} -c "${pythonCode}"`, { stdio: 'pipe' });
+
+        const content = readFileSync(txtPath, 'utf-8');
+        const arr = parseTxt(content);
+
+        expect(arr.shape).toEqual([5]);
+        expect(arr.toArray()).toEqual([1, 2, 3, 4, 5]);
+
+        unlinkSync(txtPath);
+      });
+    });
+
+    describe('TypeScript → Python (validate text files created by numpy-ts)', () => {
+      it('validates savetxt output with NumPy loadtxt', () => {
+        const txtPath = join(tempDir, 'ts_savetxt.txt');
+
+        const arr = array([
+          [1.5, 2.5, 3.5],
+          [4.5, 5.5, 6.5],
+        ]);
+        const content = serializeTxt(arr, { fmt: '%.6f' });
+        writeFileSync(txtPath, content);
+
+        const pythonCode = `
+import numpy as np
+import json
+arr = np.loadtxt('${txtPath}')
+result = {
+    'shape': list(arr.shape),
+    'values_match': np.allclose(arr, [[1.5, 2.5, 3.5], [4.5, 5.5, 6.5]])
+}
+print(json.dumps(result))
+`;
+
+        const output = execSync(`${PYTHON_CMD} -c "${pythonCode}"`, { encoding: 'utf-8' });
+        const result = JSON.parse(output);
+
+        expect(result.shape).toEqual([2, 3]);
+        expect(result.values_match).toBe(true);
+
+        unlinkSync(txtPath);
+      });
+
+      it('validates CSV output with NumPy loadtxt', () => {
+        const txtPath = join(tempDir, 'ts_csv.txt');
+
+        const arr = array([
+          [1, 2, 3],
+          [4, 5, 6],
+        ]);
+        const content = serializeTxt(arr, { fmt: '%d', delimiter: ',' });
+        writeFileSync(txtPath, content);
+
+        const pythonCode = `
+import numpy as np
+import json
+arr = np.loadtxt('${txtPath}', delimiter=',')
+result = {
+    'shape': list(arr.shape),
+    'values_match': np.array_equal(arr, [[1, 2, 3], [4, 5, 6]])
+}
+print(json.dumps(result))
+`;
+
+        const output = execSync(`${PYTHON_CMD} -c "${pythonCode}"`, { encoding: 'utf-8' });
+        const result = JSON.parse(output);
+
+        expect(result.shape).toEqual([2, 3]);
+        expect(result.values_match).toBe(true);
+
+        unlinkSync(txtPath);
+      });
+
+      it('validates 1D array output with NumPy', () => {
+        const txtPath = join(tempDir, 'ts_1d.txt');
+
+        const arr = array([10, 20, 30, 40, 50]);
+        const content = serializeTxt(arr, { fmt: '%d' });
+        writeFileSync(txtPath, content);
+
+        const pythonCode = `
+import numpy as np
+import json
+arr = np.loadtxt('${txtPath}')
+result = {
+    'shape': list(arr.shape),
+    'values': arr.tolist()
+}
+print(json.dumps(result))
+`;
+
+        const output = execSync(`${PYTHON_CMD} -c "${pythonCode}"`, { encoding: 'utf-8' });
+        const result = JSON.parse(output);
+
+        expect(result.shape).toEqual([5]);
+        expect(result.values).toEqual([10, 20, 30, 40, 50]);
+
+        unlinkSync(txtPath);
+      });
+
+      it('validates scientific notation output', () => {
+        const txtPath = join(tempDir, 'ts_scientific.txt');
+
+        const arr = array([1e-10, 2e5, 3.14159]);
+        const content = serializeTxt(arr, { fmt: '%.6e' });
+        writeFileSync(txtPath, content);
+
+        const pythonCode = `
+import numpy as np
+import json
+arr = np.loadtxt('${txtPath}')
+expected = [1e-10, 2e5, 3.14159]
+result = {
+    'shape': list(arr.shape),
+    'values_match': np.allclose(arr, expected)
+}
+print(json.dumps(result))
+`;
+
+        const output = execSync(`${PYTHON_CMD} -c "${pythonCode}"`, { encoding: 'utf-8' });
+        const result = JSON.parse(output);
+
+        expect(result.values_match).toBe(true);
+
+        unlinkSync(txtPath);
+      });
+    });
+
+    describe('genfromtxt validation', () => {
+      it('handles missing values like NumPy', () => {
+        const txtPath = join(tempDir, 'test_missing.txt');
+
+        // Create file with missing values
+        writeFileSync(txtPath, '1,2,3\n4,,6\n7,8,9\n');
+
+        // Compare with NumPy's genfromtxt
+        const pythonCode = `
+import numpy as np
+import json
+arr = np.genfromtxt('${txtPath}', delimiter=',')
+result = {
+    'shape': list(arr.shape),
+    'has_nan': bool(np.isnan(arr[1, 1])),
+    'valid_values': [arr[0, 0], arr[2, 2]]
+}
+print(json.dumps(result))
+`;
+
+        const output = execSync(`${PYTHON_CMD} -c "${pythonCode}"`, { encoding: 'utf-8' });
+        const npResult = JSON.parse(output);
+
+        // Now test numpy-ts
+        const content = readFileSync(txtPath, 'utf-8');
+        const arr = genfromtxt(content, { delimiter: ',' });
+
+        expect(arr.shape).toEqual(npResult.shape);
+        expect(Number.isNaN(arr.get([1, 1]) as number)).toBe(npResult.has_nan);
+        expect(arr.get([0, 0])).toBe(npResult.valid_values[0]);
+        expect(arr.get([2, 2])).toBe(npResult.valid_values[1]);
+
+        unlinkSync(txtPath);
+      });
+    });
+
+    describe('fromregex validation', () => {
+      it('extracts values correctly with regex', () => {
+        const txtPath = join(tempDir, 'test_regex.txt');
+
+        writeFileSync(txtPath, 'Point: x=1.5, y=2.5\nPoint: x=3.5, y=4.5\nPoint: x=5.5, y=6.5\n');
+
+        // Note: NumPy's fromregex requires structured dtype, so we validate
+        // against expected values directly rather than comparing to NumPy
+
+        const content = readFileSync(txtPath, 'utf-8');
+        const arr = fromregex(content, /x=([\d.]+), y=([\d.]+)/);
+
+        expect(arr.shape).toEqual([3, 2]);
+        expect(arr.toArray()).toEqual([
+          [1.5, 2.5],
+          [3.5, 4.5],
+          [5.5, 6.5],
+        ]);
+
+        unlinkSync(txtPath);
+      });
+
+      it('extracts single column values', () => {
+        const txtPath = join(tempDir, 'test_regex_single.txt');
+
+        writeFileSync(txtPath, 'value: 10\nvalue: 20\nvalue: 30\n');
+
+        const content = readFileSync(txtPath, 'utf-8');
+        const arr = fromregex(content, /value: (\d+)/);
+
+        expect(arr.shape).toEqual([3]);
+        expect(arr.toArray()).toEqual([10, 20, 30]);
+
+        unlinkSync(txtPath);
+      });
     });
   });
 });
