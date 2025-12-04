@@ -179,6 +179,20 @@ export {
   right_shift,
   packbits,
   unpackbits,
+  // Sorting functions
+  sort,
+  argsort,
+  lexsort,
+  partition,
+  argpartition,
+  sort_complex,
+  // Searching functions
+  nonzero,
+  flatnonzero,
+  where,
+  searchsorted,
+  extract,
+  count_nonzero,
 } from './core/ndarray';
 
 // IO functions (environment-agnostic parsing/serialization)

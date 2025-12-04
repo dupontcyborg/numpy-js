@@ -23,6 +23,7 @@ import * as trigOps from '../ops/trig';
 import * as hyperbolicOps from '../ops/hyperbolic';
 import * as advancedOps from '../ops/advanced';
 import * as bitwiseOps from '../ops/bitwise';
+import * as sortingOps from '../ops/sorting';
 
 export class NDArray {
   // Internal storage
@@ -1062,6 +1063,67 @@ export class NDArray {
   nanmedian(axis?: number, keepdims: boolean = false): NDArray | number {
     const result = reductionOps.nanmedian(this._storage, axis, keepdims);
     return typeof result === 'number' ? result : NDArray._fromStorage(result);
+  }
+
+  // ========================================
+  // Sorting and Searching
+  // ========================================
+
+  /**
+   * Return a sorted copy of the array
+   * @param axis - Axis along which to sort. Default is -1 (last axis)
+   * @returns Sorted array
+   */
+  sort(axis: number = -1): NDArray {
+    return NDArray._fromStorage(sortingOps.sort(this._storage, axis));
+  }
+
+  /**
+   * Returns the indices that would sort this array
+   * @param axis - Axis along which to sort. Default is -1 (last axis)
+   * @returns Array of indices that sort the array
+   */
+  argsort(axis: number = -1): NDArray {
+    return NDArray._fromStorage(sortingOps.argsort(this._storage, axis));
+  }
+
+  /**
+   * Partially sort the array
+   * @param kth - Element index to partition by
+   * @param axis - Axis along which to sort. Default is -1 (last axis)
+   * @returns Partitioned array
+   */
+  partition(kth: number, axis: number = -1): NDArray {
+    return NDArray._fromStorage(sortingOps.partition(this._storage, kth, axis));
+  }
+
+  /**
+   * Returns indices that would partition the array
+   * @param kth - Element index to partition by
+   * @param axis - Axis along which to sort. Default is -1 (last axis)
+   * @returns Array of indices
+   */
+  argpartition(kth: number, axis: number = -1): NDArray {
+    return NDArray._fromStorage(sortingOps.argpartition(this._storage, kth, axis));
+  }
+
+  /**
+   * Return the indices of non-zero elements
+   * @returns Tuple of arrays, one for each dimension
+   */
+  nonzero(): NDArray[] {
+    const storages = sortingOps.nonzero(this._storage);
+    return storages.map((s) => NDArray._fromStorage(s));
+  }
+
+  /**
+   * Find indices where elements should be inserted to maintain order
+   * @param v - Values to insert
+   * @param side - 'left' or 'right' side to insert
+   * @returns Indices where values should be inserted
+   */
+  searchsorted(v: NDArray, side: 'left' | 'right' = 'left'): NDArray {
+    return NDArray._fromStorage(sortingOps.searchsorted(this._storage, v._storage, side));
   }
 
   // Shape manipulation
@@ -4488,4 +4550,140 @@ export function unravel_index(
   const indicesArg = indices instanceof NDArray ? indices.storage : indices;
   const storages = advancedOps.unravel_index(indicesArg, shape, order);
   return storages.map((s) => NDArray._fromStorage(s));
+}
+
+// ========================================
+// Sorting and Searching Functions
+// ========================================
+
+/**
+ * Return a sorted copy of an array
+ * @param a - Input array
+ * @param axis - Axis along which to sort. Default is -1 (last axis)
+ * @returns Sorted array
+ */
+export function sort(a: NDArray, axis: number = -1): NDArray {
+  return NDArray._fromStorage(sortingOps.sort(a.storage, axis));
+}
+
+/**
+ * Returns the indices that would sort an array
+ * @param a - Input array
+ * @param axis - Axis along which to sort. Default is -1 (last axis)
+ * @returns Array of indices that sort the input array
+ */
+export function argsort(a: NDArray, axis: number = -1): NDArray {
+  return NDArray._fromStorage(sortingOps.argsort(a.storage, axis));
+}
+
+/**
+ * Perform an indirect stable sort using a sequence of keys
+ * @param keys - Array of NDArrays, the last key is the primary sort key
+ * @returns Array of indices that would sort the keys
+ */
+export function lexsort(keys: NDArray[]): NDArray {
+  const storages = keys.map((k) => k.storage);
+  return NDArray._fromStorage(sortingOps.lexsort(storages));
+}
+
+/**
+ * Partially sort an array
+ * @param a - Input array
+ * @param kth - Element index to partition by
+ * @param axis - Axis along which to sort. Default is -1 (last axis)
+ * @returns Partitioned array
+ */
+export function partition(a: NDArray, kth: number, axis: number = -1): NDArray {
+  return NDArray._fromStorage(sortingOps.partition(a.storage, kth, axis));
+}
+
+/**
+ * Returns indices that would partition an array
+ * @param a - Input array
+ * @param kth - Element index to partition by
+ * @param axis - Axis along which to sort. Default is -1 (last axis)
+ * @returns Array of indices
+ */
+export function argpartition(a: NDArray, kth: number, axis: number = -1): NDArray {
+  return NDArray._fromStorage(sortingOps.argpartition(a.storage, kth, axis));
+}
+
+/**
+ * Sort a complex array using the real part first, then the imaginary part
+ * For real arrays, returns a sorted 1D array
+ * @param a - Input array
+ * @returns Sorted 1D array
+ */
+export function sort_complex(a: NDArray): NDArray {
+  return NDArray._fromStorage(sortingOps.sort_complex(a.storage));
+}
+
+/**
+ * Return the indices of the elements that are non-zero
+ * @param a - Input array
+ * @returns Tuple of arrays, one for each dimension
+ */
+export function nonzero(a: NDArray): NDArray[] {
+  const storages = sortingOps.nonzero(a.storage);
+  return storages.map((s) => NDArray._fromStorage(s));
+}
+
+/**
+ * Return indices of non-zero elements in flattened array
+ * @param a - Input array
+ * @returns Array of indices
+ */
+export function flatnonzero(a: NDArray): NDArray {
+  return NDArray._fromStorage(sortingOps.flatnonzero(a.storage));
+}
+
+/**
+ * Return elements from x or y depending on condition
+ * If only condition is given, returns indices where condition is true (like nonzero)
+ * @param condition - Boolean array or condition
+ * @param x - Values where condition is true (optional)
+ * @param y - Values where condition is false (optional)
+ * @returns Array with elements chosen from x or y, or indices if only condition given
+ */
+export function where(condition: NDArray, x?: NDArray, y?: NDArray): NDArray | NDArray[] {
+  const result = sortingOps.where(condition.storage, x?.storage, y?.storage);
+  if (Array.isArray(result)) {
+    return result.map((s) => NDArray._fromStorage(s));
+  }
+  return NDArray._fromStorage(result);
+}
+
+/**
+ * Find indices where elements should be inserted to maintain order
+ * @param a - Input array (must be sorted in ascending order)
+ * @param v - Values to insert
+ * @param side - 'left' or 'right' side to insert
+ * @returns Indices where values should be inserted
+ */
+export function searchsorted(a: NDArray, v: NDArray, side: 'left' | 'right' = 'left'): NDArray {
+  return NDArray._fromStorage(sortingOps.searchsorted(a.storage, v.storage, side));
+}
+
+/**
+ * Return the elements of an array that satisfy some condition
+ * @param condition - Boolean array
+ * @param a - Input array
+ * @returns 1D array of elements where condition is true
+ */
+export function extract(condition: NDArray, a: NDArray): NDArray {
+  return NDArray._fromStorage(sortingOps.extract(condition.storage, a.storage));
+}
+
+/**
+ * Count number of non-zero values in the array
+ * @param a - Input array
+ * @param axis - Axis along which to count (optional)
+ * @returns Count of non-zero values
+ */
+export function count_nonzero(a: NDArray, axis?: number): NDArray | number {
+  const result = sortingOps.count_nonzero(a.storage, axis);
+  if (typeof result === 'number') {
+    return result;
+  }
+  return NDArray._fromStorage(result);
 }

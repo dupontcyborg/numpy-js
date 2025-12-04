@@ -20,7 +20,7 @@ def setup_arrays(setup_config):
         value = config.get("value")
 
         # Handle scalar values
-        if key in ["n", "axis", "new_shape", "shape", "fill_value", "target_shape", "dims"]:
+        if key in ["n", "axis", "new_shape", "shape", "fill_value", "target_shape", "dims", "kth"]:
             arrays[key] = shape[0]
             if key in ["new_shape", "shape", "target_shape", "dims"]:
                 arrays[key] = shape
@@ -313,6 +313,37 @@ def run_operation(spec):
         result = np.packbits(arrays["a"].astype(np.uint8))
     elif operation == "unpackbits":
         result = np.unpackbits(arrays["a"].astype(np.uint8))
+
+    # Sorting operations
+    elif operation == "sort":
+        result = np.sort(arrays["a"])
+    elif operation == "argsort":
+        result = np.argsort(arrays["a"])
+    elif operation == "partition":
+        kth = arrays.get("kth", 0)
+        result = np.partition(arrays["a"], kth)
+    elif operation == "argpartition":
+        kth = arrays.get("kth", 0)
+        result = np.argpartition(arrays["a"], kth)
+    elif operation == "lexsort":
+        result = np.lexsort((arrays["a"].ravel(), arrays["b"].ravel()))
+    elif operation == "sort_complex":
+        result = np.sort_complex(arrays["a"]).real  # Return real part for comparison
+
+    # Searching operations
+    elif operation == "nonzero":
+        idx = np.nonzero(arrays["a"])
+        result = np.stack(idx, axis=0)
+    elif operation == "flatnonzero":
+        result = np.flatnonzero(arrays["a"])
+    elif operation == "where":
+        result = np.where(arrays["a"], arrays["b"], arrays["c"])
+    elif operation == "searchsorted":
+        result = np.searchsorted(arrays["a"].ravel(), arrays["b"].ravel())
+    elif operation == "extract":
+        result = np.extract(arrays["condition"], arrays["a"])
+    elif operation == "count_nonzero":
+        result = np.count_nonzero(arrays["a"])
 
     else:
         raise ValueError(f"Unknown operation: {operation}")

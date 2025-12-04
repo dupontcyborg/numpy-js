@@ -101,7 +101,7 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
     const { shape, dtype = 'float64', fill = 'zeros', value } = config;
 
     // Handle scalar values
-    if (['n', 'axis', 'new_shape', 'shape', 'fill_value', 'target_shape', 'dims'].includes(key)) {
+    if (['n', 'axis', 'new_shape', 'shape', 'fill_value', 'target_shape', 'dims', 'kth'].includes(key)) {
       arrays[key] = shape[0];
       if (key === 'new_shape' || key === 'shape' || key === 'target_shape' || key === 'dims') {
         arrays[key] = shape;
@@ -392,6 +392,36 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
       return np.packbits(arrays.a);
     case 'unpackbits':
       return np.unpackbits(arrays.a);
+
+    // Sorting operations
+    case 'sort':
+      return np.sort(arrays.a);
+    case 'argsort':
+      return np.argsort(arrays.a);
+    case 'partition':
+      return np.partition(arrays.a, arrays.kth || 0);
+    case 'argpartition':
+      return np.argpartition(arrays.a, arrays.kth || 0);
+    case 'lexsort':
+      return np.lexsort([arrays.a, arrays.b]);
+    case 'sort_complex':
+      return np.sort_complex(arrays.a);
+
+    // Searching operations
+    case 'nonzero': {
+      const idx = np.nonzero(arrays.a);
+      return np.stack(idx, 0);
+    }
+    case 'flatnonzero':
+      return np.flatnonzero(arrays.a);
+    case 'where':
+      return np.where(arrays.a, arrays.b, arrays.c);
+    case 'searchsorted':
+      return np.searchsorted(arrays.a, arrays.b);
+    case 'extract':
+      return np.extract(arrays.condition, arrays.a);
+    case 'count_nonzero':
+      return np.count_nonzero(arrays.a);
 
     default:
       throw new Error(`Unknown operation: ${spec.operation}`);

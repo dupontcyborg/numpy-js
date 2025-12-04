@@ -1600,6 +1600,153 @@ export function getBenchmarkSpecs(mode: BenchmarkMode = 'standard'): BenchmarkCa
       iterations,
       warmup,
     });
+
+    // ========================================
+    // Sorting Benchmarks
+    // ========================================
+
+    specs.push({
+      name: `sort [${sizes.medium.join('x')}]`,
+      category: 'sorting',
+      operation: 'sort',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `argsort [${sizes.medium.join('x')}]`,
+      category: 'sorting',
+      operation: 'argsort',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `partition [${sizes.medium.join('x')}] kth=${Math.floor(sizes.medium[0]! / 2)}`,
+      category: 'sorting',
+      operation: 'partition',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+        kth: { shape: [Math.floor(sizes.medium[0]! / 2)] },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `argpartition [${sizes.medium.join('x')}] kth=${Math.floor(sizes.medium[0]! / 2)}`,
+      category: 'sorting',
+      operation: 'argpartition',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+        kth: { shape: [Math.floor(sizes.medium[0]! / 2)] },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `lexsort [${sizes.small}] x 2 keys`,
+      category: 'sorting',
+      operation: 'lexsort',
+      setup: {
+        a: { shape: [sizes.small], fill: 'arange' },
+        b: { shape: [sizes.small], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `sort_complex [${sizes.small}]`,
+      category: 'sorting',
+      operation: 'sort_complex',
+      setup: {
+        a: { shape: [sizes.small], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    // ========================================
+    // Searching Benchmarks
+    // ========================================
+
+    specs.push({
+      name: `nonzero [${sizes.medium.join('x')}]`,
+      category: 'searching',
+      operation: 'nonzero',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `flatnonzero [${sizes.medium.join('x')}]`,
+      category: 'searching',
+      operation: 'flatnonzero',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `where [${sizes.medium.join('x')}] with x,y`,
+      category: 'searching',
+      operation: 'where',
+      setup: {
+        a: { shape: sizes.medium, fill: 'ones', dtype: 'int32' },
+        b: { shape: sizes.medium, fill: 'arange' },
+        c: { shape: sizes.medium, fill: 'zeros' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `searchsorted [${sizes.small}]`,
+      category: 'searching',
+      operation: 'searchsorted',
+      setup: {
+        a: { shape: [sizes.small], fill: 'arange' },
+        b: { shape: [100], fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `extract [${sizes.medium.join('x')}]`,
+      category: 'searching',
+      operation: 'extract',
+      setup: {
+        condition: { shape: sizes.medium, fill: 'ones', dtype: 'int32' },
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
+
+    specs.push({
+      name: `count_nonzero [${sizes.medium.join('x')}]`,
+      category: 'searching',
+      operation: 'count_nonzero',
+      setup: {
+        a: { shape: sizes.medium, fill: 'arange' },
+      },
+      iterations,
+      warmup,
+    });
   }
 
   return specs;
