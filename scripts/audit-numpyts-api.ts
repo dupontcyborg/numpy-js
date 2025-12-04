@@ -13,8 +13,11 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-// Import everything from numpy-ts
+// Import everything from numpy-ts (main entry point)
 import * as np from '../src/index.js';
+
+// Import from node entry point to get I/O functions (load, save, savez, savez_compressed)
+import * as npNode from '../src/node.js';
 
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -23,6 +26,7 @@ const __dirname = dirname(__filename);
 function getNumpyTsTopLevelFunctions(): Record<string, any> {
   const functions: Record<string, any> = {};
 
+  // Scan main entry point
   for (const name of Object.keys(np)) {
     const obj = (np as any)[name];
 
@@ -43,6 +47,18 @@ function getNumpyTsTopLevelFunctions(): Record<string, any> {
           module: `numpy-ts.${name}`,
         };
       }
+    }
+  }
+
+  // Scan node entry point for I/O functions (load, save, savez, savez_compressed)
+  // These are only exported from the /node entry point
+  const nodeOnlyFunctions = ['load', 'save', 'savez', 'savez_compressed'];
+  for (const name of nodeOnlyFunctions) {
+    if (name in npNode && typeof (npNode as any)[name] === 'function') {
+      functions[name] = {
+        type: 'function',
+        module: 'numpy-ts/node',
+      };
     }
   }
 
