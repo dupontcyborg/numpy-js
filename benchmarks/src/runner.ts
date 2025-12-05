@@ -52,7 +52,8 @@ function setupArrays(setup: BenchmarkSetup, operation?: string): Record<string, 
       key === 'shape' ||
       key === 'fill_value' ||
       key === 'target_shape' ||
-      key === 'dims'
+      key === 'dims' ||
+      key === 'kth'
     ) {
       arrays[key] = shape[0];
       if (key === 'new_shape' || key === 'shape' || key === 'target_shape' || key === 'dims') {
@@ -406,6 +407,36 @@ function executeOperation(operation: string, arrays: Record<string, any>): any {
   } else if (operation === 'parseNpzSync') {
     // arrays['_npzBytes'] is pre-serialized in setupArrays
     return parseNpzSync(arrays['_npzBytes']);
+  }
+
+  // Sorting operations
+  else if (operation === 'sort') {
+    return np.sort(arrays['a']);
+  } else if (operation === 'argsort') {
+    return np.argsort(arrays['a']);
+  } else if (operation === 'partition') {
+    return np.partition(arrays['a'], arrays['kth'] || 0);
+  } else if (operation === 'argpartition') {
+    return np.argpartition(arrays['a'], arrays['kth'] || 0);
+  } else if (operation === 'lexsort') {
+    return np.lexsort([arrays['a'], arrays['b']]);
+  } else if (operation === 'sort_complex') {
+    return np.sort_complex(arrays['a']);
+  }
+
+  // Searching operations
+  else if (operation === 'nonzero') {
+    return np.nonzero(arrays['a']);
+  } else if (operation === 'flatnonzero') {
+    return np.flatnonzero(arrays['a']);
+  } else if (operation === 'where') {
+    return np.where(arrays['a'], arrays['b'], arrays['c']);
+  } else if (operation === 'searchsorted') {
+    return np.searchsorted(arrays['a'], arrays['b']);
+  } else if (operation === 'extract') {
+    return np.extract(arrays['condition'], arrays['a']);
+  } else if (operation === 'count_nonzero') {
+    return np.count_nonzero(arrays['a']);
   }
 
   throw new Error(`Unknown operation: ${operation}`);

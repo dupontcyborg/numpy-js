@@ -34,8 +34,9 @@ function deserializeValue(val: any): any {
 
 /**
  * Compare two arrays or scalars for equality with tolerance
+ * @param operation - The operation name (for special handling of non-deterministic operations)
  */
-function resultsMatch(numpytsResult: any, numpyResult: any): boolean {
+function resultsMatch(numpytsResult: any, numpyResult: any, operation?: string): boolean {
   // Both scalars
   if (typeof numpytsResult === 'number' && typeof numpyResult === 'number') {
     return Math.abs(numpytsResult - numpyResult) < FLOAT_TOLERANCE;
@@ -64,6 +65,57 @@ function resultsMatch(numpytsResult: any, numpyResult: any): boolean {
   }
 
   return false;
+}
+
+/**
+ * Check if a partition result satisfies the partition property
+ * All elements before kth should be <= element at kth
+ * All elements after kth should be >= element at kth
+ */
+function checkPartitionProperty(data: any, kth: number, shape: number[]): boolean {
+  // For multi-dimensional arrays, check along last axis
+  if (shape.length === 0) return true;
+
+  const lastAxisSize = shape[shape.length - 1]!;
+  const outerSize = shape.slice(0, -1).reduce((a, b) => a * b, 1) || 1;
+
+  // Flatten nested array to 1D for easier checking
+  function flatten(arr: any): number[] {
+    if (typeof arr === 'number') return [arr];
+    if (Array.isArray(arr)) {
+      return arr.flatMap((x) => flatten(x));
+    }
+    return [];
+  }
+
+  const flatData = flatten(data);
+
+  // Check each row along the last axis
+  for (let i = 0; i < outerSize; i++) {
+    const rowStart = i * lastAxisSize;
+    const kthValue = flatData[rowStart + kth];
+
+    // Skip if kthValue is NaN
+    if (typeof kthValue === 'number' && isNaN(kthValue)) continue;
+
+    // Check all elements before kth are <= kthValue
+    for (let j = 0; j < kth; j++) {
+      const val = flatData[rowStart + j];
+      if (typeof val === 'number' && !isNaN(val)) {
+        if (val > kthValue!) return false;
+      }
+    }
+
+    // Check all elements after kth are >= kthValue
+    for (let j = kth + 1; j < lastAxisSize; j++) {
+      const val = flatData[rowStart + j];
+      if (typeof val === 'number' && !isNaN(val)) {
+        if (val < kthValue!) return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 /**
@@ -101,7 +153,7 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
     const { shape, dtype = 'float64', fill = 'zeros', value } = config;
 
     // Handle scalar values
-    if (['n', 'axis', 'new_shape', 'shape', 'fill_value', 'target_shape', 'dims'].includes(key)) {
+    if (['n', 'axis', 'new_shape', 'shape', 'fill_value', 'target_shape', 'dims', 'kth'].includes(key)) {
       arrays[key] = shape[0];
       if (key === 'new_shape' || key === 'shape' || key === 'target_shape' || key === 'dims') {
         arrays[key] = shape;
@@ -393,6 +445,36 @@ function runNumpyTsOperation(spec: BenchmarkCase): any {
     case 'unpackbits':
       return np.unpackbits(arrays.a);
 
+    // Sorting operations
+    case 'sort':
+      return np.sort(arrays.a);
+    case 'argsort':
+      return np.argsort(arrays.a);
+    case 'partition':
+      return np.partition(arrays.a, arrays.kth || 0);
+    case 'argpartition':
+      return np.argpartition(arrays.a, arrays.kth || 0);
+    case 'lexsort':
+      return np.lexsort([arrays.a, arrays.b]);
+    case 'sort_complex':
+      return np.sort_complex(arrays.a);
+
+    // Searching operations
+    case 'nonzero': {
+      const idx = np.nonzero(arrays.a);
+      return np.stack(idx, 0);
+    }
+    case 'flatnonzero':
+      return np.flatnonzero(arrays.a);
+    case 'where':
+      return np.where(arrays.a, arrays.b, arrays.c);
+    case 'searchsorted':
+      return np.searchsorted(arrays.a, arrays.b);
+    case 'extract':
+      return np.extract(arrays.condition, arrays.a);
+    case 'count_nonzero':
+      return np.count_nonzero(arrays.a);
+
     default:
       throw new Error(`Unknown operation: ${spec.operation}`);
   }
@@ -463,7 +545,49 @@ export async function validateBenchmarks(specs: BenchmarkCase[]): Promise<void> 
               tsValue = numpytsResult;
             }
 
-            if (resultsMatch(tsValue, numpyResult)) {
+            // For partition/argpartition, check partition property instead of exact equality
+            let isValid = false;
+            if (spec.operation === 'partition' || spec.operation === 'argpartition') {
+              // Extract kth from spec setup
+              const kth = spec.setup.kth?.shape?.[0] ?? 0;
+
+              if (spec.operation === 'partition') {
+                // Check partition property: elements before kth <= kth element <= elements after kth
+                isValid =
+                  tsValue.shape &&
+                  tsValue.shape.length > 0 &&
+                  checkPartitionProperty(tsValue.data, kth, tsValue.shape);
+              } else {
+                // For argpartition, apply indices to get partitioned values and check property
+                // Get original array from spec setup
+                const origArray = Array.isArray(spec.setup.a)
+                  ? spec.setup.a
+                  : spec.setup.a?.shape
+                    ? Array.from({ length: spec.setup.a.shape.reduce((a: number, b: number) => a * b, 1) }, (_, i) => i)
+                    : [];
+
+                // Apply indices to get partitioned array
+                function applyIndices(data: any, indices: any): any {
+                  if (Array.isArray(indices)) {
+                    return indices.map((idx: any) => {
+                      if (Array.isArray(idx)) {
+                        return applyIndices(data, idx);
+                      }
+                      return Array.isArray(data) ? data[idx] : data;
+                    });
+                  }
+                  return data;
+                }
+
+                const partitionedData = applyIndices(origArray, tsValue.data);
+                isValid = checkPartitionProperty(partitionedData, kth, tsValue.shape);
+              }
+            } else {
+              // Standard comparison for other operations
+              isValid = resultsMatch(tsValue, numpyResult, spec.operation);
+            }
+
+            if (isValid) {
               passed++;
             } else {
               failed++;

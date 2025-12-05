@@ -32,8 +32,8 @@ def setup_arrays(setup: Dict[str, Any], operation: str = None) -> Dict[str, np.n
         dtype = spec.get("dtype", "float64")
         fill_type = spec.get("fill", "zeros")
 
-        # Handle scalar values (n, axis, new_shape, shape, fill_value, target_shape, dims)
-        if key in ["n", "axis", "new_shape", "shape", "fill_value", "target_shape", "dims"]:
+        # Handle scalar values (n, axis, new_shape, shape, fill_value, target_shape, dims, kth)
+        if key in ["n", "axis", "new_shape", "shape", "fill_value", "target_shape", "dims", "kth"]:
             if len(shape) == 1:
                 arrays[key] = shape[0]
             else:
@@ -373,6 +373,36 @@ def execute_operation(operation: str, arrays: Dict[str, np.ndarray]) -> Any:
         # arrays["_npzBytes"] should be pre-serialized
         buffer = io.BytesIO(arrays["_npzBytes"])
         return np.load(buffer)
+
+    # Sorting operations
+    elif operation == "sort":
+        return np.sort(arrays["a"])
+    elif operation == "argsort":
+        return np.argsort(arrays["a"])
+    elif operation == "partition":
+        kth = arrays.get("kth", 0)
+        return np.partition(arrays["a"], kth)
+    elif operation == "argpartition":
+        kth = arrays.get("kth", 0)
+        return np.argpartition(arrays["a"], kth)
+    elif operation == "lexsort":
+        return np.lexsort((arrays["a"].ravel(), arrays["b"].ravel()))
+    elif operation == "sort_complex":
+        return np.sort_complex(arrays["a"])
+
+    # Searching operations
+    elif operation == "nonzero":
+        return np.nonzero(arrays["a"])
+    elif operation == "flatnonzero":
+        return np.flatnonzero(arrays["a"])
+    elif operation == "where":
+        return np.where(arrays["a"], arrays["b"], arrays["c"])
+    elif operation == "searchsorted":
+        return np.searchsorted(arrays["a"].ravel(), arrays["b"].ravel())
+    elif operation == "extract":
+        return np.extract(arrays["condition"], arrays["a"])
+    elif operation == "count_nonzero":
+        return np.count_nonzero(arrays["a"])
 
     else:
         raise ValueError(f"Unknown operation: {operation}")
